@@ -1,11 +1,12 @@
 "use server"
 
-import Stripe from 'stripe';
 import { createClient as createServiceClient } from '@supabase/supabase-js';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2025-10-29.clover',
-});
+// Viva Wallet API Configuration
+const VIVA_API_URL = process.env.VIVA_API_URL || 'https://demo-api.vivapayments.com';
+const VIVA_CLIENT_ID = process.env.VIVA_CLIENT_ID!;
+const VIVA_CLIENT_SECRET = process.env.VIVA_CLIENT_SECRET!;
+const VIVA_SOURCE_CODE = process.env.VIVA_SOURCE_CODE!;
 
 // Create Supabase admin client for server-side operations
 const getSupabaseAdmin = () => {
@@ -21,33 +22,122 @@ const getSupabaseAdmin = () => {
   );
 };
 
-export async function createPaymentIntent(amount: number, orderData: any) {
+// Get OAuth Access Token
+async function getAccessToken() {
+  const auth = Buffer.from(`${VIVA_CLIENT_ID}:${VIVA_CLIENT_SECRET}`).toString('base64');
+  
+  // OAuth endpoint is different from API endpoint!
+  // Demo: demo-accounts.vivapayments.com
+  // Live: accounts.vivapayments.com
+  const oauthUrl = VIVA_API_URL.includes('demo')
+    ? 'https://demo-accounts.vivapayments.com/connect/token'
+    : 'https://accounts.vivapayments.com/connect/token';
+  
+  const response = await fetch(oauthUrl, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Basic ${auth}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'grant_type=client_credentials',
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('❌ Viva OAuth Error - Status:', response.status);
+    console.error('❌ Viva OAuth Error - Response:', errorText);
+    console.error('❌ VIVA_CLIENT_ID:', VIVA_CLIENT_ID);
+    console.error('❌ VIVA_CLIENT_SECRET:', VIVA_CLIENT_SECRET ? 'SET (hidden)' : 'MISSING');
+    console.error('❌ VIVA_API_URL:', VIVA_API_URL);
+    throw new Error(`Failed to authenticate with Viva Wallet: ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.access_token;
+}
+
+// Create Payment Order
+export async function createVivaPaymentOrder(orderData: {
+  amount: number;
+  orderId: string;
+  customerEmail: string;
+  customerName: string;
+  customerPhone?: string;
+}) {
   try {
-    console.log('🔑 Creating payment intent with amount:', amount);
+    console.log('🔑 Creating Viva payment order for:', orderData.orderId);
     
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // Convert to cents
-      currency: 'eur',
-      automatic_payment_methods: {
-        enabled: true,
+    const accessToken = await getAccessToken();
+    
+    // Get base URL for success/failure redirects
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    
+    const paymentOrderData = {
+      amount: Math.round(orderData.amount * 100), // Convert to cents
+      customerTrns: `Παραγγελία Tinkerbell #${orderData.orderId}`,
+      customer: {
+        email: orderData.customerEmail,
+        fullName: orderData.customerName,
+        phone: orderData.customerPhone || '',
+        countryCode: 'GR',
+        requestLang: 'el-GR'
       },
-      metadata: {
-        customer_email: orderData.customer_email,
-        customer_name: orderData.customer_name,
-        customer_phone: orderData.customer_phone || '',
-        boxnow_locker_id: orderData.boxnow_locker_id || '',
-        items_count: orderData.items.length.toString(),
+      paymentTimeout: 1800, // 30 minutes for testing
+      preauth: false,
+      allowRecurring: false,
+      maxInstallments: 0,
+      paymentNotification: true,
+      tipAmount: 0,
+      disableExactAmount: false,
+      disableCash: true,
+      disableWallet: false,
+      sourceCode: VIVA_SOURCE_CODE,
+      merchantTrns: `Tinkerbell Kids Store - Order ${orderData.orderId}`,
+      tags: [
+        'tinkerbell-eshop',
+        'kids-clothing',
+        `order-${orderData.orderId}`
+      ]
+    };
+
+    const response = await fetch(`${VIVA_API_URL}/checkout/v2/orders`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify(paymentOrderData),
     });
 
-    console.log('✅ Payment intent created:', paymentIntent.id);
-    return { clientSecret: paymentIntent.client_secret };
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Viva API error:', errorText);
+      throw new Error('Failed to create payment order');
+    }
+
+    const data = await response.json();
+    console.log('✅ Payment order created:', data.orderCode);
+    
+    // Determine checkout URL based on environment
+    const checkoutBaseUrl = VIVA_API_URL.includes('demo') 
+      ? 'https://demo.vivapayments.com' 
+      : 'https://www.vivapayments.com';
+    
+    // Customize checkout with brand colors
+    // Remove # from color for URL parameter
+    const brandColor = 'ffb3d9'; // Tinkerbell pink
+    
+    return {
+      orderCode: data.orderCode,
+      checkoutUrl: `${checkoutBaseUrl}/web/checkout?ref=${data.orderCode}&color=${brandColor}`
+    };
   } catch (error) {
-    console.error('❌ Error creating payment intent:', error);
-    throw new Error('Failed to create payment intent');
+    console.error('❌ Error creating Viva payment order:', error);
+    throw new Error('Failed to create payment order');
   }
 }
 
+// Create Order in Database
 export async function createOrder(orderData: {
   items: Array<{
     product_id: string;
@@ -63,7 +153,7 @@ export async function createOrder(orderData: {
   customer_phone?: string;
   shipping_address: any;
   boxnow_locker_id?: string;
-  stripe_payment_intent_id: string;
+  viva_order_code: string;
 }) {
   const supabase = getSupabaseAdmin();
 
@@ -77,7 +167,7 @@ export async function createOrder(orderData: {
       customer_phone: orderData.customer_phone,
       shipping_address: orderData.shipping_address,
       boxnow_locker_id: orderData.boxnow_locker_id,
-      stripe_payment_intent_id: orderData.stripe_payment_intent_id,
+      viva_order_code: orderData.viva_order_code,
       status: 'pending',
       payment_status: 'pending',
     })
@@ -85,6 +175,7 @@ export async function createOrder(orderData: {
     .single();
 
   if (orderError || !order) {
+    console.error('Failed to create order:', orderError);
     throw new Error('Failed to create order');
   }
 
@@ -104,18 +195,22 @@ export async function createOrder(orderData: {
     .insert(orderItems);
 
   if (itemsError) {
+    console.error('Failed to create order items:', itemsError);
     throw new Error('Failed to create order items');
   }
 
   return order;
 }
 
+// Update Order Payment Status (called from webhook)
 export async function updateOrderPaymentStatus(
-  paymentIntentId: string,
+  vivaOrderCode: string,
+  transactionId: string,
   status: 'paid' | 'failed'
 ) {
   console.log('📋 updateOrderPaymentStatus called');
-  console.log('📋 Payment Intent ID:', paymentIntentId);
+  console.log('📋 Viva Order Code:', vivaOrderCode);
+  console.log('📋 Transaction ID:', transactionId);
   console.log('📋 Status:', status);
 
   const supabase = getSupabaseAdmin();
@@ -125,7 +220,7 @@ export async function updateOrderPaymentStatus(
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .select('*, order_items(*)')
-    .eq('stripe_payment_intent_id', paymentIntentId)
+    .eq('viva_order_code', vivaOrderCode)
     .single();
 
   if (orderError) {
@@ -134,7 +229,7 @@ export async function updateOrderPaymentStatus(
   }
 
   if (!order) {
-    console.error('❌ Order not found for payment intent:', paymentIntentId);
+    console.error('❌ Order not found for Viva order code:', vivaOrderCode);
     throw new Error('Order not found');
   }
 
@@ -148,8 +243,9 @@ export async function updateOrderPaymentStatus(
     .update({
       payment_status: status,
       status: status === 'paid' ? 'paid' : 'cancelled',
+      viva_transaction_id: transactionId,
     })
-    .eq('stripe_payment_intent_id', paymentIntentId);
+    .eq('viva_order_code', vivaOrderCode);
 
   if (error) {
     console.error('❌ Error updating order status:', error);

@@ -29,11 +29,11 @@
 ✅ Προϊόντα με variants (size/color)
 ✅ Shopping cart
 ✅ Checkout flow
+✅ Viva Wallet Smart Checkout payments
+✅ Webhook integration για order updates
 ✅ BOXNOW locker selection (7 mock lockers)
 ✅ Search/filter lockers
-✅ Stripe payments (test mode)
-✅ Order creation
-✅ Stock management
+✅ Order creation με automatic stock decrease
 ✅ Admin dashboard
 
 =====================================
@@ -62,22 +62,28 @@ DEMO LOCKERS
 Όλα με πραγματικές διευθύνσεις για realistic demo!
 
 =====================================
-STRIPE TEST CARDS
+VIVA WALLET SETUP
 =====================================
 
-Επιτυχής Πληρωμή:
------------------
-Card: 4242 4242 4242 4242
-Expiry: 12/25 (οποιαδήποτε μελλοντική)
-CVC: 123 (οποιοιδήποτε 3 αριθμοί)
+Για να λειτουργήσουν οι πληρωμές:
 
-Αποτυχημένη Πληρωμή:
---------------------
-Card: 4000 0000 0000 0002
+1. Δημιούργησε Viva Wallet demo account:
+   https://developer.viva.com/demo-accounts/
 
-Requires Authentication:
-------------------------
-Card: 4000 0025 0000 3155
+2. Πάρε API credentials από το portal
+
+3. Πρόσθεσέ τα στο .env.local:
+   VIVA_API_URL=https://demo-api.vivapayments.com
+   VIVA_CLIENT_ID=your_client_id
+   VIVA_CLIENT_SECRET=your_secret
+   VIVA_SOURCE_CODE=1234
+   VIVA_WEBHOOK_KEY=random_string
+
+4. Test Cards (Demo):
+   ✅ Success: 4111 1111 1111 1111
+   ❌ Fail: 4000 0000 0000 0002
+
+Για αναλυτικές οδηγίες: VIVA-WALLET-SETUP.txt
 
 =====================================
 DEPLOY ΓΙΑ PREVIEW
@@ -129,6 +135,15 @@ FILES ΠΟΥ ΠΡΟΣΤΕΘΗΚΑΝ
 
 ✅ app/api/boxnow/shipments/route.ts
    Internal API route για delivery requests
+
+✅ lib/actions/viva-wallet.ts
+   Viva Wallet API integration
+
+✅ app/api/webhooks/viva/route.ts
+   Webhook handler για payment events
+
+✅ VIVA-WALLET-SETUP.txt
+   Πλήρες Viva Wallet setup guide
 
 ✅ BOXNOW-INTEGRATION.txt
    Πλήρες documentation

@@ -198,11 +198,16 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             />
           </div>
 
-          <div>
+          <div className="space-y-1">
             <p className="text-sm text-muted-foreground">Payment Status: {order.payment_status}</p>
-            {order.stripe_payment_intent_id && (
+            {order.viva_order_code && (
               <p className="text-sm text-muted-foreground">
-                Stripe Payment ID: {order.stripe_payment_intent_id}
+                Viva Order Code: {order.viva_order_code}
+              </p>
+            )}
+            {order.viva_transaction_id && (
+              <p className="text-sm text-muted-foreground">
+                Viva Transaction ID: {order.viva_transaction_id}
               </p>
             )}
           </div>

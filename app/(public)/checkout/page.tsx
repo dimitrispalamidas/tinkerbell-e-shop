@@ -8,86 +8,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { formatPrice } from '@/lib/utils';
-import { loadStripe } from '@stripe/stripe-js';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { createPaymentIntent, createOrder } from '@/lib/actions/stripe';
 import { toast } from 'sonner';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { BoxnowLockerList } from '@/components/checkout/boxnow-locker-list';
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-
-function CheckoutForm() {
-  const t = useTranslations('checkout');
-  const tCommon = useTranslations('common');
-  const locale = useLocale();
-  const router = useRouter();
-  
-  const stripe = useStripe();
-  const elements = useElements();
-  
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [orderComplete, setOrderComplete] = useState(false);
-  const [orderId, setOrderId] = useState<string>('');
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!stripe || !elements) return;
-
-    setIsProcessing(true);
-
-    try {
-      const { error } = await stripe.confirmPayment({
-        elements,
-        confirmParams: {
-          return_url: `${window.location.origin}/checkout/success`,
-        },
-      });
-
-      if (error) {
-        toast.error(error.message);
-      }
-    } catch (err) {
-      toast.error(locale === 'el' ? 'Σφάλμα πληρωμής' : 'Payment error');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  if (orderComplete) {
-    return (
-      <div className="text-center py-16">
-        <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold mb-2">{t('order_complete')}</h2>
-        <p className="text-muted-foreground mb-4">{t('thank_you')}</p>
-        <p className="text-sm text-muted-foreground mb-8">
-          {t('order_number')}: {orderId}
-        </p>
-        <Button onClick={() => router.push('/')}>
-          {locale === 'el' ? 'Επιστροφή στην Αρχική' : 'Back to Home'}
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <PaymentElement />
-      
-      <Button
-        type="submit"
-        size="lg"
-        className="w-full"
-        disabled={!stripe || isProcessing}
-      >
-        {isProcessing 
-          ? (locale === 'el' ? 'Επεξεργασία...' : 'Processing...') 
-          : t('place_order')}
-      </Button>
-    </form>
-  );
-}
 
 export default function CheckoutPage() {
   const t = useTranslations('checkout');
@@ -98,7 +21,6 @@ export default function CheckoutPage() {
   
   const { items, getTotal, clearCart } = useCartStore();
   const [step, setStep] = useState(1);
-  const [clientSecret, setClientSecret] = useState('');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -130,57 +52,69 @@ export default function CheckoutPage() {
         toast.error(locale === 'el' ? 'Επιλέξτε locker' : 'Select a locker');
         return;
       }
-      
-      // Create payment intent and order
-      try {
-        const orderData = {
-          items: items.map(item => ({
-            product_id: item.id,
-            quantity: item.quantity,
-            price: item.price,
-            size: item.size,
-            color: item.color,
-            product_name: item.name,
-          })),
-          total: getTotal(),
-          customer_email: formData.email,
-          customer_name: formData.name,
-          customer_phone: formData.phone,
-          shipping_address: {
-            name: formData.name,
-            address: formData.address,
-            city: formData.city,
-            postal_code: formData.postalCode,
-            country: 'GR',
-            phone: formData.phone,
-          },
-          boxnow_locker_id: formData.boxnowLockerId,
-        };
-
-        // Create payment intent first
-        const { clientSecret } = await createPaymentIntent(getTotal(), orderData);
-        
-        if (!clientSecret) {
-          throw new Error('Failed to create payment intent');
-        }
-        
-        // Extract payment intent ID from client secret
-        const paymentIntentId = clientSecret.split('_secret_')[0];
-        
-        // Create order in database
-        await createOrder({
-          ...orderData,
-          stripe_payment_intent_id: paymentIntentId,
-        });
-
-        setClientSecret(clientSecret);
-        setStep(3);
-      } catch (error) {
-        console.error('Checkout error:', error);
-        toast.error(locale === 'el' ? 'Σφάλμα' : 'Error');
-      }
+      setStep(3);
     }
   };
+
+  const handlePayment = async () => {
+    try {
+      setIsProcessing(true);
+
+      // Import the Viva Wallet actions dynamically
+      const { createVivaPaymentOrder, createOrder } = await import('@/lib/actions/viva-wallet');
+
+      const orderData = {
+        items: items.map(item => ({
+          product_id: item.id,
+          quantity: item.quantity,
+          price: item.price,
+          size: item.size,
+          color: item.color,
+          product_name: item.name,
+        })),
+        total: getTotal(),
+        customer_email: formData.email,
+        customer_name: formData.name,
+        customer_phone: formData.phone,
+        shipping_address: {
+          name: formData.name,
+          address: formData.address,
+          city: formData.city,
+          postal_code: formData.postalCode,
+          country: 'GR',
+          phone: formData.phone,
+        },
+        boxnow_locker_id: formData.boxnowLockerId,
+      };
+
+      // Create Viva payment order
+      const { orderCode, checkoutUrl } = await createVivaPaymentOrder({
+        amount: getTotal(),
+        orderId: `TMP-${Date.now()}`, // Temporary ID
+        customerEmail: formData.email,
+        customerName: formData.name,
+        customerPhone: formData.phone,
+      });
+
+      // Create order in database
+      const order = await createOrder({
+        ...orderData,
+        viva_order_code: orderCode,
+      });
+
+      console.log('Order created:', order.id);
+      console.log('Viva Order Code:', orderCode);
+
+      // Redirect to Viva checkout
+      window.location.href = checkoutUrl;
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast.error(locale === 'el' ? 'Σφάλμα κατά τη δημιουργία πληρωμής' : 'Error creating payment');
+      setIsProcessing(false);
+    }
+  };
+
+  const [isProcessing, setIsProcessing] = useState(false);
 
   if (items.length === 0) {
     return null;
@@ -279,15 +213,48 @@ export default function CheckoutPage() {
               </Card>
             )}
 
-            {step === 3 && clientSecret && (
+            {step === 3 && (
               <Card>
                 <CardHeader>
                   <CardTitle>{t('payment')}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Elements stripe={stripePromise} options={{ clientSecret }}>
-                    <CheckoutForm />
-                  </Elements>
+                <CardContent className="space-y-6">
+                  <div className="bg-muted p-4 rounded-lg">
+                    <h3 className="font-semibold mb-2">
+                      {locale === 'el' ? 'Ασφαλής Πληρωμή με Viva Wallet' : 'Secure Payment with Viva Wallet'}
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                      {locale === 'el' 
+                        ? 'Θα ανακατευθυνθείτε στη σελίδα πληρωμής της Viva Wallet για να ολοκληρώσετε την παραγγελία σας με ασφάλεια.' 
+                        : 'You will be redirected to Viva Wallet secure payment page to complete your order.'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>{locale === 'el' ? 'Ασφαλής κρυπτογράφηση' : 'Secure encryption'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>{locale === 'el' ? 'Υποστήριξη όλων των καρτών' : 'All cards supported'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                      <span>{locale === 'el' ? 'Δόσεις διαθέσιμες' : 'Installments available'}</span>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handlePayment}
+                    size="lg"
+                    className="w-full"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing 
+                      ? (locale === 'el' ? 'Επεξεργασία...' : 'Processing...') 
+                      : (locale === 'el' ? 'Συνέχεια στην Πληρωμή' : 'Continue to Payment')}
+                  </Button>
                 </CardContent>
               </Card>
             )}

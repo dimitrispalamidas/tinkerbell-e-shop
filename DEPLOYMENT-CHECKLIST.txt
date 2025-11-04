@@ -13,10 +13,12 @@ TINKERBELL - DEPLOYMENT CHECKLIST
 □ NEXT_PUBLIC_SUPABASE_URL - Το production Supabase URL
 □ NEXT_PUBLIC_SUPABASE_ANON_KEY - Το production anon key
 □ SUPABASE_SERVICE_ROLE_KEY - Το production service role key
-□ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY - Stripe live key (pk_live_...)
-□ STRIPE_SECRET_KEY - Stripe live secret (sk_live_...)
-□ STRIPE_WEBHOOK_SECRET - Production webhook secret
 □ NEXT_PUBLIC_BASE_URL - Το production domain σου (https://yourdomain.com)
+□ VIVA_API_URL - Production Viva API URL (https://api.vivapayments.com)
+□ VIVA_CLIENT_ID - Production Viva Client ID
+□ VIVA_CLIENT_SECRET - Production Viva Client Secret
+□ VIVA_SOURCE_CODE - Production Viva Source Code
+□ VIVA_WEBHOOK_KEY - Production Webhook Verification Key
 
 ✅ BOXNOW Integration (Όταν είσαι έτοιμος):
 -------------------------------------------
@@ -36,13 +38,16 @@ TINKERBELL - DEPLOYMENT CHECKLIST
 □ Database functions/triggers working
 
 =====================================
-3. STRIPE
+3. VIVA WALLET PAYMENTS
 =====================================
 
-□ Stripe account σε live mode
-□ Webhooks configured για production URL
-□ Test payments λειτουργούν
-□ Webhook endpoint verified
+□ Viva Wallet account created (live mode)
+□ Payment Source configured
+□ API credentials obtained
+□ Webhook configured για production URL (HTTPS)
+□ Success/Failure URLs configured
+□ Test payments επιτυχείς (με πραγματική κάρτα, μικρό ποσό)
+□ Webhook endpoint verified (returns 200 OK)
 
 =====================================
 4. BOXNOW (Προαιρετικό - Για Αργότερα)
@@ -87,7 +92,7 @@ TINKERBELL - DEPLOYMENT CHECKLIST
 =====================================
 
 □ Complete checkout flow
-□ Stripe payments (test mode πρώτα)
+□ Payment integration testing
 □ Email notifications (αν υπάρχουν)
 □ Order creation
 □ Stock decrements
@@ -110,7 +115,7 @@ TINKERBELL - DEPLOYMENT CHECKLIST
 
 □ Test production URL
 □ Complete 1 test order
-□ Check Stripe dashboard
+□ Check payment gateway dashboard
 □ Check Supabase logs
 □ Monitor for errors
 □ Backup database
@@ -125,13 +130,13 @@ NOTES
 - Πρόσθεσε τα credentials αργότερα όταν είσαι έτοιμος
 
 ⚠️ Test Orders:
-- Χρησιμοποίησε Stripe test mode πρώτα
+- Χρησιμοποίησε test mode πρώτα
 - Μετά κάνε 1-2 test με live mode
 - Χρησιμοποίησε χαμηλά ποσά για testing
 
 ⚠️ Monitoring:
 - Έλεγξε τα logs τακτικά
-- Monitor Stripe για failed payments
+- Monitor payment gateway για failed payments
 - Monitor Supabase για errors
 
 =====================================

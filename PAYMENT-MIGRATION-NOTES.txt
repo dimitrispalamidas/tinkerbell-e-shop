@@ -1,0 +1,242 @@
+=====================================
+PAYMENT MIGRATION: STRIPE → VIVA WALLET
+=====================================
+
+Ημερομηνία: November 2025
+Status: ✅ Ολοκληρωμένη
+
+=====================================
+ΤΙ ΑΛΛΑΞΕ
+=====================================
+
+Removed (Stripe):
+-----------------
+❌ lib/actions/stripe.ts
+❌ app/api/webhooks/stripe/route.ts
+❌ STRIPE-SETUP-GUIDE.txt
+❌ @stripe/react-stripe-js package
+❌ @stripe/stripe-js package
+❌ stripe package
+❌ stripe_payment_intent_id field
+
+Added (Viva Wallet):
+--------------------
+✅ lib/actions/viva-wallet.ts
+✅ app/api/webhooks/viva/route.ts
+✅ VIVA-WALLET-SETUP.txt
+✅ viva_order_code field
+✅ viva_transaction_id field
+
+=====================================
+DATABASE CHANGES
+=====================================
+
+Migration: add_viva_wallet_fields_to_orders
+-------------------------------------------
+ALTER TABLE orders:
+  + viva_order_code TEXT
+  + viva_transaction_id TEXT
+  + INDEX on viva_order_code
+  + INDEX on viva_transaction_id
+
+Removed:
+  - stripe_payment_intent_id (no longer needed)
+
+=====================================
+API CHANGES
+=====================================
+
+Old (Stripe):
+------------
+1. Create Payment Intent → Client Secret
+2. Client-side Stripe Elements
+3. Stripe handles payment in browser
+4. Webhook confirms payment
+5. Update order status
+
+New (Viva Wallet):
+-----------------
+1. Create Payment Order → Order Code
+2. Redirect to Viva Smart Checkout
+3. Customer pays on Viva's secure page
+4. Webhook confirms payment
+5. Update order status
+6. Customer redirected back to success page
+
+=====================================
+ENVIRONMENT VARIABLES
+=====================================
+
+Removed:
+--------
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+
+Added:
+------
+VIVA_API_URL
+VIVA_CLIENT_ID
+VIVA_CLIENT_SECRET
+VIVA_SOURCE_CODE
+VIVA_WEBHOOK_KEY
+NEXT_PUBLIC_BASE_URL
+
+=====================================
+WEBHOOK ENDPOINTS
+=====================================
+
+Old: /api/webhooks/stripe
+New: /api/webhooks/viva
+
+Verification:
+- Stripe: Signature verification με webhook secret
+- Viva: Authorization header με custom key
+
+=====================================
+CHECKOUT FLOW
+=====================================
+
+Before (Stripe):
+---------------
+Checkout → Fill Info → Select Locker → 
+Stripe Elements (on-page) → Payment Success → 
+Webhook → Update DB → Success Page
+
+After (Viva Wallet):
+-------------------
+Checkout → Fill Info → Select Locker → 
+Create Viva Order → Redirect to Viva → 
+Payment on Viva Page → Webhook → Update DB → 
+Redirect to Success Page
+
+=====================================
+BENEFITS OF VIVA WALLET
+=====================================
+
+✅ Greek payment provider (καλύτερη υποστήριξη)
+✅ Lower transaction fees
+✅ Better integration με ελληνικές τράπεζες
+✅ Δόσεις support out of the box
+✅ PSD2 compliant
+✅ Μειωμένα rejected payments
+✅ Ελληνικό support team
+✅ Viva Wallet app support
+
+=====================================
+MIGRATION CHECKLIST (COMPLETED)
+=====================================
+
+✅ Remove Stripe dependencies
+✅ Create Viva Wallet actions
+✅ Create Viva webhook endpoint
+✅ Update database schema
+✅ Update checkout flow
+✅ Update success page
+✅ Update admin order view
+✅ Update environment config
+✅ Update documentation
+✅ Test payment flow
+✅ Test webhook handling
+✅ Test stock management
+✅ Test BOXNOW integration
+
+=====================================
+TESTING INSTRUCTIONS
+=====================================
+
+1. Setup Viva Demo Account:
+   https://developer.viva.com/demo-accounts/
+
+2. Configure .env.local με demo credentials
+
+3. Test Checkout:
+   - Add products to cart
+   - Go through checkout
+   - Use test card: 4111 1111 1111 1111
+   - Complete payment on Viva page
+   - Verify redirect to success page
+
+4. Verify Webhook:
+   - Check order status updated to "paid"
+   - Check stock decreased
+   - Check BOXNOW delivery created (if credentials)
+   - Check admin order view shows Viva IDs
+
+5. Test Failed Payment:
+   - Use card: 4000 0000 0000 0002
+   - Verify order marked as failed
+
+=====================================
+PRODUCTION DEPLOYMENT
+=====================================
+
+Pre-deployment:
+--------------
+1. Create live Viva Wallet account
+2. Get production API credentials
+3. Configure production webhook (HTTPS!)
+4. Update environment variables
+5. Test με μικρό ποσό
+
+During deployment:
+-----------------
+1. Deploy code
+2. Run database migration (auto-applied)
+3. Configure webhooks στο Viva Portal
+4. Test complete flow
+
+Post-deployment:
+---------------
+1. Monitor Viva Dashboard
+2. Check webhook logs
+3. Test 1-2 real orders
+4. Monitor error logs
+
+=====================================
+ROLLBACK PLAN (if needed)
+=====================================
+
+Αν χρειαστεί επιστροφή στο Stripe:
+
+1. Restore Stripe files από git history
+2. Reinstall Stripe packages
+3. Revert database migration:
+   ALTER TABLE orders DROP COLUMN viva_order_code;
+   ALTER TABLE orders DROP COLUMN viva_transaction_id;
+   ALTER TABLE orders ADD COLUMN stripe_payment_intent_id TEXT;
+4. Update .env.local
+5. Redeploy
+
+=====================================
+SUPPORT & CONTACTS
+=====================================
+
+Viva Wallet:
+-----------
+Developer Portal: https://developer.viva.com
+Support: support@vivawallet.com
+Community: https://community.vivawallet.com
+Phone: +30 210 XXX XXXX (check portal)
+
+Documentation:
+-------------
+Main Docs: VIVA-WALLET-SETUP.txt
+Integration: https://developer.viva.com/smart-checkout/
+API Reference: https://developer.viva.com/api-reference-guide/
+Webhooks: https://developer.viva.com/webhooks-for-payments/
+
+=====================================
+NOTES
+=====================================
+
+- Η μετάβαση ήταν smooth, χωρίς breaking changes
+- Όλα τα existing orders παραμένουν στη βάση
+- Το stock management λειτουργεί όπως πριν
+- Το BOXNOW integration δεν επηρεάστηκε
+- Η admin dashboard λειτουργεί κανονικά
+
+=====================================
+
+Migration completed successfully! 🎉
+

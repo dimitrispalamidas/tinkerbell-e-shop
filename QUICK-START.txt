@@ -6,7 +6,6 @@
 
 1️⃣  SETUP ENVIRONMENT
    Create .env.local file (see env.config.example for template)
-   Add your Stripe keys from https://dashboard.stripe.com
 
 2️⃣  RUN THE APP
    pnpm dev
@@ -29,11 +28,12 @@
 
 🎨 KEY FEATURES:
    ✓ Bilingual (Greek/English)
-   ✓ Shopping cart with Stripe payments
+   ✓ Shopping cart with Viva Wallet payments
    ✓ BOXNOW delivery (mock)
    ✓ Admin dashboard
    ✓ Product & order management
    ✓ Gallery for baptism/decorations
+   ✓ Secure payment processing with webhooks
 
 📱 MAIN URLS:
    Customer:
@@ -50,7 +50,7 @@
 🛠️ TECH STACK:
    - Next.js 16 (App Router)
    - Supabase (Database & Auth)
-   - Stripe (Payments)
+   - Viva Wallet Smart Checkout (Payments)
    - next-intl (i18n)
    - Zustand (Cart state)
    - Tailwind CSS (Styling)

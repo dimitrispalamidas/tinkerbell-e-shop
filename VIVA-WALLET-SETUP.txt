@@ -1,0 +1,412 @@
+=====================================
+VIVA WALLET SMART CHECKOUT - SETUP
+=====================================
+
+Το Tinkerbell e-shop χρησιμοποιεί το Viva Wallet Smart Checkout για ασφαλείς online πληρωμές.
+
+=====================================
+ΒΗΜΑ 1: ΔΗΜΙΟΥΡΓΙΑ ΛΟΓΑΡΙΑΣΜΟΥ
+=====================================
+
+1. Πήγαινε στο https://www.vivawallet.com/en-gr/business
+2. Δημιούργησε λογαριασμό επιχείρησης
+3. Επιβεβαίωσε το email σου
+
+Για Testing:
+-----------
+Μπορείς να χρησιμοποιήσεις Demo λογαριασμό:
+- Demo Portal: https://demo.vivapayments.com
+- Δημιουργία demo account: https://developer.viva.com/demo-accounts/
+
+=====================================
+ΒΗΜΑ 2: ΔΗΜΙΟΥΡΓΙΑ PAYMENT SOURCE
+=====================================
+
+1. Σύνδεση στο Viva Portal
+2. Πήγαινε στο: Πωλήσεις > Online Πληρωμές > Websites/Apps
+3. Πάτα "Προσθήκη Website/App"
+4. Συμπλήρωσε:
+   - Όνομα: Tinkerbell E-Shop
+   - Website URL: https://yourdomain.com
+   - Success URL: https://yourdomain.com/checkout/success
+   - Failure URL: https://yourdomain.com/checkout
+5. Ανέβασε το Logo:
+   - Μορφή: PNG με διαφάνεια
+   - Μέγεθος: Έως 100KB
+   - Διαστάσεις: 128 x 128 pixels (προτεινόμενο)
+   - Αρχείο: public/logo.webp (μετέτρεψε σε PNG)
+6. Κρατά τον 4ψήφιο Source Code που θα δημιουργηθεί
+
+💡 Το checkout θα έχει αυτόματα:
+   ✓ Το logo σου στην κορυφή
+   ✓ Tinkerbell pink χρώμα (#ffb3d9)
+   ✓ Ελληνικά μηνύματα
+   ✓ "Παραγγελία Tinkerbell #XXX" στην περιγραφή
+
+=====================================
+ΒΗΜΑ 3: API CREDENTIALS
+=====================================
+
+1. Πήγαινε στο: Ρυθμίσεις > API Access
+2. Δημιούργησε API Keys:
+   - Client ID
+   - Client Secret
+3. Αντίγραψέ τα και φύλαξέ τα με ασφάλεια
+
+=====================================
+ΒΗΜΑ 4: WEBHOOK CONFIGURATION
+=====================================
+
+1. Δημιούργησε ένα Verification Key (random string):
+   PowerShell: -join ((65..90) + (97..122) + (48..57) | Get-Random -Count 32 | % {[char]$_})
+   Ή online: https://www.random.org/strings/
+   
+   Παράδειγμα: viva-webhook-secret-2024-abc123xyz
+
+2. Πρόσθεσέ το στο .env.local ή Vercel:
+   VIVA_WEBHOOK_KEY=viva-webhook-secret-2024-abc123xyz
+
+3. Deploy το app (αν είναι σε production)
+
+4. Στο Viva Portal, πήγαινε στο: Ρυθμίσεις > Webhooks
+5. Πάτα "Add Webhook URL"
+6. Προσθέτε:
+   - URL: https://yourdomain.com/api/webhooks/viva
+   - Key: viva-webhook-secret-2024-abc123xyz (το ίδιο που έβαλες στο .env)
+   - Events: Επέλεξε:
+     * Transaction Payment Created (EventTypeId: 1796)
+     * Transaction Payment Failed (EventTypeId: 1797)
+
+7. Η Viva θα στείλει GET request για verification:
+   GET https://yourdomain.com/api/webhooks/viva?key=viva-webhook-secret-2024-abc123xyz
+   Το endpoint θα επιστρέψει το key → ✅ Verified!
+
+8. Αποθήκευσε
+
+Πώς λειτουργεί:
+--------------
+1. Verification (GET): Viva επαληθεύει το endpoint
+2. Webhooks (POST): Viva στέλνει τα events της πληρωμής
+
+=====================================
+ΒΗΜΑ 5: ENVIRONMENT VARIABLES
+=====================================
+
+Στο .env.local αρχείο σου, πρόσθεσε:
+
+# Viva Wallet Configuration
+VIVA_API_URL=https://demo-api.vivapayments.com
+VIVA_CLIENT_ID=your_client_id_here
+VIVA_CLIENT_SECRET=your_client_secret_here
+VIVA_SOURCE_CODE=1234
+VIVA_WEBHOOK_KEY=your_webhook_verification_key_here
+
+# App URLs
+NEXT_PUBLIC_BASE_URL=http://localhost:3000
+
+Για Production:
+--------------
+VIVA_API_URL=https://api.vivapayments.com
+
+=====================================
+ΒΗΜΑ 6: TESTING
+=====================================
+
+Demo Test Cards:
+---------------
+Επιτυχής Πληρωμή:
+- Card Number: 4111 1111 1111 1111
+- Expiry: 12/25 (οποιαδήποτε μελλοντική)
+- CVV: 123 (οποιοιδήποτε 3 αριθμοί)
+- Cardholder: TEST CARD
+
+Αποτυχημένη Πληρωμή:
+- Card Number: 4000 0000 0000 0002
+- Expiry: 12/25
+- CVV: 123
+- Cardholder: FAILED CARD
+
+Δοκιμή Flow:
+-----------
+1. Πρόσθεσε προϊόντα στο καλάθι
+2. Checkout
+3. Συμπλήρωσε στοιχεία πελάτη
+4. Επίλεξε BOXNOW locker
+5. Πάτα "Συνέχεια στην Πληρωμή"
+6. Θα ανακατευθυνθείς στο Viva Smart Checkout
+7. Συμπλήρωσε test card
+8. Ολοκλήρωσε την πληρωμή
+9. Θα επιστρέψεις στο /checkout/success
+
+=====================================
+BRANDING & CUSTOMIZATION
+=====================================
+
+Το Tinkerbell checkout έχει customized:
+---------------------------------------
+
+1. Χρώμα Brand:
+   - Pink: #ffb3d9 (το primary χρώμα του site)
+   - Προστίθεται αυτόματα στο checkout URL
+   - Ταιριάζει με το pastel theme
+
+2. Logo:
+   - Ανεβαίνει στο Viva Portal (Payment Source)
+   - Εμφανίζεται στην κορυφή του checkout
+   - Format: PNG, 128x128px, <100KB
+
+3. Περιγραφές:
+   - "Παραγγελία Tinkerbell #XXX" (για πελάτη)
+   - "Tinkerbell Kids Store - Order XXX" (για merchant)
+   - Ελληνικά μηνύματα
+
+4. Tags:
+   - tinkerbell-eshop
+   - kids-clothing
+   - order-{id}
+
+Αποτέλεσμα:
+-----------
+✓ Branded checkout με τα χρώματα του Tinkerbell
+✓ Professional εμφάνιση
+✓ Καλύτερο conversion rate
+✓ Αυξημένη εμπιστοσύνη πελατών
+
+=====================================
+ΠΩΣ ΛΕΙΤΟΥΡΓΕΙ
+=====================================
+
+Flow Diagram:
+------------
+┌─────────────────────────────────────┐
+│  1. Πελάτης πάει στο Checkout       │
+│     Συμπληρώνει στοιχεία & locker   │
+└─────────────┬───────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│  2. Backend δημιουργεί:             │
+│     - Viva Payment Order            │
+│     - Order στη βάση δεδομένων      │
+└─────────────┬───────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│  3. Redirect σε Viva Smart Checkout │
+│     Πελάτης πληρώνει με κάρτα       │
+└─────────────┬───────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│  4. Viva στέλνει webhook            │
+│     EventTypeId: 1796 (success)     │
+└─────────────┬───────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│  5. Backend ενημερώνει:             │
+│     - Order status → paid           │
+│     - Αφαιρεί stock                 │
+│     - Δημιουργεί BOXNOW delivery    │
+└─────────────┬───────────────────────┘
+              ↓
+┌─────────────────────────────────────┐
+│  6. Πελάτης ανακατευθύνεται στο     │
+│     /checkout/success               │
+└─────────────────────────────────────┘
+
+=====================================
+FILES STRUCTURE
+=====================================
+
+/lib/actions/viva-wallet.ts
+  ├─ getAccessToken() - OAuth authentication
+  ├─ createVivaPaymentOrder() - Δημιουργία payment order
+  ├─ createOrder() - Αποθήκευση στη βάση
+  └─ updateOrderPaymentStatus() - Update μετά από webhook
+
+/app/api/webhooks/viva/route.ts
+  └─ POST handler για Viva webhooks
+  └─ Verifies authorization key
+  └─ Handles payment events
+
+/app/(public)/checkout/page.tsx
+  └─ Checkout flow με Viva integration
+  └─ Redirect στο Smart Checkout
+
+/app/(public)/checkout/success/page.tsx
+  └─ Success page μετά την πληρωμή
+
+Database (orders table):
+  ├─ viva_order_code: Payment order reference
+  └─ viva_transaction_id: Transaction ID μετά την πληρωμή
+
+=====================================
+VIVA API ENDPOINTS
+=====================================
+
+Authentication:
+--------------
+POST /connect/token
+  Headers:
+    Authorization: Basic base64(CLIENT_ID:CLIENT_SECRET)
+  Body:
+    grant_type=client_credentials
+  
+  Response:
+    {
+      "access_token": "...",
+      "expires_in": 3600
+    }
+
+Create Payment Order:
+--------------------
+POST /checkout/v2/orders
+  Headers:
+    Authorization: Bearer {access_token}
+    Content-Type: application/json
+  
+  Body:
+    {
+      "amount": 10000, // cents
+      "customerTrns": "Order #123",
+      "customer": {
+        "email": "customer@example.com",
+        "fullName": "John Doe",
+        "phone": "1234567890",
+        "countryCode": "GR"
+      },
+      "sourceCode": "1234",
+      "merchantTrns": "Tinkerbell Order 123"
+    }
+  
+  Response:
+    {
+      "orderCode": "252055160400148536"
+    }
+
+Checkout URL:
+------------
+https://demo.vivapayments.com/web/checkout?ref={orderCode}
+
+=====================================
+WEBHOOK EVENTS
+=====================================
+
+Transaction Payment Created (1796):
+----------------------------------
+Sent όταν η πληρωμή ολοκληρώνεται επιτυχώς.
+
+Body:
+{
+  "EventTypeId": 1796,
+  "EventData": {
+    "TransactionId": "abc123",
+    "OrderCode": "252055160400148536",
+    "Amount": 100.00,
+    "StatusId": "F", // F = Success
+    "Email": "customer@example.com"
+  }
+}
+
+Transaction Payment Failed (1797):
+---------------------------------
+Sent όταν η πληρωμή αποτύχει.
+
+Body:
+{
+  "EventTypeId": 1797,
+  "EventData": {
+    "TransactionId": "xyz789",
+    "OrderCode": "252055160400148536",
+    "StatusId": "E" // E = Error
+  }
+}
+
+=====================================
+SECURITY
+=====================================
+
+1. Webhook Verification:
+   - Το webhook endpoint ελέγχει το Authorization header
+   - Πρέπει να ταιριάζει με το VIVA_WEBHOOK_KEY
+
+2. HTTPS Required:
+   - Το Viva δέχεται μόνο HTTPS webhooks
+   - Για local testing χρησιμοποίησε ngrok
+
+3. OAuth Tokens:
+   - Τα access tokens λήγουν σε 1 ώρα
+   - Automatic refresh στο code
+
+=====================================
+LOCAL TESTING με NGROK
+=====================================
+
+1. Εγκατάστησε ngrok:
+   npm install -g ngrok
+
+2. Ξεκίνησε το app:
+   npm run dev
+
+3. Σε νέο terminal, τρέξε:
+   ngrok http 3000
+
+4. Αντίγραψε το HTTPS URL (π.χ. https://abc123.ngrok.io)
+
+5. Στο Viva Portal, όρισε webhook URL:
+   https://abc123.ngrok.io/api/webhooks/viva
+
+6. Δοκίμασε πληρωμή και παρακολούθησε τα logs
+
+=====================================
+PRODUCTION CHECKLIST
+=====================================
+
+□ Άλλαξε VIVA_API_URL σε production URL
+□ Χρησιμοποίησε live API credentials (όχι demo)
+□ Όρισε production webhook URL (HTTPS)
+□ Άλλαξε Success/Failure URLs στο Viva Portal
+□ Test με πραγματική κάρτα (μικρό ποσό)
+□ Παρακολούθησε Viva Dashboard για transactions
+□ Ελεγξε logs για webhooks
+□ Backup database πριν go-live
+
+=====================================
+TROUBLESHOOTING
+=====================================
+
+Webhook δεν λειτουργεί:
+----------------------
+1. Έλεγξε ότι το URL είναι HTTPS
+2. Έλεγξε το Authorization header
+3. Δες τα logs στο Viva Portal > Webhooks
+4. Βεβαιώσου ότι επιστρέφει 200 OK
+
+Πληρωμή δεν ολοκληρώνεται:
+-------------------------
+1. Έλεγξε API credentials
+2. Έλεγξε ότι το Source Code είναι σωστό
+3. Δες Viva Dashboard για failed transactions
+4. Έλεγξε console logs
+
+Order δεν ενημερώνεται:
+----------------------
+1. Έλεγξε webhook logs
+2. Έλεγξε database connection
+3. Έλεγξε ότι το viva_order_code ταιριάζει
+
+=====================================
+SUPPORT & DOCS
+=====================================
+
+Documentation:
+- Smart Checkout: https://developer.viva.com/smart-checkout/
+- API Reference: https://developer.viva.com/api-reference-guide/
+- Webhooks: https://developer.viva.com/webhooks-for-payments/
+
+Support:
+- Developer Portal: https://developer.viva.com
+- Email: support@vivawallet.com
+- Viva Community: https://community.vivawallet.com
+
+=====================================
+
+Καλές πωλήσεις! 🎉
+

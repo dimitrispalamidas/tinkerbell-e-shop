@@ -47,7 +47,8 @@ export type Order = {
   status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled'
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
   total: number
-  stripe_payment_intent_id: string | null
+  viva_order_code: string | null
+  viva_transaction_id: string | null
   shipping_address: {
     name: string
     address: string

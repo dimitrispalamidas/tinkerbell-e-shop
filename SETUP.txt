@@ -8,8 +8,7 @@ PREREQUISITES:
 --------------
 1. Node.js 18+ installed
 2. pnpm package manager
-3. Stripe account (for payments)
-4. Supabase project (already configured via MCP)
+3. Supabase project (already configured via MCP)
 
 ENVIRONMENT SETUP:
 ------------------
@@ -19,22 +18,8 @@ ENVIRONMENT SETUP:
 NEXT_PUBLIC_SUPABASE_URL=https://bkuqjcbyabaanzgisgcz.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrdXFqY2J5YWJhYW56Z2lzZ2N6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NDgwMDQsImV4cCI6MjA3NzUyNDAwNH0.0aUVJg8B03GmUHbwGamXTNpquoqjVXJi40Lv0DPVP7I
 
-# Stripe (Get your keys from https://dashboard.stripe.com/test/apikeys)
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
-STRIPE_SECRET_KEY=sk_test_your_key_here
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
-
 # App Config
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
-
-STRIPE SETUP:
--------------
-1. Create a Stripe account at https://stripe.com
-2. Get your test API keys from the Dashboard
-3. Set up a webhook endpoint:
-   - URL: http://localhost:3000/api/webhooks/stripe
-   - Events to listen for: payment_intent.succeeded, payment_intent.payment_failed
-   - Copy the webhook secret to STRIPE_WEBHOOK_SECRET
 
 RUNNING THE APP:
 ----------------
@@ -84,7 +69,6 @@ FEATURES:
 ✓ Bilingual (Greek/English) with easy switching
 ✓ Product catalog with filters
 ✓ Shopping cart with persistent state
-✓ Stripe payment integration
 ✓ BOXNOW locker selection (mock version)
 ✓ Admin dashboard with:
   - Product management
@@ -93,6 +77,15 @@ FEATURES:
   - Sales statistics
 ✓ Responsive design with kids-friendly colors
 ✓ Image storage via Supabase Storage
+
+PAYMENT INTEGRATION:
+--------------------
+✓ Viva Wallet Smart Checkout integration
+✓ Secure payment processing
+✓ Webhook support for order updates
+✓ Automatic stock management
+
+For setup instructions, see VIVA-WALLET-SETUP.txt
 
 BOXNOW INTEGRATION:
 -------------------
@@ -112,7 +105,6 @@ SUPPORT:
 For issues or questions, refer to:
 - Next.js docs: https://nextjs.org/docs
 - Supabase docs: https://supabase.com/docs
-- Stripe docs: https://stripe.com/docs
 
 Happy selling! 🎉
 

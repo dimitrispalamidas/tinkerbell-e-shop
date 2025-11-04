@@ -52,10 +52,10 @@ Your app now has full BOXNOW locker integration!
 │                    ↓                        │
 │         Locker ID αποθηκεύεται              │
 │                    ↓                        │
-│              Stripe Payment                 │
+│            Payment Processing               │
 └─────────────────────────────────────────────┘
                      ↓
-         Payment Success Webhook
+         Payment Success Handler
                      ↓
 ┌─────────────────────────────────────────────┐
 │         BACKEND (Server Actions)            │
@@ -170,10 +170,7 @@ Your app now has full BOXNOW locker integration!
    
    Ε. Επίλεξε locker από τη λίστα
    
-   ΣΤ. Ολοκλήρωσε test παραγγελία με Stripe test card:
-       Card: 4242 4242 4242 4242
-       Expiry: 12/25
-       CVC: 123
+   ΣΤ. (Payment integration to be added)
    
    Ζ. Η παραγγελία θα ολοκληρωθεί επιτυχώς!
        Το delivery request ΔΕΝ θα δημιουργηθεί (χρειάζεται stage credentials)
@@ -211,8 +208,7 @@ BACKEND (API Integration):
   └─ POST endpoint για delivery requests
   └─ Καλεί boxnowService.createDeliveryRequest()
 
-/lib/actions/stripe.ts
-  └─ updateOrderPaymentStatus()
+Payment Integration (TBD):
   └─ Όταν payment succeeds:
      ├─ Καλεί /api/boxnow/shipments
      └─ Αποθηκεύει tracking number
@@ -473,7 +469,7 @@ PAYMENT MODES
 prepaid - Προπληρωμένο (πλήρωσε ήδη online)
 cod     - Cash on Delivery / Αντικαταβολή
 
-Στην εφαρμογή σου χρησιμοποιείς "prepaid" αφού πληρώνουν με Stripe.
+Στην εφαρμογή σου χρησιμοποιείς "prepaid" για online πληρωμές.
 
 =====================================
 NOTES
