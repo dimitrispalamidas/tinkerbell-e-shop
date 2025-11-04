@@ -1,0 +1,275 @@
+=====================================
+TINKERBELL - EMAIL SETUP GUIDE
+=====================================
+
+Order confirmation emails χρησιμοποιούν το Resend + React Email
+για professional, branded email templates.
+
+=====================================
+ΒΗΜΑ 1: ΔΗΜΙΟΥΡΓΙΑ RESEND ACCOUNT
+=====================================
+
+1. Πήγαινε στο: https://resend.com
+2. Πάτα "Sign Up" (μπορείς να κάνεις sign up με GitHub)
+3. Επιβεβαίωσε το email σου
+4. Δημιούργησε ένα νέο project (π.χ. "Tinkerbell E-Shop")
+
+✅ Free Tier:
+   - 3,000 emails/μήνα ΔΩΡΕΑΝ
+   - 100 emails/ημέρα
+   - Χωρίς credit card για το free tier!
+
+=====================================
+ΒΗΜΑ 2: ΔΗΜΙΟΥΡΓΙΑ API KEY
+=====================================
+
+1. Στο Resend Dashboard, πήγαινε στο: API Keys
+2. Πάτα "Create API Key"
+3. Όνομα: "Tinkerbell Production" (ή "Development")
+4. Permissions: "Sending access"
+5. Αντίγραψε το API key (θα το δεις μόνο μία φορά!)
+6. Αποθήκευσέ το με ασφάλεια
+
+Παράδειγμα API key:
+re_123abc456def789ghi012jkl345mno678
+
+=====================================
+ΒΗΜΑ 3: CONFIGURATION
+=====================================
+
+1. Στο .env.local (ή Vercel Environment Variables):
+   
+   RESEND_API_KEY=re_123abc456def789ghi012jkl345mno678
+
+2. Για Production (Vercel):
+   - Πήγαινε στο Vercel Dashboard
+   - Project Settings > Environment Variables
+   - Πρόσθεσε: RESEND_API_KEY = [το API key σου]
+   - Κάνε redeploy
+
+=====================================
+ΒΗΜΑ 4: DOMAIN VERIFICATION (Optional αλλά προτεινόμενο)
+=====================================
+
+Για να στέλνεις emails από το domain σου (π.χ. orders@tinkerbell.gr):
+
+1. Στο Resend Dashboard: Settings > Domains
+2. Πάτα "Add Domain"
+3. Όνομα domain: tinkerbell.gr
+4. Πρόσθεσε τα DNS records που θα σου δώσει:
+   
+   Παράδειγμα DNS Records:
+   Type  | Name              | Value
+   ------|-------------------|---------------------------
+   TXT   | @                 | resend-verification=xyz...
+   MX    | @                 | mx1.resend.com (Priority 10)
+   MX    | @                 | mx2.resend.com (Priority 20)
+   TXT   | resend._domainkey | k=rsa;p=MIGfMA0...
+
+5. Περίμενε για verification (μερικά λεπτά - 24 ώρες)
+
+⚠️ Μέχρι να γίνει verified το domain:
+   - Emails στέλνονται από: onboarding@resend.dev
+   - Δουλεύουν κανονικά, αλλά δείχνουν "via resend.dev"
+
+Μετά το verification:
+   - Άλλαξε το "from" στο lib/actions/send-order-email.ts:
+     from: 'Tinkerbell <orders@tinkerbell.gr>'
+
+=====================================
+ΒΗΜΑ 5: TESTING
+=====================================
+
+Testing στο Local:
+-----------------
+1. Βεβαιώσου ότι έχεις το RESEND_API_KEY στο .env.local
+2. Τρέξε: npm run dev
+3. Κάνε μια test παραγγελία
+4. Check τα logs:
+   - Console: "📧 Sending order confirmation email..."
+   - "✅ Order confirmation email sent successfully!"
+5. Check το email στο inbox σου
+
+Testing με Resend Dashboard:
+----------------------------
+1. Πήγαινε στο: Resend Dashboard > Emails
+2. Θα δεις όλα τα sent emails
+3. Για κάθε email μπορείς να δεις:
+   - Status (sent, delivered, bounced, etc.)
+   - Open rate
+   - Click rate
+   - Full email preview
+
+=====================================
+EMAIL TEMPLATE CUSTOMIZATION
+=====================================
+
+Το email template βρίσκεται στο: emails/order-confirmation.tsx
+
+Μπορείς να αλλάξεις:
+-------------------
+1. Logo: 
+   Άλλαξε το src στο <Img> component
+   Προς το παρόν: https://tinkerbell-e-shop.vercel.app/logo.webp
+
+2. Colors:
+   - Pink: #ffb3d9 (Tinkerbell brand color)
+   - Green: #22c55e (success color)
+   
+3. Footer:
+   - Email: info@tinkerbell.gr
+   - Phone: +30 123 456 7890
+
+4. Content:
+   - Όλα τα κείμενα είναι στα Ελληνικά
+   - Μπορείς να προσθέσεις περισσότερες πληροφορίες
+
+Preview του Email:
+-----------------
+Τρέξε το React Email dev server:
+npm run email:dev
+
+Θα ανοίξει browser με live preview του email template!
+
+=====================================
+HOW IT WORKS
+=====================================
+
+Flow:
+----
+1. Ο πελάτης ολοκληρώνει την πληρωμή στο Viva Wallet
+2. Το Viva στέλνει webhook (EventTypeId: 1796)
+3. Το webhook endpoint (app/api/webhooks/viva/route.ts):
+   - Ενημερώνει την παραγγελία στη βάση
+   - Μειώνει το stock
+   - Καλεί το sendOrderConfirmationEmail()
+4. Το sendOrderConfirmationEmail() (lib/actions/send-order-email.ts):
+   - Φέρνει την παραγγελία από τη βάση (με order items)
+   - Renders το React Email template
+   - Στέλνει το email μέσω Resend
+5. Ο πελάτης λαμβάνει το email επιβεβαίωσης!
+
+Template Structure:
+------------------
+- Header: Logo + Brand name
+- Success Message: "Επιτυχής Παραγγελία!"
+- Order Details: Order code + Email
+- Product List: Όλα τα προϊόντα με τιμές
+- Total: Συνολικό κόστος
+- BOXNOW Tracking: Αν υπάρχει
+- Footer: Contact info
+
+=====================================
+TROUBLESHOOTING
+=====================================
+
+Email δεν στέλνεται:
+------------------
+1. Check API key στο .env.local
+2. Check logs στο console:
+   - "❌ [Email] Failed to send:"
+3. Check Resend Dashboard > Logs
+4. Βεβαιώσου ότι δεν έχεις ξεπεράσει το daily limit (100/day)
+
+Email πάει σε Spam:
+------------------
+1. Verify το domain σου (ΒΗΜΑ 4)
+2. Πρόσθεσε SPF, DKIM, DMARC records
+3. Θέρμανε το domain (στείλε μερικά emails πρώτα)
+
+Email δεν φτάνει:
+----------------
+1. Check Resend Dashboard > Emails > Status
+2. Αν είναι "bounced":
+   - Check ότι το email είναι valid
+   - Check ότι το inbox δεν είναι γεμάτο
+3. Αν είναι "delivered" αλλά δεν το βλέπεις:
+   - Check spam folder
+   - Check promotions tab (Gmail)
+
+=====================================
+PRICING & LIMITS
+=====================================
+
+Free Tier:
+---------
+✅ 3,000 emails/μήνα
+✅ 100 emails/ημέρα
+✅ Unlimited domains
+✅ Email analytics
+✅ 24/7 support
+
+Pro Plan ($20/μήνα):
+-------------------
+- 50,000 emails/μήνα
+- 2,000 emails/ημέρα
+- Premium support
+- Custom SMTP
+- Webhooks
+
+⚠️ Για το Tinkerbell e-shop:
+Αν κάνεις ~10 παραγγελίες/ημέρα = 300/μήνα
+→ Free tier είναι αρκετό!
+
+=====================================
+RESEND vs ALTERNATIVES
+=====================================
+
+EmailJS:
+- ❌ Όχι για transactional emails
+- ❌ Rate limits
+- ✅ Καλό για contact forms μόνο
+
+SendGrid:
+- ✅ 100 emails/ημέρα FREE
+- ❌ Πιο πολύπλοκο setup
+- ❌ Χειρότερο developer experience
+
+Brevo (Sendinblue):
+- ✅ 300 emails/ημέρα FREE
+- ❌ Πιο αργό API
+- ❌ Δεν έχει React Email support
+
+Resend (Επιλογή μας):
+- ✅ 3,000 emails/μήνα FREE
+- ✅ Φτιάχτηκε για Next.js
+- ✅ React Email templates
+- ✅ Modern, γρήγορο, αξιόπιστο
+- ✅ Καλύτερο developer experience
+
+=====================================
+PRODUCTION CHECKLIST
+=====================================
+
+Πριν το go-live:
+□ Δημιούργησε Resend account
+□ Πάρε API key
+□ Πρόσθεσε RESEND_API_KEY στο Vercel
+□ (Optional) Verify domain
+□ Test με πραγματική παραγγελία
+□ Check ότι το email φτάνει
+□ Check ότι το email template δείχνει σωστά
+□ Check mobile responsiveness (Gmail app)
+□ Ενημέρωσε το "from" address αν verified domain
+
+=====================================
+HELPFUL LINKS
+=====================================
+
+- Resend Dashboard: https://resend.com/dashboard
+- React Email Docs: https://react.email/docs
+- Resend API Docs: https://resend.com/docs
+- Email Testing: https://litmus.com (για advanced testing)
+- Spam Checker: https://www.mail-tester.com
+
+=====================================
+SUPPORT
+=====================================
+
+Αν χρειάζεσαι βοήθεια:
+- Resend Support: support@resend.com
+- Resend Discord: https://resend.com/discord
+- Documentation: https://resend.com/docs
+
+=====================================
+

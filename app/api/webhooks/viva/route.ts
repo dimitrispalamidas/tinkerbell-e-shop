@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { updateOrderPaymentStatus } from '@/lib/actions/viva-wallet';
+import { sendOrderConfirmationEmail } from '@/lib/actions/send-order-email';
 
 // Viva Wallet Webhook Verification Key
 const VIVA_WEBHOOK_KEY = process.env.VIVA_WEBHOOK_KEY!;
@@ -58,6 +59,22 @@ export async function POST(req: Request) {
         console.log('🔄 Updating order payment status to paid...');
         await updateOrderPaymentStatus(orderCode, transactionId, 'paid');
         console.log('✅ Order payment status updated successfully!');
+        
+        // Send order confirmation email
+        try {
+          console.log('📧 Sending order confirmation email...');
+          const emailResult = await sendOrderConfirmationEmail(orderCode);
+          
+          if (emailResult.success) {
+            console.log('✅ Order confirmation email sent successfully!');
+          } else {
+            console.error('⚠️ Failed to send order confirmation email:', emailResult.error);
+          }
+        } catch (emailError) {
+          // Don't fail the webhook if email sending fails
+          console.error('⚠️ Error sending order confirmation email:', emailError);
+          console.error('⚠️ Webhook continues despite email error');
+        }
       } else {
         console.log('⚠️ Payment status not completed, StatusId:', statusId);
       }
