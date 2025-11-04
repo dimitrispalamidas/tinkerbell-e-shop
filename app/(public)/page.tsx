@@ -2,7 +2,7 @@ import { getTranslations, getLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Shirt, ShoppingBag } from 'lucide-react';
+import { ArrowRight, ShoppingBag } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/utils';
@@ -69,8 +69,13 @@ export default async function HomePage() {
             <Link href="/shop?type=clothing">
               <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-2 border-pink/30 hover:border-pink">
                 <CardContent className="p-0">
-                  <div className="aspect-video bg-gradient-to-br from-pink/30 to-lavender/30 flex items-center justify-center">
-                    <Shirt className="h-24 w-24 text-pink" />
+                  <div className="aspect-video relative overflow-hidden">
+                    <Image
+                      src="/ρουχα.png"
+                      alt={tNav('clothing')}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                   <div className="p-6">
                     <h3 className="text-2xl font-bold mb-2">{tNav('clothing')}</h3>
@@ -85,8 +90,13 @@ export default async function HomePage() {
             <Link href="/shop?type=shoes">
               <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-2 border-baby-blue/30 hover:border-baby-blue">
                 <CardContent className="p-0">
-                  <div className="aspect-video bg-gradient-to-br from-baby-blue/30 to-mint/30 flex items-center justify-center">
-                    <ShoppingBag className="h-24 w-24 text-baby-blue" />
+                  <div className="aspect-video relative overflow-hidden">
+                    <Image
+                      src="/παππουτσια.png"
+                      alt={tNav('shoes')}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                   <div className="p-6">
                     <h3 className="text-2xl font-bold mb-2">{tNav('shoes')}</h3>
