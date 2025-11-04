@@ -1,0 +1,503 @@
+=====================================
+BOXNOW LOCKER INTEGRATION GUIDE
+=====================================
+
+Η εφαρμογή σου τώρα έχει ολοκληρωμένη υποστήριξη για BOXNOW lockers!
+Your app now has full BOXNOW locker integration!
+
+=====================================
+ΤΙ ΕΓΙΝΕ / WHAT WAS DONE
+=====================================
+
+✅ Custom Locker Selector (Frontend) - READY FOR DEMO!
+   - Mock data με πραγματικά BOXNOW lockers
+   - Λίστα με search/filter functionality  
+   - Λειτουργεί ΧΩΡΙΣ credentials
+   - Auto-fallback σε API όταν υπάρχουν credentials
+   - Ready για demo ΤΩΡΑ!
+
+✅ BOXNOW Partner API Service (Backend)
+   - OAuth2 authentication
+   - Δημιουργία delivery requests
+   - Tracking parcels
+   - Cancel parcels
+
+✅ Αυτόματη Δημιουργία Αποστολής
+   - Όταν πληρωμή επιτύχει → Αυτόματο delivery request
+   - Το tracking number αποθηκεύεται στην παραγγελία
+   - Το BOXNOW ενημερώνεται να πάρει το πακέτο
+
+📝 NOTE: Χρησιμοποιούμε custom locker selector με mock data για demo.
+   Όταν πάρεις credentials, μπορείς να αλλάξεις σε:
+   - Production Widget (με χάρτη) + Production Partner ID
+   - ή API integration για real-time lockers
+
+=====================================
+ΑΡΧΙΤΕΚΤΟΝΙΚΗ / ARCHITECTURE
+=====================================
+
+┌─────────────────────────────────────────────┐
+│           FRONTEND (Checkout)               │
+│                                             │
+│  ┌──────────────────────────────────────┐  │
+│  │  BoxnowLockerList Component          │  │
+│  │  ↓                                    │  │
+│  │  GET /api/v1/destinations            │  │
+│  │  (Stage Location API - Public)       │  │
+│  │  ↓                                    │  │
+│  │  - Λίστα με lockers                  │  │
+│  │  - Search/filter                     │  │
+│  │  - Επιλογή από πελάτη                │  │
+│  └──────────────────────────────────────┘  │
+│                    ↓                        │
+│         Locker ID αποθηκεύεται              │
+│                    ↓                        │
+│              Stripe Payment                 │
+└─────────────────────────────────────────────┘
+                     ↓
+         Payment Success Webhook
+                     ↓
+┌─────────────────────────────────────────────┐
+│         BACKEND (Server Actions)            │
+│                                             │
+│  ┌──────────────────────────────────────┐  │
+│  │   POST /api/boxnow/shipments         │  │
+│  │   (Internal API Route)               │  │
+│  └──────────────────────────────────────┘  │
+│                    ↓                        │
+│  ┌──────────────────────────────────────┐  │
+│  │  boxnowService.createDeliveryRequest │  │
+│  │  (lib/services/boxnow.ts)            │  │
+│  └──────────────────────────────────────┘  │
+│                    ↓                        │
+│         OAuth2 Authentication                │
+│                    ↓                        │
+│  POST /api/v1/delivery-requests             │
+│         (BOXNOW Partner API)                │
+└─────────────────────────────────────────────┘
+                     ↓
+┌─────────────────────────────────────────────┐
+│            BOXNOW SYSTEM                    │
+│                                             │
+│  - Λαμβάνει delivery request                │
+│  - Στέλνει courier στην αποθήκη σου         │
+│  - Παίρνει το πακέτο                        │
+│  - Το μεταφέρει στο locker                  │
+│  - Στέλνει SMS στον πελάτη με PIN           │
+└─────────────────────────────────────────────┘
+
+=====================================
+ΒΗΜΑΤΑ ΕΓΚΑΤΑΣΤΑΣΗΣ / SETUP STEPS
+=====================================
+
+1. ΠΑΡΕ TA API CREDENTIALS ΑΠΟ BOXNOW
+   -----------------------------------------
+   
+   📋 ΒΗΜΑ 1: Συμπλήρωσε τη Φόρμα Εγγραφής
+   Πήγαινε στο: https://connect.boxnow.gr/form
+   
+   Θα χρειαστείς:
+   ✓ Όνομα E-shop
+   ✓ Νόμιμη Ονομασία Επιχείρησης
+   ✓ ΑΦΜ Επιχείρησης
+   ✓ Δ.Ο.Υ. (Tax Office)
+   ✓ IBAN
+   ✓ Νόμιμος Εκπρόσωπος
+   ✓ Email επικοινωνίας
+   ✓ Διευθύνσεις αποθηκών/καταστημάτων (origin points)
+   
+   📋 ΒΗΜΑ 2: Λάβε τα Credentials
+   Μετά την έγκριση θα λάβεις αυτόματα:
+   ✓ OAUTH_CLIENT_ID - Το OAuth2 Client ID σου (κρυφό!)
+   ✓ OAUTH_CLIENT_SECRET - Το OAuth2 Client Secret σου (κρυφό!)
+   ✓ API_URL - Το base URL για το Partner API
+   ✓ PARTNER_ID - Το Partner ID σου για το widget
+   ✓ ORIGIN_LOCATION_ID - Το ID της αποθήκης/καταστήματός σου
+   
+   ⚠️ Εναλλακτικά, μπορείς να επικοινωνήσεις:
+   - Email: [email protected]
+   - Τηλέφωνο: 211-100 5304
+   - Ωράριο: Δευτέρα-Παρασκευή 8:00-20:00, Σάββατο 10:00-18:00
+
+2. ΠΡΟΣΘΕΣΕ ΤΑ CREDENTIALS ΣΤΟ .env.local (OPTIONAL)
+   --------------------------------------------------
+   
+   ⭐ ΓΙΑ DEMO/PREVIEW (ΧΩΡΙΣ CREDENTIALS):
+   ----------------------------------------
+   Η εφαρμογή λειτουργεί OUT OF THE BOX με mock data!
+   
+   ✅ Χωρίς .env.local variables:
+   - Εμφανίζει 7 demo BOXNOW lockers
+   - Λειτουργική επιλογή locker
+   - Πλήρες UI/UX για demo
+   - Delivery requests ΔΕΝ δημιουργούνται (δεν έχεις credentials)
+   
+   ⭐ ΓΙΑ TESTING ΜΕ STAGE API (ΧΩΡΙΣ ΠΡΑΓΜΑΤΙΚΕΣ ΑΠΟΣΤΟΛΕΣ):
+   ----------------------------------------------------------
+   Πρόσθεσε στο .env.local:
+   
+   
+   📋 ΓΙΑ PRODUCTION (ΌΤΑν ΠΑΡΕΙΣ ΤΑ CREDENTIALS):
+   -----------------------------------------------
+   Πρόσθεσε και αυτά στο .env.local:
+
+   # BOXNOW Partner API Configuration (Backend)
+   BOXNOW_API_URL=https://api-stage.boxnow.gr
+   BOXNOW_OAUTH_CLIENT_ID=your_oauth_client_id
+   BOXNOW_OAUTH_CLIENT_SECRET=your_oauth_client_secret
+   BOXNOW_DEFAULT_ORIGIN_ID=your_warehouse_location_id
+
+   # Locker List API (Frontend)
+   NEXT_PUBLIC_BOXNOW_LOCATIONS_API_URL=https://locationapi-production.boxnow.gr
+   
+   ⚠️ ΣΗΜΑΝΤΙΚΟ: 
+   - Τα CLIENT_ID και CLIENT_SECRET είναι ΑΠΟΛΥΤΩΣ ΚΡΥΦΑ - μην τα μοιραστείς!
+   - Για production άλλαξε το LOCATIONS_API_URL σε production URL
+   - Το API_URL για production: https://api-production.boxnow.gr
+   - Το API_URL για stage/sandbox: https://api-stage.boxnow.gr
+
+3. ΔΟΚΙΜΑΣΕ ΤΗΝ ΕΦΑΡΜΟΓΗ - ΛΕΙΤΟΥΡΓΕΙ ΤΩΡΑ!
+   ------------------------------------------
+   
+   Α. Ξεκίνα την εφαρμογή:
+      npm run dev
+   
+   Β. Πήγαινε στο: http://localhost:3000/el/checkout
+   
+   Γ. ✅ ΘΑ ΔΕΙΣ λίστα με 7 BOXNOW lockers (mock data)!
+   
+   Δ. Δοκίμασε το search - αναζήτησε "Αθήνα", "Θεσσαλονίκη", κλπ
+   
+   Ε. Επίλεξε locker από τη λίστα
+   
+   ΣΤ. Ολοκλήρωσε test παραγγελία με Stripe test card:
+       Card: 4242 4242 4242 4242
+       Expiry: 12/25
+       CVC: 123
+   
+   Ζ. Η παραγγελία θα ολοκληρωθεί επιτυχώς!
+       Το delivery request ΔΕΝ θα δημιουργηθεί (χρειάζεται stage credentials)
+       
+   📝 Για πλήρη testing με delivery requests, πρόσθεσε τα BOXNOW credentials
+
+=====================================
+ΔΟΜΗ ΑΡΧΕΙΩΝ / FILE STRUCTURE
+=====================================
+
+FRONTEND (Custom Locker Selector):
+-----------------------------------
+/app/(public)/checkout/page.tsx
+  └─ BoxnowLockerList component
+  └─ Callback: onSelectLocker() → αποθηκεύει locker data
+
+/components/checkout/boxnow-locker-list.tsx
+  └─ Φέρνει lockers από Stage Location API
+  └─ GET https://locationapi-stage.boxnow.gr/api/v1/destinations
+  └─ Search/filter functionality
+  └─ Όμορφο UI με λίστα lockers
+
+BACKEND (API Integration):
+---------------------------
+/lib/services/boxnow.ts
+  └─ BoxnowService class
+  └─ Methods:
+     ├─ getAccessToken() - OAuth2 authentication
+     ├─ createDeliveryRequest() - Δημιουργία αποστολής
+     ├─ getParcel() - Πληροφορίες δέματος
+     ├─ listParcels() - Λίστα δεμάτων
+     └─ cancelParcel() - Ακύρωση δέματος
+
+/app/api/boxnow/shipments/route.ts
+  └─ POST endpoint για delivery requests
+  └─ Καλεί boxnowService.createDeliveryRequest()
+
+/lib/actions/stripe.ts
+  └─ updateOrderPaymentStatus()
+  └─ Όταν payment succeeds:
+     ├─ Καλεί /api/boxnow/shipments
+     └─ Αποθηκεύει tracking number
+
+=====================================
+BOXNOW PARTNER API ENDPOINTS
+=====================================
+
+Authentication:
+--------------
+POST /api/v1/auth-sessions
+  Body: {
+    grant_type: "client_credentials",
+    client_id: "...",
+    client_secret: "..."
+  }
+  Response: {
+    access_token: "...",
+    token_type: "Bearer",
+    expires_in: 3600
+  }
+
+Delivery Requests:
+------------------
+POST /api/v1/delivery-requests
+  Headers: Authorization: Bearer {token}
+  Body: {
+    typeOfService: "standard" | "same-day",
+    orderNumber: "order_123",
+    paymentMode: "prepaid" | "cod",
+    allowReturn: true,
+    origin: {
+      locationId: "warehouse_id"
+    },
+    destination: {
+      locationId: "locker_id",
+      contactName: "...",
+      contactNumber: "...",
+      contactEmail: "..."
+    },
+    items: [{
+      name: "Order #123",
+      compartmentSize: 1 | 2 | 3  // 1=small, 2=medium, 3=large
+    }]
+  }
+  Response: {
+    id: "parcel_id",
+    trackingNumber: "..."
+  }
+
+Parcels:
+--------
+GET /api/v1/parcels
+  Parameters: ?orderNumber=...&limit=50
+
+GET /api/v1/parcels/{id}
+  
+POST /api/v1/parcels/{id}:cancel
+
+=====================================
+BOXNOW MAP WIDGET CONFIGURATION
+=====================================
+
+Widget Config Options:
+----------------------
+
+_bn_map_widget_config = {
+  // REQUIRED:
+  partnerId: 123,                    // Το Partner ID σου
+  parentElement: "#boxnowmap",       // Container element
+  afterSelect: function(selected) {  // Callback function
+    // selected.boxnowLockerId (ή selected.id)
+    // selected.boxnowLockerAddressLine1 (ή selected.addressLine1)
+    // selected.boxnowLockerPostalCode (ή selected.postalCode)
+    // selected.name, selected.image, selected.note
+  },
+  
+  // OPTIONAL:
+  type: "iframe",              // "iframe" | "popup" | "navigate"
+  gps: true,                   // true | false - GPS auto-detect (default: true)
+  autoclose: true,             // true | false - Close after select (default: true)
+  autoselect: true,            // true | false - Select on click (default: true)
+  buttonSelector: ".boxnow-widget-button", // Custom button class
+  zip: "10563"                 // Αρχικός ΤΚ αν gps=false
+};
+
+Widget Script:
+--------------
+https://widget-cdn.boxnow.gr/map-widget/client/v5.js
+
+=====================================
+TROUBLESHOOTING
+=====================================
+
+Πρόβλημα: Το widget δεν φορτώνει
+---------------------------------
+✓ Έλεγξε ότι έχεις βάλει το NEXT_PUBLIC_BOXNOW_PARTNER_ID στο .env.local
+✓ Έλεγξε το Network tab - το script φορτώνει;
+✓ Έλεγξε το Console - υπάρχουν JavaScript errors;
+✓ Βεβαιώσου ότι υπάρχει το <div id="boxnowmap"></div>
+
+Πρόβλημα: Θέλω stage widget για testing
+----------------------------------------
+✓ Το widget επικοινωνεί ΜΟΝΟ με production by default
+✓ Για stage widget, στείλε email στο: ict@boxnow.gr
+✓ Ζήτησε: "Stage/sandbox widget for testing"
+✓ Θα σου δώσουν ειδικό configuration ή URL
+
+Πρόβλημα: Error "_bn_map_widget_config is required"
+----------------------------------------------------
+✓ Το config ΠΡΕΠΕΙ να οριστεί ΠΡΙΝ φορτώσει το script!
+✓ Σειρά: 1) Ορίζεις _bn_map_widget_config, 2) Φορτώνεις το script
+✓ Στο Next.js: Βάλε το config σε useEffect χωρίς dependencies που τρέχει πρώτο
+✓ Το Script component με strategy="afterInteractive" θα φορτώσει μετά
+
+Πρόβλημα: Error "Parent element #boxnowmap not exist"
+------------------------------------------------------
+✓ Το div με id="boxnowmap" ΠΡΕΠΕΙ να υπάρχει ΠΡΙΝ φορτώσει το script!
+✓ Αν το div είναι conditional (π.χ. σε step 2), το script πρέπει να φορτώνει conditional
+✓ Λύση 1: Φόρτωσε το script ΜΟΝΟ όταν το div υπάρχει
+✓ Λύση 2: Έχε το div hidden αλλά να υπάρχει πάντα στο DOM
+✓ Στο Next.js: Wrap το <Script> με το ίδιο condition με το div
+
+Πρόβλημα: Το widget φορτώνει αλλά δεν λειτουργεί το afterSelect
+----------------------------------------------------------------
+✓ Έλεγξε ότι το _bn_map_widget_config έχει οριστεί σωστά
+✓ Έλεγξε το Console για errors
+✓ Βάλε console.log() μέσα στο afterSelect για debugging
+
+Πρόβλημα: API Error 401 (Unauthorized)
+---------------------------------------
+✓ Τα OAuth credentials είναι λάθος
+✓ Το CLIENT_ID ή CLIENT_SECRET είναι λανθασμένο
+✓ Δοκίμασε να ξαναφέρεις τα credentials από το BOXNOW
+✓ Έλεγξε ότι χρησιμοποιείς το σωστό API_URL (stage vs production)
+
+Πρόβλημα: Δεν δημιουργείται delivery request
+---------------------------------------------
+✓ Έλεγξε τα webhook logs (console logs με 📦)
+✓ Έλεγξε ότι το NEXT_PUBLIC_BASE_URL είναι σωστό
+✓ Έλεγξε ότι υπάρχει boxnow_locker_id στην παραγγελία
+✓ Έλεγξε ότι έχεις βάλει το BOXNOW_DEFAULT_ORIGIN_ID
+
+Πρόβλημα: API Error 400 (Bad Request)
+--------------------------------------
+✓ Έλεγξε το request body format
+✓ Έλεγξε ότι το BOXNOW_DEFAULT_ORIGIN_ID είναι σωστό
+✓ Έλεγξε ότι το locker ID είναι valid
+✓ Κοίτα το error message για λεπτομέρειες
+
+=====================================
+ΠΑΡΑΓΩΓΗ / PRODUCTION DEPLOYMENT
+=====================================
+
+Πριν το deployment:
+------------------
+✓ Βάλε το production BOXNOW_API_URL
+✓ Βάλε το production BOXNOW_OAUTH_CLIENT_ID
+✓ Βάλε το production BOXNOW_OAUTH_CLIENT_SECRET
+✓ Βάλε το σωστό NEXT_PUBLIC_BASE_URL (το domain σου)
+✓ Δοκίμασε με test orders στο stage environment
+✓ Έλεγξε ότι τα webhooks λειτουργούν
+
+Environment Variables για Production:
+-------------------------------------
+# BOXNOW Partner API (Backend)
+BOXNOW_API_URL=https://api-production.boxnow.gr
+BOXNOW_OAUTH_CLIENT_ID=your_production_client_id
+BOXNOW_OAUTH_CLIENT_SECRET=your_production_client_secret
+BOXNOW_DEFAULT_ORIGIN_ID=your_production_warehouse_id
+
+# BOXNOW Widget (Frontend)
+NEXT_PUBLIC_BOXNOW_PARTNER_ID=your_partner_id
+NEXT_PUBLIC_BOXNOW_WIDGET_URL=https://widget-cdn.boxnow.gr/map-widget/client/v5.js
+
+# App
+NEXT_PUBLIC_BASE_URL=https://yourdomain.com
+
+⚠️ ΜΗΝ commit τα production credentials στο git!
+
+ℹ️ Μπορείς να παραλείψεις το NEXT_PUBLIC_BOXNOW_WIDGET_URL - θα χρησιμοποιηθεί 
+   το production URL by default
+
+=====================================
+ΕΠΟΜΕΝΑ ΒΗΜΑΤΑ / NEXT STEPS
+=====================================
+
+📦 ΤΩΡΑ - Ready για Demo/Preview:
+----------------------------------
+1. ✅ npm run dev
+2. ✅ Deploy σε Vercel/hosting για preview
+3. ✅ Δείξε στον πελάτη το UI/UX
+4. ✅ Όλα λειτουργούν με mock data!
+
+🚀 Όταν είσαι έτοιμος για πραγματικές αποστολές:
+-------------------------------------------------
+1. ⏳ Κάνε εγγραφή στο BOXNOW → https://connect.boxnow.gr/form
+2. ⏳ Πάρε Stage credentials
+3. ⏳ Δοκίμασε backend API με stage (ασφαλές testing)
+4. ⏳ Πάρε Production credentials
+5. ⏳ Δοκίμασε με 1-2 πραγματικές παραγγελίες
+6. ⏳ Deploy με production credentials
+7. 🎉 Go live με πραγματικές BOXNOW αποστολές!
+
+=====================================
+ΥΠΟΣΤΗΡΙΞΗ / SUPPORT
+=====================================
+
+BOXNOW Support:
+--------------
+Registration: https://connect.boxnow.gr/form
+Email: [email protected]
+Phone: 211-100 5304
+Hours: Mon-Fri 8:00-20:00, Sat 10:00-18:00
+Website: https://boxnow.gr
+
+Documentation:
+--------------
+Widget Docs: https://boxnow.gr/widget-developers
+Partner API: https://boxnow.gr/en/partner-api
+API Manual: https://boxnow.gr/media/hidden/BoxNow%20API%20Manual%20(v.7.2).pdf
+Partner Portal: https://connect.boxnow.gr/
+
+=====================================
+OAUTH2 AUTHENTICATION FLOW
+=====================================
+
+Το BOXNOW API χρησιμοποιεί OAuth2 Client Credentials flow:
+
+1. Το service ζητάει access token με το CLIENT_ID & CLIENT_SECRET
+   → POST /api/v1/auth-sessions
+
+2. Το BOXNOW επιστρέφει access token (ισχύει 1 ώρα)
+   → { access_token: "...", expires_in: 3600 }
+
+3. Το access token χρησιμοποιείται σε όλα τα API requests
+   → Authorization: Bearer {token}
+
+4. Το token ανανεώνεται αυτόματα όταν λήξει
+   → In-memory caching με expiration check
+
+=====================================
+COMPARTMENT SIZES
+=====================================
+
+Όταν δημιουργείς delivery request, επιλέγεις compartmentSize:
+
+1 = SMALL   (Μικρό πακέτο)
+2 = MEDIUM  (Μεσαίο πακέτο) - DEFAULT
+3 = LARGE   (Μεγάλο πακέτο)
+
+Το BOXNOW θα χρησιμοποιήσει το κατάλληλο compartment στο locker.
+
+=====================================
+PAYMENT MODES
+=====================================
+
+prepaid - Προπληρωμένο (πλήρωσε ήδη online)
+cod     - Cash on Delivery / Αντικαταβολή
+
+Στην εφαρμογή σου χρησιμοποιείς "prepaid" αφού πληρώνουν με Stripe.
+
+=====================================
+NOTES
+=====================================
+
+- Το Widget φέρνει αυτόματα updated lockers - δεν χρειάζεται API call
+  από εσένα για τη λίστα lockers
+
+- Το Backend API χρειάζεται ΜΟΝΟ για delivery requests, όχι για
+  λίστα lockers
+
+- Όλα τα errors είναι handled gracefully - αν το BOXNOW API
+  αποτύχει, η παραγγελία θα συνεχίσει κανονικά
+
+- Το tracking number αποθηκεύεται στο πεδίο 
+  "boxnow_tracking_code" στον πίνακα orders
+
+- Το OAuth2 access token caching είναι in-memory - σε serverless
+  environments κάθε cold start θα πάρει νέο token (αυτό είναι OK)
+
+- Το BOXNOW θα στείλει SMS στον πελάτη με PIN code όταν το
+  πακέτο φτάσει στο locker
+
+- Ο πελάτης έχει συνήθως 3-7 μέρες να παραλάβει το πακέτο
+  πριν επιστραφεί σε εσένα
+
+=====================================

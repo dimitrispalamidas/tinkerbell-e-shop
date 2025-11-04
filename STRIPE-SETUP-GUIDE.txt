@@ -1,0 +1,155 @@
+═══════════════════════════════════════════════════════════════
+                    🔐 STRIPE INTEGRATION GUIDE 🔐
+                        Οδηγός Ρύθμισης Stripe
+═══════════════════════════════════════════════════════════════
+
+✅ Έχεις ήδη υλοποιημένα όλα τα παρακάτω:
+   - Payment Intent creation
+   - Checkout flow με Stripe Elements
+   - Webhook handler για payment confirmations
+   - Automatic order creation και stock management
+   - Stripe packages (@stripe/stripe-js, stripe)
+
+
+📋 ΒΗΜΑ 1: Δημιουργία Stripe Account
+═══════════════════════════════════════════════════════════════
+1. Πήγαινε στο: https://dashboard.stripe.com/register
+2. Δημιούργησε δωρεάν λογαριασμό
+3. Ολοκλήρωσε την εγγραφή
+
+
+📋 ΒΗΜΑ 2: Παίρνεις τα API Keys (Test Mode)
+═══════════════════════════════════════════════════════════════
+1. Πήγαινε στο: https://dashboard.stripe.com/test/apikeys
+2. Θα βρεις 2 keys:
+   
+   ✓ Publishable key (Αρχίζει με pk_test_...)
+     - Αυτό είναι PUBLIC - μπορεί να φανεί στο frontend
+   
+   ✓ Secret key (Αρχίζει με sk_test_...)
+     - Αυτό είναι SECRET - ΜΟΝΟ για server-side
+     - Κάνε "Reveal test key" για να το δεις
+
+
+📋 ΒΗΜΑ 3: Ρύθμιση .env.local File
+═══════════════════════════════════════════════════════════════
+1. Δημιούργησε αρχείο .env.local στο root του project
+2. Αντίγραψε τα περιεχόμενα από το env.config.example
+3. Συμπλήρωσε τα Stripe keys:
+
+   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_actual_key_here
+   STRIPE_SECRET_KEY=sk_test_your_actual_key_here
+   STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here  (Αυτό θα το πάρεις στο Βήμα 4)
+
+
+📋 ΒΗΜΑ 4: Ρύθμιση Webhook (Development - Local Testing)
+═══════════════════════════════════════════════════════════════
+Για να δουλέψουν τα webhooks τοπικά, χρειάζεσαι το Stripe CLI:
+
+A. Εγκατάσταση Stripe CLI:
+   - Windows: Κατέβασε από https://github.com/stripe/stripe-cli/releases
+   - Mac: brew install stripe/stripe-cli/stripe
+   - Linux: Download binary από τo GitHub
+
+B. Login στο Stripe CLI:
+   stripe login
+   (Θα ανοίξει browser για authentication)
+
+C. Ξεκίνησε το webhook forwarding:
+   stripe listen --forward-to http://localhost:3000/api/webhooks/stripe
+   
+   📝 Αυτή η εντολή θα σου δώσει ένα webhook secret (whsec_...)
+      Αντίγραψέ το στο .env.local ως STRIPE_WEBHOOK_SECRET
+
+D. Άφησε το Stripe CLI να τρέχει σε ένα terminal παράθυρο
+   ενώ η εφαρμογή σου τρέχει σε άλλο παράθυρο
+
+
+📋 ΒΗΜΑ 5: Ρύθμιση Webhook (Production - Live)
+═══════════════════════════════════════════════════════════════
+Όταν κάνεις deploy:
+
+1. Πήγαινε στο: https://dashboard.stripe.com/test/webhooks
+2. Κλικ "Add endpoint"
+3. Βάλε το URL: https://your-domain.com/api/webhooks/stripe
+4. Επίλεξε τα events:
+   ✓ payment_intent.succeeded
+   ✓ payment_intent.payment_failed
+5. Αντίγραψε το "Signing secret" και βάλ' το ως STRIPE_WEBHOOK_SECRET
+
+
+📋 ΒΗΜΑ 6: Test Stripe Integration
+═══════════════════════════════════════════════════════════════
+1. Ξεκίνησε το app: pnpm dev
+2. Ξεκίνησε το Stripe CLI σε άλλο terminal: stripe listen --forward-to http://localhost:3000/api/webhooks/stripe
+3. Πήγαινε σε checkout
+4. Χρησιμοποίησε test card numbers:
+
+   ✓ Επιτυχημένη πληρωμή: 4242 4242 4242 4242
+   ✓ Αποτυχημένη πληρωμή: 4000 0000 0000 0002
+   ✓ 3D Secure: 4000 0027 6000 3184
+   
+   - Ημερομηνία λήξης: Οποιαδήποτε μελλοντική (π.χ. 12/25)
+   - CVC: Οποιοιδήποτε 3 αριθμοί (π.χ. 123)
+   - ZIP: Οποιοιδήποτε 5 αριθμοί (π.χ. 12345)
+
+
+📋 ΤΙ ΕΞΤΡΑ ΧΡΕΙΑΖΕΤΑΙ;
+═══════════════════════════════════════════════════════════════
+
+✅ ΟΛΟΚΛΗΡΩΜΕΝΟ:
+   - Payment Intent API
+   - Checkout UI με Stripe Elements
+   - Webhook handler
+   - Order creation
+   - Stock management
+   - Error handling
+
+⚠️  ΠΡΟΣΟΧΗ - Για Production:
+   1. Αλλάξε τα test keys (pk_test_, sk_test_) 
+      με live keys (pk_live_, sk_live_) όταν είσαι έτοιμος
+   
+   2. Ενεργοποίησε το Stripe account σου:
+      - Συμπλήρωσε business details
+      - Verification documents
+      - Bank account για withdrawals
+   
+   3. Ρύθμισε το webhook για production URL
+
+📌 OPTIONAL (Προτεινόμενα):
+   1. Stripe Radar για fraud detection (built-in)
+   2. Email receipts (μπορείς να τα ενεργοποιήσεις στο Stripe Dashboard)
+   3. Success/Cancel pages (έχεις ήδη success page)
+
+
+📋 ΧΡΗΣΙΜΑ LINKS
+═══════════════════════════════════════════════════════════════
+- Dashboard: https://dashboard.stripe.com/test/dashboard
+- API Keys: https://dashboard.stripe.com/test/apikeys
+- Webhooks: https://dashboard.stripe.com/test/webhooks
+- Test Cards: https://stripe.com/docs/testing
+- Stripe CLI: https://stripe.com/docs/stripe-cli
+- Documentation: https://stripe.com/docs
+
+
+📋 TROUBLESHOOTING
+═══════════════════════════════════════════════════════════════
+1. Αν δεν παίρνεις webhooks:
+   - Έλεγξε αν τρέχει το stripe listen
+   - Έλεγξε αν το STRIPE_WEBHOOK_SECRET είναι σωστό
+   - Δες τα logs στο Stripe Dashboard
+
+2. Αν έχεις payment errors:
+   - Έλεγξε αν τα keys είναι σωστά
+   - Δες το browser console για errors
+   - Δες τα server logs
+
+3. Αν δεν δημιουργούνται orders:
+   - Έλεγξε τα webhooks
+   - Δες τα logs στο terminal που τρέχει το stripe listen
+
+
+═══════════════════════════════════════════════════════════════
+🎉 Καλή επιτυχία με το e-shop σου! 🎉
+═══════════════════════════════════════════════════════════════
+

@@ -1,0 +1,138 @@
+=====================================
+TINKERBELL - DEPLOYMENT CHECKLIST
+=====================================
+
+Πριν κάνεις deploy σε production, ακολούθησε αυτό το checklist!
+
+=====================================
+1. ENVIRONMENT VARIABLES
+=====================================
+
+✅ Production Build:
+--------------------
+□ NEXT_PUBLIC_SUPABASE_URL - Το production Supabase URL
+□ NEXT_PUBLIC_SUPABASE_ANON_KEY - Το production anon key
+□ SUPABASE_SERVICE_ROLE_KEY - Το production service role key
+□ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY - Stripe live key (pk_live_...)
+□ STRIPE_SECRET_KEY - Stripe live secret (sk_live_...)
+□ STRIPE_WEBHOOK_SECRET - Production webhook secret
+□ NEXT_PUBLIC_BASE_URL - Το production domain σου (https://yourdomain.com)
+
+✅ BOXNOW Integration (Όταν είσαι έτοιμος):
+-------------------------------------------
+□ BOXNOW_API_URL - Production URL
+□ BOXNOW_OAUTH_CLIENT_ID - Production credentials
+□ BOXNOW_OAUTH_CLIENT_SECRET - Production credentials
+□ BOXNOW_DEFAULT_ORIGIN_ID - Production warehouse ID
+□ NEXT_PUBLIC_BOXNOW_LOCATIONS_API_URL - Production locations URL
+
+=====================================
+2. DATABASE (SUPABASE)
+=====================================
+
+□ Όλα τα tables έχουν δημιουργηθεί
+□ RLS (Row Level Security) policies enabled
+□ Storage buckets configured
+□ Database functions/triggers working
+
+=====================================
+3. STRIPE
+=====================================
+
+□ Stripe account σε live mode
+□ Webhooks configured για production URL
+□ Test payments λειτουργούν
+□ Webhook endpoint verified
+
+=====================================
+4. BOXNOW (Προαιρετικό - Για Αργότερα)
+=====================================
+
+□ BOXNOW εγγραφή ολοκληρωμένη
+□ Stage testing completed
+□ Production credentials ληφθέντα
+□ 1-2 test deliveries επιτυχείς
+□ Partner Portal access
+
+=====================================
+5. CODE QUALITY
+=====================================
+
+□ No linter errors
+□ No TypeScript errors
+□ No console.errors σε production
+□ Remove debug console.logs
+□ Test σε Chrome, Firefox, Safari, Mobile
+
+=====================================
+6. PERFORMANCE
+=====================================
+
+□ Images optimized (WebP format)
+□ Lazy loading enabled
+□ Bundle size reasonable
+□ Lighthouse score > 90
+
+=====================================
+7. SECURITY
+=====================================
+
+□ Environment variables ΔΕΝ είναι committed στο git
+□ .env.local στο .gitignore
+□ HTTPS enabled
+□ No sensitive data στον κώδικα
+
+=====================================
+8. TESTING
+=====================================
+
+□ Complete checkout flow
+□ Stripe payments (test mode πρώτα)
+□ Email notifications (αν υπάρχουν)
+□ Order creation
+□ Stock decrements
+□ Admin dashboard
+
+=====================================
+9. DEPLOYMENT
+=====================================
+
+□ Build succeeds locally (npm run build)
+□ Push to git repository
+□ Deploy to Vercel/hosting
+□ Environment variables configured στο hosting
+□ Domain configured (αν χρειάζεται)
+□ SSL certificate active
+
+=====================================
+10. POST-DEPLOYMENT
+=====================================
+
+□ Test production URL
+□ Complete 1 test order
+□ Check Stripe dashboard
+□ Check Supabase logs
+□ Monitor for errors
+□ Backup database
+
+=====================================
+NOTES
+=====================================
+
+⚠️ BOXNOW Integration:
+- Μπορείς να κάνεις deploy ΧΩΡΙΣ BOXNOW credentials
+- Η εφαρμογή θα δουλεύει με mock lockers
+- Πρόσθεσε τα credentials αργότερα όταν είσαι έτοιμος
+
+⚠️ Test Orders:
+- Χρησιμοποίησε Stripe test mode πρώτα
+- Μετά κάνε 1-2 test με live mode
+- Χρησιμοποίησε χαμηλά ποσά για testing
+
+⚠️ Monitoring:
+- Έλεγξε τα logs τακτικά
+- Monitor Stripe για failed payments
+- Monitor Supabase για errors
+
+=====================================
+

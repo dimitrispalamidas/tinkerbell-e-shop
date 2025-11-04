@@ -1,0 +1,103 @@
+═══════════════════════════════════════════════════════════════
+  📸 ΟΔΗΓΟΣ ΑΝΕΒΑΣΜΑΤΟΣ ΕΙΚΟΝΩΝ - IMAGE UPLOAD GUIDE
+═══════════════════════════════════════════════════════════════
+
+ΤΡΟΠΟΣ 1: Μέσω Supabase Dashboard (Εύκολος)
+──────────────────────────────────────────────────────────────
+
+1. Πήγαινε στο Supabase Dashboard: https://supabase.com/dashboard
+2. Άνοιξε το project σου
+3. Πήγαινε στο Storage → Buckets
+4. Θα δεις 2 buckets:
+   • products   (για εικόνες προϊόντων)
+   • gallery    (για εικόνες gallery)
+
+5. Για να ανεβάσεις εικόνες:
+   a. Κλικ στο bucket (π.χ. "products")
+   b. Κλικ "Upload File"
+   c. Διάλεξε τις εικόνες σου
+   d. Κλικ "Upload"
+
+6. Για να πάρεις το URL μιας εικόνας:
+   a. Κλικ στην εικόνα
+   b. Αντίγραψε το "Public URL"
+   c. Θα είναι κάτι σαν:
+      https://xxx.supabase.co/storage/v1/object/public/products/image.jpg
+
+7. Ενημέρωσε τη βάση με τα URLs:
+
+   -- Για προϊόντα (array of URLs):
+   UPDATE products 
+   SET images = ARRAY[
+     'https://xxx.supabase.co/storage/v1/object/public/products/product1.jpg',
+     'https://xxx.supabase.co/storage/v1/object/public/products/product1-2.jpg'
+   ]
+   WHERE sku = 'TSH-001';
+
+   -- Για gallery items (single URL):
+   UPDATE gallery_items 
+   SET image_url = 'https://xxx.supabase.co/storage/v1/object/public/gallery/baptism1.jpg'
+   WHERE id = 'your-gallery-id';
+
+
+ΤΡΟΠΟΣ 2: Μέσω Script (Για πολλές εικόνες)
+──────────────────────────────────────────────────────────────
+
+1. Δημιούργησε τους φακέλους:
+   public/sample-images/products/
+   public/sample-images/gallery/
+
+2. Βάλε τις εικόνες σου εκεί
+
+3. Τρέξε το script:
+   npx tsx scripts/upload-images.ts
+
+4. Το script θα τυπώσει τα URLs - χρησιμοποίησέ τα για να ενημερώσεις τη βάση
+
+
+ΤΡΟΠΟΣ 3: Χρήση Placeholder Images (Για testing)
+──────────────────────────────────────────────────────────────
+
+Μπορείς να χρησιμοποιήσεις placeholder images από το διαδίκτυο:
+
+UPDATE products SET images = ARRAY[
+  'https://placehold.co/600x600/ff69b4/white?text=Product+1',
+  'https://placehold.co/600x600/dda0dd/white?text=Product+1+Alt'
+] WHERE sku = 'TSH-001';
+
+UPDATE products SET images = ARRAY[
+  'https://placehold.co/600x600/87ceeb/white?text=Dress',
+  'https://placehold.co/600x600/ffc0cb/white?text=Dress+Alt'
+] WHERE sku = 'DRS-001';
+
+UPDATE products SET images = ARRAY[
+  'https://placehold.co/600x600/98fb98/white?text=Sneakers'
+] WHERE sku = 'SNK-001';
+
+UPDATE products SET images = ARRAY[
+  'https://placehold.co/600x600/dda0dd/white?text=Sandals'
+] WHERE sku = 'SND-001';
+
+UPDATE products SET images = ARRAY[
+  'https://placehold.co/600x600/4169e1/white?text=Jeans'
+] WHERE sku = 'JNS-001';
+
+
+ΣΥΜΒΟΥΛΕΣ
+──────────────────────────────────────────────────────────────
+
+✓ Ονόματα αρχείων: Χρησιμοποίησε descriptive names
+  ✓ Good: product-tshirt-pink.jpg
+  ✗ Bad:  IMG_1234.jpg
+
+✓ Μέγεθος: Κράτα τις εικόνες κάτω από 500KB
+  - Χρησιμοποίησε https://tinypng.com/ για compression
+
+✓ Διαστάσεις: 
+  - Προϊόντα: 800x800px ή 1000x1000px (square)
+  - Gallery: 1200x800px ή παρόμοιο aspect ratio
+
+✓ Format: Προτιμάς .jpg για φωτογραφίες, .png για graphics
+
+═══════════════════════════════════════════════════════════════
+

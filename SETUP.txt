@@ -1,0 +1,118 @@
+===========================================
+TINKERBELL E-SHOP - SETUP INSTRUCTIONS
+===========================================
+
+This is a bilingual (Greek/English) e-commerce platform for kids clothing and shoes.
+
+PREREQUISITES:
+--------------
+1. Node.js 18+ installed
+2. pnpm package manager
+3. Stripe account (for payments)
+4. Supabase project (already configured via MCP)
+
+ENVIRONMENT SETUP:
+------------------
+1. Create a .env.local file in the root directory with the following content:
+
+# Supabase (Already configured)
+NEXT_PUBLIC_SUPABASE_URL=https://bkuqjcbyabaanzgisgcz.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJrdXFqY2J5YWJhYW56Z2lzZ2N6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE5NDgwMDQsImV4cCI6MjA3NzUyNDAwNH0.0aUVJg8B03GmUHbwGamXTNpquoqjVXJi40Lv0DPVP7I
+
+# Stripe (Get your keys from https://dashboard.stripe.com/test/apikeys)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_key_here
+STRIPE_SECRET_KEY=sk_test_your_key_here
+STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret_here
+
+# App Config
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+STRIPE SETUP:
+-------------
+1. Create a Stripe account at https://stripe.com
+2. Get your test API keys from the Dashboard
+3. Set up a webhook endpoint:
+   - URL: http://localhost:3000/api/webhooks/stripe
+   - Events to listen for: payment_intent.succeeded, payment_intent.payment_failed
+   - Copy the webhook secret to STRIPE_WEBHOOK_SECRET
+
+RUNNING THE APP:
+----------------
+1. Install dependencies:
+   pnpm install
+
+2. Run the development server:
+   pnpm dev
+
+3. Open http://localhost:3000 in your browser
+
+DEFAULT ROUTES:
+---------------
+Customer-facing:
+- Homepage: http://localhost:3000 (or /el, /en)
+- Shop: /el/katastima or /en/shop
+- Cart: /el/kalathi or /en/cart
+- Checkout: /el/oloklirosi or /en/checkout
+- Gallery: /el/gallery/baptism, /el/gallery/decorations
+
+Admin:
+- Login: http://localhost:3000/admin/login
+- Dashboard: /admin
+- Products: /admin/products
+- Orders: /admin/orders
+- Gallery: /admin/gallery
+
+CREATING AN ADMIN USER:
+-----------------------
+1. Sign up a user through Supabase Auth
+2. Add the user to the admin_users table:
+   INSERT INTO admin_users (user_id, role) 
+   VALUES ('user-id-from-auth', 'admin');
+
+DATABASE:
+---------
+The database is already set up with the following tables:
+- products: Store product catalog
+- categories: Product categories (clothing, shoes)
+- orders: Customer orders
+- order_items: Individual items in orders
+- gallery_items: Baptism and decoration showcase images
+- admin_users: Admin user permissions
+
+FEATURES:
+---------
+✓ Bilingual (Greek/English) with easy switching
+✓ Product catalog with filters
+✓ Shopping cart with persistent state
+✓ Stripe payment integration
+✓ BOXNOW locker selection (mock version)
+✓ Admin dashboard with:
+  - Product management
+  - Order management with status updates
+  - Gallery management for baptism/decorations
+  - Sales statistics
+✓ Responsive design with kids-friendly colors
+✓ Image storage via Supabase Storage
+
+BOXNOW INTEGRATION:
+-------------------
+Currently using mock data. To integrate real BOXNOW API:
+1. Get API credentials from BOXNOW
+2. Update components/checkout/boxnow-selector.tsx
+3. Replace mock locker data with API calls
+
+CUSTOMIZATION:
+--------------
+- Colors: Edit app/globals.css (playful pastel theme)
+- Translations: Edit messages/el.json and messages/en.json
+- Theme: Configured in Tailwind with custom color palette
+
+SUPPORT:
+--------
+For issues or questions, refer to:
+- Next.js docs: https://nextjs.org/docs
+- Supabase docs: https://supabase.com/docs
+- Stripe docs: https://stripe.com/docs
+
+Happy selling! 🎉
+

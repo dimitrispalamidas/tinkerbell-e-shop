@@ -1,0 +1,153 @@
+=====================================
+🚀 QUICKSTART - DEMO MODE
+=====================================
+
+Η εφαρμογή σου είναι ΕΤΟΙΜΗ για demo!
+
+=====================================
+ΞΕΚΙΝΑ ΤΩΡΑ
+=====================================
+
+1. Τρέξε το app:
+   npm run dev
+
+2. Άνοιξε στο browser:
+   http://localhost:3000
+
+3. Πήγαινε στο checkout:
+   - Πρόσθεσε προϊόντα στο καλάθι
+   - Checkout
+   - Συμπλήρωσε στοιχεία
+   - Επίλεξε BOXNOW locker (7 διαθέσιμα!)
+   - Δοκίμασε search: "Αθήνα", "Θεσσαλονίκη"
+
+=====================================
+ΤΙ ΛΕΙΤΟΥΡΓΕΙ ΤΩΡΑ (ΧΩΡΙΣ CREDENTIALS)
+=====================================
+
+✅ Πλήρες e-shop UI
+✅ Προϊόντα με variants (size/color)
+✅ Shopping cart
+✅ Checkout flow
+✅ BOXNOW locker selection (7 mock lockers)
+✅ Search/filter lockers
+✅ Stripe payments (test mode)
+✅ Order creation
+✅ Stock management
+✅ Admin dashboard
+
+=====================================
+ΤΙ ΔΕΝ ΛΕΙΤΟΥΡΓΕΙ (ΧΡΕΙΑΖΕΤΑΙ BOXNOW CREDENTIALS)
+=====================================
+
+❌ Πραγματικά BOXNOW lockers (χρησιμοποιεί mock data)
+❌ BOXNOW delivery requests
+❌ BOXNOW tracking numbers
+❌ Πραγματική μεταφορά δεμάτων
+
+=====================================
+DEMO LOCKERS
+=====================================
+
+Τα 7 mock lockers που εμφανίζονται:
+
+1. BOXNOW Syntagma (Αθήνα)
+2. BOXNOW Kolonaki (Αθήνα)
+3. BOXNOW Glyfada (Γλυφάδα)
+4. BOXNOW Piraeus (Πειραιάς)
+5. BOXNOW Thessaloniki (Θεσσαλονίκη)
+6. BOXNOW Kifisia (Κηφισιά)
+7. BOXNOW Marousi (Μαρούσι)
+
+Όλα με πραγματικές διευθύνσεις για realistic demo!
+
+=====================================
+STRIPE TEST CARDS
+=====================================
+
+Επιτυχής Πληρωμή:
+-----------------
+Card: 4242 4242 4242 4242
+Expiry: 12/25 (οποιαδήποτε μελλοντική)
+CVC: 123 (οποιοιδήποτε 3 αριθμοί)
+
+Αποτυχημένη Πληρωμή:
+--------------------
+Card: 4000 0000 0000 0002
+
+Requires Authentication:
+------------------------
+Card: 4000 0025 0000 3155
+
+=====================================
+DEPLOY ΓΙΑ PREVIEW
+=====================================
+
+Vercel (Recommended):
+---------------------
+1. git add .
+2. git commit -m "Add BOXNOW integration"
+3. git push
+4. Vercel auto-deploys!
+5. Στείλε το preview link στον πελάτη
+
+Netlify / Other:
+----------------
+1. npm run build
+2. Deploy το .next folder
+3. Configure environment variables
+
+=====================================
+ΟΤΑν ΠΑΡΕΙΣ BOXNOW CREDENTIALS
+=====================================
+
+1. Βάλε τα στο .env.local:
+
+   # Stage (για testing)
+   BOXNOW_API_URL=https://api-stage.boxnow.gr
+   BOXNOW_OAUTH_CLIENT_ID=stage_id
+   BOXNOW_OAUTH_CLIENT_SECRET=stage_secret
+   BOXNOW_DEFAULT_ORIGIN_ID=stage_warehouse
+
+2. Restart το app:
+   npm run dev
+
+3. Τώρα:
+   ✅ Θα φορτώνει ΠΡΑΓΜΑΤΙΚΑ lockers από BOXNOW
+   ✅ Θα δημιουργεί delivery requests (stage - δεν στέλνει)
+   ✅ Θα βλέπεις parcels στο Partner Portal
+
+=====================================
+FILES ΠΟΥ ΠΡΟΣΤΕΘΗΚΑΝ
+=====================================
+
+✅ components/checkout/boxnow-locker-list.tsx
+   Custom locker selector με mock data
+
+✅ lib/services/boxnow.ts
+   BOXNOW Partner API service
+
+✅ app/api/boxnow/shipments/route.ts
+   Internal API route για delivery requests
+
+✅ BOXNOW-INTEGRATION.txt
+   Πλήρες documentation
+
+✅ DEPLOYMENT-CHECKLIST.txt
+   Pre-deployment checklist
+
+✅ QUICKSTART-DEMO.txt
+   Αυτό το αρχείο!
+
+=====================================
+SUPPORT
+=====================================
+
+Docs: BOXNOW-INTEGRATION.txt
+Deployment: DEPLOYMENT-CHECKLIST.txt
+BOXNOW: https://connect.boxnow.gr/form
+
+=====================================
+🎉 ENJOY YOUR DEMO!
+=====================================
+

@@ -1,0 +1,68 @@
+╔═══════════════════════════════════════════════════════════╗
+║        TINKERBELL E-SHOP - QUICK START GUIDE             ║
+╚═══════════════════════════════════════════════════════════╝
+
+🚀 GET STARTED IN 3 STEPS:
+
+1️⃣  SETUP ENVIRONMENT
+   Create .env.local file (see env.config.example for template)
+   Add your Stripe keys from https://dashboard.stripe.com
+
+2️⃣  RUN THE APP
+   pnpm dev
+   Open http://localhost:3000
+
+3️⃣  CREATE ADMIN USER
+   Option A - Using Supabase Dashboard:
+   - Go to Supabase Auth
+   - Create a new user
+   - Go to SQL Editor and run:
+     INSERT INTO admin_users (user_id, role) 
+     VALUES ('user-id-here', 'admin');
+
+   Option B - Using the script (requires service role key):
+   npx tsx scripts/setup-admin.ts admin@example.com password123
+
+📦 ADD SAMPLE DATA (Optional):
+   - Go to your Supabase SQL Editor
+   - Copy and run scripts/seed-sample-data.sql
+
+🎨 KEY FEATURES:
+   ✓ Bilingual (Greek/English)
+   ✓ Shopping cart with Stripe payments
+   ✓ BOXNOW delivery (mock)
+   ✓ Admin dashboard
+   ✓ Product & order management
+   ✓ Gallery for baptism/decorations
+
+📱 MAIN URLS:
+   Customer:
+   - Homepage: http://localhost:3000
+   - Shop: /el/katastima or /en/shop
+   - Cart: /el/kalathi or /en/cart
+   
+   Admin:
+   - Login: http://localhost:3000/admin/login
+   - Dashboard: /admin
+   - Products: /admin/products
+   - Orders: /admin/orders
+
+🛠️ TECH STACK:
+   - Next.js 16 (App Router)
+   - Supabase (Database & Auth)
+   - Stripe (Payments)
+   - next-intl (i18n)
+   - Zustand (Cart state)
+   - Tailwind CSS (Styling)
+
+💡 TIPS:
+   - Language switcher in header (globe icon)
+   - Cart persists in localStorage
+   - All routes support both Greek and English
+   - Admin pages are protected by auth
+   - Pastel color theme perfect for kids store!
+
+📖 For detailed info, see SETUP.txt
+
+Happy coding! 🎉
+
