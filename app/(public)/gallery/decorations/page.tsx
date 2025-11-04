@@ -27,13 +27,17 @@ export default async function DecorationsGalleryPage() {
             {t('custom_order')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="gap-2">
-              <Mail className="h-5 w-5" />
-              tinkerbellkalamatas@gmail.com
+            <Button size="lg" className="gap-2" asChild>
+              <a href="mailto:tinkerbellkalamatas@gmail.com">
+                <Mail className="h-5 w-5" />
+                tinkerbellkalamatas@gmail.com
+              </a>
             </Button>
-            <Button size="lg" variant="outline" className="gap-2">
-              <Phone className="h-5 w-5" />
-              +30 123 456 7890
+            <Button size="lg" variant="outline" className="gap-2" asChild>
+              <a href="tel:+302721406303">
+                <Phone className="h-5 w-5" />
+                2721 406303
+              </a>
             </Button>
           </div>
         </div>

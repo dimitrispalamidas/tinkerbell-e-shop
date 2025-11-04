@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import Link from 'next/link'
 import Image from 'next/image'
+import { Mail, Phone, MapPin } from 'lucide-react'
 
 export function Footer() {
   const t = useTranslations('nav')
@@ -116,10 +117,36 @@ export function Footer() {
           {/* Contact Info */}
           <div className="md:col-span-3">
             <h4 className="font-semibold mb-4">{t('contact') || 'Επικοινωνία'}</h4>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Email: tinkerbellkalamatas@gmail.com</p>
-              <p>{t('phone') || 'Τηλ'}: 2721 406303</p>
-              <p className="pt-2">Γεωργούλη 8, Καλαμάτα</p>
+            <div className="space-y-3 text-sm">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-primary flex-shrink-0" />
+                <a 
+                  href="mailto:tinkerbellkalamatas@gmail.com" 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  tinkerbellkalamatas@gmail.com
+                </a>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-primary flex-shrink-0" />
+                <a 
+                  href="tel:+302721406303" 
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  2721 406303
+                </a>
+              </div>
+              <div className="flex items-start gap-2 pt-1">
+                <MapPin className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                <a 
+                  href="https://www.google.com/maps/search/?api=1&query=Γεωργούλη+8,+Καλαμάτα" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-primary transition-colors"
+                >
+                  Γεωργούλη 8, Καλαμάτα
+                </a>
+              </div>
             </div>
           </div>
         </div>

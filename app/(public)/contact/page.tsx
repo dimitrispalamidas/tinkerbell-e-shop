@@ -92,10 +92,15 @@ async function ContactContent() {
                 </div>
                 <div>
                   <h3 className="font-semibold mb-1">{t('address')}</h3>
-                  <p className="text-muted-foreground">
+                  <a 
+                    href="https://www.google.com/maps/search/?api=1&query=Γεωργούλη+8,+Καλαμάτα"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
                     Γεωργούλη 8<br />
                     Καλαμάτα, Ελλάδα
-                  </p>
+                  </a>
                 </div>
               </div>
             </div>
