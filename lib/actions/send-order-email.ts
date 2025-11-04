@@ -65,8 +65,10 @@ export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
     const emailHtml = await render(OrderConfirmationEmail(emailData));
 
     // Send email via Resend
+    // Using onboarding@resend.dev because we don't have a verified domain yet
+    // When you verify your domain, change this to: 'Tinkerbell <orders@yourdomain.com>'
     const { data, error } = await resend.emails.send({
-      from: 'Tinkerbell <orders@tinkerbell-shop.com>',
+      from: 'Tinkerbell <onboarding@resend.dev>',
       to: [order.customer_email],
       subject: `Επιβεβαίωση Παραγγελίας #${order.viva_order_code} - Tinkerbell`,
       html: emailHtml,
