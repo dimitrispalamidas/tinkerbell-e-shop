@@ -148,8 +148,8 @@ export const OrderConfirmationEmail = ({
           <Hr style={hr} />
           <Text style={footerText}>
             Χρειάζεστε βοήθεια;{' '}
-            <Link href="mailto:info@tinkerbell.gr" style={link}>
-              info@tinkerbell.gr
+            <Link href="mailto:tinkerbellkalamatas@gmail.com" style={link}>
+              tinkerbellkalamatas@gmail.com
             </Link>
           </Text>
           <Text style={footerText}>

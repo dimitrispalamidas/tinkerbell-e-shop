@@ -134,7 +134,7 @@
   "legal": {
     "lastUpdated": "Last updated: November 2025",
     "contactInfo": "For questions about {topic}, please contact us:",
-    "contactEmail": "Email: info@tinkerbell.gr",
+    "contactEmail": "Email: tinkerbellkalamatas@gmail.com",
     "contactPhone": "Phone: 2721 406303",
     "contactAddress": "Address: Georgouli 8, Kalamata"
   },
@@ -272,7 +272,7 @@
     "exceptions_sale": "Sale/discounted products (except defects)",
     "process_title": "4. Return Process",
     "process_text": "To proceed with a return:",
-    "process_contact": "Contact us: Send email to info@tinkerbell.gr or call 2721 406303 within 14 days of receipt",
+    "process_contact": "Contact us: Send email to tinkerbellkalamatas@gmail.com or call 2721 406303 within 14 days of receipt",
     "process_rma": "Get authorization number: We will give you a unique return number (RMA)",
     "process_pack": "Pack carefully: Pack the products in original packaging with all accessories",
     "process_ship": "Shipping: Send the products to the address we will provide",
@@ -309,7 +309,7 @@
     "refusal_text": "If you refuse receipt of the order without reason, we reserve the right to charge shipping and handling costs before refunding the remaining amount.",
     "contact_title": "11. Contact for Returns",
     "contact_text": "For any questions about returns:",
-    "contact_email": "Email: info@tinkerbell.gr (preferred method)",
+    "contact_email": "Email: tinkerbellkalamatas@gmail.com (preferred method)",
     "contact_phone": "Phone: 2721 406303 (Mon-Fri, 9:00-17:00)",
     "contact_address": "Return Address: [Address to be provided upon contact]",
     "contact_note": "Note: Do not send products without first contacting us and receiving an RMA number.",

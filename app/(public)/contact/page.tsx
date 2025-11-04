@@ -46,10 +46,10 @@ async function ContactContent() {
                 <div>
                   <h3 className="font-semibold mb-1">{t('email')}</h3>
                   <a 
-                    href="mailto:info@tinkerbell.gr" 
+                    href="mailto:tinkerbellkalamatas@gmail.com" 
                     className="text-muted-foreground hover:text-primary transition-colors"
                   >
-                    info@tinkerbell.gr
+                    tinkerbellkalamatas@gmail.com
                   </a>
                 </div>
               </div>

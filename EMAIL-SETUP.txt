@@ -117,7 +117,7 @@ EMAIL TEMPLATE CUSTOMIZATION
    - Green: #22c55e (success color)
    
 3. Footer:
-   - Email: info@tinkerbell.gr
+   - Email: tinkerbellkalamatas@gmail.com
    - Phone: +30 123 456 7890
 
 4. Content:

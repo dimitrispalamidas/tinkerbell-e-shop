@@ -117,7 +117,7 @@ export function Footer() {
           <div className="md:col-span-3">
             <h4 className="font-semibold mb-4">{t('contact') || 'Επικοινωνία'}</h4>
             <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Email: info@tinkerbell.gr</p>
+              <p>Email: tinkerbellkalamatas@gmail.com</p>
               <p>{t('phone') || 'Τηλ'}: 2721 406303</p>
               <p className="pt-2">Γεωργούλη 8, Καλαμάτα</p>
             </div>
