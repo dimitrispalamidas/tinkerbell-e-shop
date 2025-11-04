@@ -29,6 +29,8 @@ export async function POST(req: Request) {
 
     // Viva Wallet sends different event types
     // EventTypeId: 1796 = Transaction Payment Created (successful payment)
+    // EventTypeId: 1797 = Transaction Reversal Created (refund)
+    // EventTypeId: 1798 = Transaction Failed (failed payment)
     const eventTypeId = body.EventTypeId;
     console.log('📋 Event Type ID:', eventTypeId);
 
@@ -60,6 +62,23 @@ export async function POST(req: Request) {
         console.log('⚠️ Payment status not completed, StatusId:', statusId);
       }
     } else if (eventTypeId === 1797) {
+      // Refund/Reversal
+      const eventData = body.EventData;
+      const transactionId = eventData?.TransactionId;
+      const orderCode = eventData?.OrderCode;
+      const amount = eventData?.Amount;
+
+      console.log('💰 Refund/Reversal processed:');
+      console.log('  - Transaction ID:', transactionId);
+      console.log('  - Order Code:', orderCode);
+      console.log('  - Amount:', amount);
+
+      if (orderCode && transactionId) {
+        console.log('🔄 Updating order payment status to refunded...');
+        await updateOrderPaymentStatus(orderCode, transactionId, 'refunded');
+        console.log('✅ Order marked as refunded!');
+      }
+    } else if (eventTypeId === 1798) {
       // Failed payment
       const eventData = body.EventData;
       const transactionId = eventData?.TransactionId;

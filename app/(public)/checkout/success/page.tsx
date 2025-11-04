@@ -5,8 +5,21 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Package, ArrowRight } from 'lucide-react';
+import { CheckCircle, Package, ArrowRight, Loader2 } from 'lucide-react';
 import { useCartStore } from '@/lib/store/cart';
+import { createClient } from '@/lib/supabase/client';
+
+type OrderData = {
+  id: string;
+  viva_order_code: string;
+  total: number;
+  customer_name: string;
+  customer_email: string;
+  status: string;
+  payment_status: string;
+  created_at: string;
+  boxnow_tracking_code?: string;
+};
 
 export default function CheckoutSuccess() {
   const t = useTranslations('checkout');
@@ -16,42 +29,111 @@ export default function CheckoutSuccess() {
   const searchParams = useSearchParams();
   const clearCart = useCartStore((state) => state.clearCart);
   
-  const [orderCode, setOrderCode] = useState<string | null>(null);
+  const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    // Get Viva order parameters from URL
-    const s = searchParams.get('s'); // Status: 1 = success, 0 = failed
-    const t = searchParams.get('t'); // Transaction ID
-    const orderRef = searchParams.get('orderCode'); // Order Code
-    
-    if (s === '1' && orderRef) {
-      setOrderCode(orderRef);
-      // Clear the cart after successful payment
-      clearCart();
+    async function fetchLatestOrder() {
+      try {
+        // Get all possible parameters from URL
+        const s = searchParams.get('s');
+        const t = searchParams.get('t');
+        const orderRef = searchParams.get('orderCode') || searchParams.get('OrderCode');
+        const eventId = searchParams.get('eventId');
+        
+        console.log('🔍 Success page URL parameters:', {
+          s,
+          t,
+          orderRef,
+          eventId,
+          allParams: Object.fromEntries(searchParams.entries())
+        });
+        
+        // Always clear cart when user reaches success page
+        clearCart();
+        
+        const supabase = createClient();
+        
+        // Try to find order by different methods
+        let order = null;
+        
+        // Method 1: Try to find by Viva order code from URL
+        if (orderRef) {
+          console.log('🔍 Searching for order by orderCode:', orderRef);
+          const { data } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('viva_order_code', orderRef)
+            .single();
+          order = data;
+        }
+        
+        // Method 2: Try to find by transaction ID
+        if (!order && t) {
+          console.log('🔍 Searching for order by transaction ID:', t);
+          const { data } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('viva_transaction_id', t)
+            .single();
+          order = data;
+        }
+        
+        // Method 3: Get the latest paid order (fallback)
+        if (!order) {
+          console.log('🔍 Fetching latest paid order as fallback');
+          const { data } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('payment_status', 'paid')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
+          order = data;
+        }
+        
+        if (order) {
+          console.log('✅ Order found:', order.id);
+          setOrderData(order);
+        } else {
+          console.log('❌ No order found');
+          setError(true);
+        }
+      } catch (err) {
+        console.error('❌ Error fetching order:', err);
+        setError(true);
+      } finally {
+        setIsLoading(false);
+      }
     }
     
-    setIsLoading(false);
+    fetchLatestOrder();
   }, [searchParams, clearCart]);
 
   if (isLoading) {
     return (
       <div className="container max-w-2xl mx-auto px-4 py-16">
-        <div className="flex items-center justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pink-500"></div>
+        <div className="flex flex-col items-center justify-center gap-4">
+          <Loader2 className="w-12 h-12 text-pink-500 animate-spin" />
+          <p className="text-gray-600">
+            {locale === 'el' ? 'Φόρτωση πληροφοριών παραγγελίας...' : 'Loading order information...'}
+          </p>
         </div>
       </div>
     );
   }
 
-  if (!orderCode) {
+  if (error || !orderData) {
     return (
       <div className="container max-w-2xl mx-auto px-4 py-16">
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-gray-600 mb-4">
-                {locale === 'el' ? 'Δεν βρέθηκαν πληροφορίες πληρωμής.' : 'No payment information found.'}
+            <div className="text-center space-y-4">
+              <p className="text-gray-600">
+                {locale === 'el' 
+                  ? 'Δεν βρέθηκαν πληροφορίες παραγγελίας. Αν ολοκληρώσατε την πληρωμή, θα λάβετε email επιβεβαίωσης.' 
+                  : 'Order information not found. If you completed the payment, you will receive a confirmation email.'}
               </p>
               <Button onClick={() => router.push('/shop')}>
                 {locale === 'el' ? 'Επιστροφή στο Κατάστημα' : 'Back to Shop'}
@@ -78,25 +160,53 @@ export default function CheckoutSuccess() {
         <CardContent className="space-y-6">
           <div className="text-center space-y-2">
             <p className="text-lg text-gray-700">
-              {locale === 'el' ? 'Σας ευχαριστούμε για την παραγγελία σας!' : 'Thank you for your order!'}
+              {locale === 'el' 
+                ? `Ευχαριστούμε ${orderData.customer_name}!` 
+                : `Thank you ${orderData.customer_name}!`}
             </p>
             <p className="text-gray-600">
               {locale === 'el' 
-                ? 'Ένα email επιβεβαίωσης έχει σταλεί στη διεύθυνση email σας.' 
-                : 'A confirmation email has been sent to your email address.'}
+                ? `Ένα email επιβεβαίωσης έχει σταλεί στο ${orderData.customer_email}` 
+                : `A confirmation email has been sent to ${orderData.customer_email}`}
             </p>
           </div>
 
-          <div className="bg-gray-50 rounded-lg p-4 space-y-2">
-            <div className="flex items-center gap-2 text-sm">
-              <Package className="w-5 h-5 text-pink-500" />
-              <span className="font-medium">
-                {locale === 'el' ? 'Κωδικός Παραγγελίας' : 'Order Code'}:
-              </span>
+          <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div className="flex items-start gap-2 text-sm">
+              <Package className="w-5 h-5 text-pink-500 mt-0.5" />
+              <div className="flex-1">
+                <span className="font-medium block mb-1">
+                  {locale === 'el' ? 'Κωδικός Παραγγελίας' : 'Order Code'}:
+                </span>
+                <p className="text-xs md:text-sm text-gray-600 font-mono break-all">
+                  {orderData.viva_order_code}
+                </p>
+              </div>
             </div>
-            <p className="text-xs md:text-sm text-gray-600 font-mono break-all pl-7">
-              {orderCode}
-            </p>
+            
+            <div className="border-t pt-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">
+                  {locale === 'el' ? 'Σύνολο' : 'Total'}:
+                </span>
+                <span className="font-semibold text-lg">
+                  €{orderData.total.toFixed(2)}
+                </span>
+              </div>
+            </div>
+            
+            {orderData.boxnow_tracking_code && (
+              <div className="border-t pt-3">
+                <div className="text-sm">
+                  <span className="text-gray-600 block mb-1">
+                    {locale === 'el' ? 'Κωδικός Παρακολούθησης BOXNOW' : 'BOXNOW Tracking Code'}:
+                  </span>
+                  <span className="font-mono text-xs text-gray-800">
+                    {orderData.boxnow_tracking_code}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">

@@ -27,9 +27,15 @@ VIVA WALLET SMART CHECKOUT - SETUP
 3. Πάτα "Προσθήκη Website/App"
 4. Συμπλήρωσε:
    - Όνομα: Tinkerbell E-Shop
-   - Website URL: https://yourdomain.com
-   - Success URL: https://yourdomain.com/checkout/success
-   - Failure URL: https://yourdomain.com/checkout
+   - Website URL: https://tinkerbell-e-shop.vercel.app
+   - Success URL: https://tinkerbell-e-shop.vercel.app/el/checkout/success
+   - Failure URL: https://tinkerbell-e-shop.vercel.app/el/checkout
+   
+   ⚠️ ΠΡΟΣΟΧΗ: 
+   - Τα URLs ΠΡΕΠΕΙ να είναι HTTPS (όχι HTTP)
+   - Πρόσθεσε το /el/ για ελληνικό locale (ή /en/ για αγγλικά)
+   - Για local testing: https://your-ngrok-url.ngrok.io/el/checkout/success
+   
 5. Ανέβασε το Logo:
    - Μορφή: PNG με διαφάνεια
    - Μέγεθος: Έως 100KB
@@ -74,8 +80,9 @@ VIVA WALLET SMART CHECKOUT - SETUP
    - URL: https://yourdomain.com/api/webhooks/viva
    - Key: viva-webhook-secret-2024-abc123xyz (το ίδιο που έβαλες στο .env)
    - Events: Επέλεξε:
-     * Transaction Payment Created (EventTypeId: 1796)
-     * Transaction Payment Failed (EventTypeId: 1797)
+     * Transaction Payment Created (EventTypeId: 1796) - Επιτυχής πληρωμή
+     * Transaction Failed (EventTypeId: 1798) - Αποτυχία πληρωμής
+     * Transaction Reversal Created (EventTypeId: 1797) - Refund (προαιρετικό)
 
 7. Η Viva θα στείλει GET request για verification:
    GET https://yourdomain.com/api/webhooks/viva?key=viva-webhook-secret-2024-abc123xyz
@@ -305,15 +312,29 @@ Body:
   }
 }
 
-Transaction Payment Failed (1797):
----------------------------------
-Sent όταν η πληρωμή αποτύχει.
+Transaction Reversal Created (1797):
+-----------------------------------
+Sent όταν γίνεται refund (επιστροφή χρημάτων).
 
 Body:
 {
   "EventTypeId": 1797,
   "EventData": {
     "TransactionId": "xyz789",
+    "OrderCode": "252055160400148536",
+    "Amount": 100.00
+  }
+}
+
+Transaction Failed (1798):
+---------------------------------
+Sent όταν η πληρωμή αποτύχει.
+
+Body:
+{
+  "EventTypeId": 1798,
+  "EventData": {
+    "TransactionId": "def456",
     "OrderCode": "252055160400148536",
     "StatusId": "E" // E = Error
   }
