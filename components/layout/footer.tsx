@@ -44,7 +44,7 @@ export function Footer() {
                 </svg>
               </a>
               <a 
-                href="https://www.instagram.com/mytinkerbell_events?igsh=MWp1enRqY2ZwNmRzYw%3D%3D" 
+                href="https://www.instagram.com/mytinkerbell_events?utm_source=ig_web_button_share_sheet&igsh=ZDNlZDc0MzIxNw==" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-primary transition-colors"
@@ -118,7 +118,8 @@ export function Footer() {
             <h4 className="font-semibold mb-4">{t('contact') || 'Επικοινωνία'}</h4>
             <div className="space-y-2 text-sm text-muted-foreground">
               <p>Email: info@tinkerbell.gr</p>
-              <p>{t('phone') || 'Τηλ'}: +30 123 456 7890</p>
+              <p>{t('phone') || 'Τηλ'}: 2721 406303</p>
+              <p className="pt-2">Γεωργούλη 8, Καλαμάτα</p>
             </div>
           </div>
         </div>

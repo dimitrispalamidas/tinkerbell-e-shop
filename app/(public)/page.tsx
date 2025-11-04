@@ -161,12 +161,25 @@ export default async function HomePage() {
       )}
 
       {/* Baptism & Decorations CTA */}
-      <section className="py-16 bg-gradient-to-br from-lavender/20 to-sunny/20">
-        <div className="container mx-auto px-4 text-center max-w-3xl">
-          <h2 className="text-3xl font-bold mb-4">
+      <section className="relative py-24 md:py-32 overflow-hidden min-h-[500px] flex items-center">
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/stolismoi.webp"
+            alt="Βαπτιστικά & Στολισμοί"
+            fill
+            className="object-cover"
+            priority={false}
+          />
+          {/* Overlay όπως το video section */}
+          <div className="absolute inset-0 bg-black/40" />
+        </div>
+
+        <div className="container mx-auto px-4 text-center max-w-3xl relative z-10">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white drop-shadow-2xl">
             {locale === 'el' ? 'Βαπτιστικά & Στολισμοί' : 'Baptism & Decorations'}
           </h2>
-          <p className="text-lg text-muted-foreground mb-8">
+          <p className="text-lg md:text-xl text-white/90 mb-8 drop-shadow-lg">
             {locale === 'el' 
               ? 'Δημιουργούμε μοναδικά βαπτιστικά πακέτα και στολισμούς για κάθε περίσταση'
               : 'We create unique baptism packages and decorations for every occasion'
@@ -174,12 +187,12 @@ export default async function HomePage() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/gallery/baptism">
-              <Button size="lg" variant="secondary">
+              <Button size="lg" className="shadow-xl w-full sm:w-auto">
                 {tNav('baptism')}
               </Button>
             </Link>
             <Link href="/gallery/decorations">
-              <Button size="lg" variant="secondary">
+              <Button size="lg" variant="outline" className="bg-white/90 hover:bg-white shadow-xl w-full sm:w-auto">
                 {tNav('decorations')}
               </Button>
             </Link>

@@ -70,6 +70,9 @@ export function Header() {
               </div>
             </div>
           </div>
+          <Link href="/contact" className="transition-colors hover:text-primary">
+            {t('contact')}
+          </Link>
         </nav>
 
         <div className="flex items-center space-x-4">
