@@ -7,19 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Package, ArrowRight, Loader2 } from 'lucide-react';
 import { useCartStore } from '@/lib/store/cart';
-import { createClient } from '@/lib/supabase/client';
-
-type OrderData = {
-  id: string;
-  viva_order_code: string;
-  total: number;
-  customer_name: string;
-  customer_email: string;
-  status: string;
-  payment_status: string;
-  created_at: string;
-  boxnow_tracking_code?: string;
-};
+import { getOrderByVivaCode, getOrderByTransactionId, getLatestPaidOrder, type OrderData } from '@/lib/actions/get-order';
 
 export default function CheckoutSuccess() {
   const t = useTranslations('checkout');
@@ -37,9 +25,9 @@ export default function CheckoutSuccess() {
     async function fetchLatestOrder() {
       try {
         // Get all possible parameters from URL
-        const s = searchParams.get('s');
-        const t = searchParams.get('t');
-        const orderRef = searchParams.get('orderCode') || searchParams.get('OrderCode');
+        const s = searchParams.get('s'); // Status
+        const t = searchParams.get('t'); // Transaction ID
+        const orderRef = searchParams.get('orderCode') || searchParams.get('OrderCode'); // Order Code
         const eventId = searchParams.get('eventId');
         
         console.log('🔍 Success page URL parameters:', {
@@ -53,44 +41,25 @@ export default function CheckoutSuccess() {
         // Always clear cart when user reaches success page
         clearCart();
         
-        const supabase = createClient();
-        
-        // Try to find order by different methods
-        let order = null;
+        // Try to find order by different methods using server actions
+        let order: OrderData | null = null;
         
         // Method 1: Try to find by Viva order code from URL
         if (orderRef) {
           console.log('🔍 Searching for order by orderCode:', orderRef);
-          const { data } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('viva_order_code', orderRef)
-            .single();
-          order = data;
+          order = await getOrderByVivaCode(orderRef);
         }
         
         // Method 2: Try to find by transaction ID
         if (!order && t) {
           console.log('🔍 Searching for order by transaction ID:', t);
-          const { data } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('viva_transaction_id', t)
-            .single();
-          order = data;
+          order = await getOrderByTransactionId(t);
         }
         
         // Method 3: Get the latest paid order (fallback)
         if (!order) {
           console.log('🔍 Fetching latest paid order as fallback');
-          const { data } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('payment_status', 'paid')
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
-          order = data;
+          order = await getLatestPaidOrder();
         }
         
         if (order) {
