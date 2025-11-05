@@ -1,0 +1,13 @@
+# Robots.txt for Τινκερμπελ (Tinkerbell)
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /admin-login
+
+# Sitemap
+Sitemap: https://www.tinkerbell.gr/sitemap.xml
+
+# Crawl-delay
+Crawl-delay: 1
+
