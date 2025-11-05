@@ -42,18 +42,18 @@ export default async function ShopPage({
   const { data: products } = await query.order('created_at', { ascending: false });
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-4">{t('all_products')}</h1>
+    <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="mb-6 md:mb-8">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">{t('all_products')}</h1>
         {products && (
-          <p className="text-muted-foreground">
+          <p className="text-sm md:text-base text-muted-foreground">
             {t('showing_results', { count: products.length })}
           </p>
         )}
       </div>
 
       {products && products.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
           {products.map((product) => (
             <Link key={product.id} href={`/product/${product.id}`}>
               <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full group">
@@ -71,15 +71,15 @@ export default async function ShopPage({
                       <ShoppingBag className="h-20 w-20 text-muted-foreground" />
                     )}
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold mb-2 line-clamp-2">
+                  <div className="p-3 md:p-4">
+                    <h3 className="text-sm md:text-base font-semibold mb-1 md:mb-2 line-clamp-2">
                       {locale === 'el' ? product.name_el : product.name_en}
                     </h3>
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                    <p className="text-xs md:text-sm text-muted-foreground mb-2 line-clamp-2">
                       {locale === 'el' ? product.description_el : product.description_en}
                     </p>
                     <div className="flex justify-between items-center">
-                      <p className="text-lg font-bold text-primary">
+                      <p className="text-base md:text-lg font-bold text-primary">
                         {formatPrice(product.price, locale)}
                       </p>
                       {(() => {

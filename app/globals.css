@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@layer base {
+  :root {
+    --header-height: 64px; /* Header height h-16 = 4rem = 64px */
+  }
+}
+
 :root {
   --background: #fefefe;
   --foreground: #2d2d2d;

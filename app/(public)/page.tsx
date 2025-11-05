@@ -2,7 +2,8 @@ import { getTranslations, getLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, ShoppingBag } from 'lucide-react';
+import { ArrowRight, ShoppingBag, Baby } from 'lucide-react';
+import { BsBalloonHeart } from 'react-icons/bs';
 import { createClient } from '@/lib/supabase/server';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/utils';
@@ -26,20 +27,20 @@ export default async function HomePage() {
   return (
     <div className="flex flex-col">
       {/* Hero Section με Video Background */}
-      <section className="relative py-20 md:py-32 min-h-[600px] flex items-center">
+      <section className="relative flex items-center min-h-[calc(100vh-4rem)]">
         {/* Video Background */}
         <VideoBackground />
         
         {/* Content */}
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6 text-white drop-shadow-2xl">
+            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 text-white drop-shadow-2xl">
               {t('hero_title')}
             </h1>
-            <p className="text-xl md:text-2xl text-white/90 mb-4 drop-shadow-lg">
+            <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-3 md:mb-4 drop-shadow-lg">
               {t('hero_subtitle')}
             </p>
-            <p className="text-lg text-white/80 mb-8 drop-shadow-lg">
+            <p className="text-base md:text-lg text-white/80 mb-6 md:mb-8 drop-shadow-lg">
               {t('hero_description')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -49,9 +50,10 @@ export default async function HomePage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/gallery/baptism">
+              <Link href="/gallery/decorations">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/90 hover:bg-white shadow-xl">
-                  {tNav('baptism')}
+                  <BsBalloonHeart className="mr-2 h-5 w-5" />
+                  {tNav('decorations')}
                 </Button>
               </Link>
             </div>
@@ -60,9 +62,9 @@ export default async function HomePage() {
       </section>
 
       {/* Categories */}
-      <section className="py-16 bg-background">
+      <section className="py-12 md:py-16 bg-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12">
             {t('categories')}
           </h2>
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -77,9 +79,9 @@ export default async function HomePage() {
                       className="object-cover"
                     />
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-2xl font-bold mb-2">{tNav('clothing')}</h3>
-                    <p className="text-muted-foreground">
+                  <div className="p-4 md:p-6">
+                    <h3 className="text-xl md:text-2xl font-bold mb-2">{tNav('clothing')}</h3>
+                    <p className="text-sm md:text-base text-muted-foreground">
                       {locale === 'el' ? 'Ανακαλύψτε τη συλλογή μας' : 'Discover our collection'}
                     </p>
                   </div>
@@ -98,9 +100,9 @@ export default async function HomePage() {
                       className="object-cover"
                     />
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-2xl font-bold mb-2">{tNav('shoes')}</h3>
-                    <p className="text-muted-foreground">
+                  <div className="p-4 md:p-6">
+                    <h3 className="text-xl md:text-2xl font-bold mb-2">{tNav('shoes')}</h3>
+                    <p className="text-sm md:text-base text-muted-foreground">
                       {locale === 'el' ? 'Δείτε τα παπούτσια μας' : 'Browse our shoes'}
                     </p>
                   </div>
@@ -113,10 +115,10 @@ export default async function HomePage() {
 
       {/* Featured Products */}
       {products && products.length > 0 && (
-        <section className="py-16 bg-muted/30">
+        <section className="py-12 md:py-16 bg-muted/30">
           <div className="container mx-auto px-4">
-            <div className="flex justify-between items-center mb-12">
-              <h2 className="text-3xl font-bold">{t('featured_products')}</h2>
+            <div className="flex justify-between items-center mb-8 md:mb-12">
+              <h2 className="text-2xl md:text-3xl font-bold">{t('featured_products')}</h2>
               <Link href="/shop">
                 <Button variant="outline">
                   {t('view_all')}
@@ -125,7 +127,7 @@ export default async function HomePage() {
               </Link>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {products.map((product) => (
                 <Link key={product.id} href={`/product/${product.id}`}>
                   <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
@@ -143,11 +145,11 @@ export default async function HomePage() {
                           <ShoppingBag className="h-20 w-20 text-muted-foreground" />
                         )}
                       </div>
-                      <div className="p-4">
-                        <h3 className="font-semibold mb-2 line-clamp-2">
+                      <div className="p-2 md:p-4">
+                        <h3 className="text-xs md:text-sm font-semibold mb-1 md:mb-2 line-clamp-2">
                           {locale === 'el' ? product.name_el : product.name_en}
                         </h3>
-                        <p className="text-lg font-bold text-primary">
+                        <p className="text-sm md:text-lg font-bold text-primary">
                           {formatPrice(product.price, locale)}
                         </p>
                       </div>
@@ -161,7 +163,7 @@ export default async function HomePage() {
       )}
 
       {/* Baptism & Decorations CTA */}
-      <section className="relative py-24 md:py-32 overflow-hidden min-h-[500px] flex items-center">
+      <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden min-h-[400px] md:min-h-[500px] flex items-center">
         {/* Background Image */}
         <div className="absolute inset-0 z-0">
           <Image
@@ -176,10 +178,10 @@ export default async function HomePage() {
         </div>
 
         <div className="container mx-auto px-4 text-center max-w-3xl relative z-10">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-white drop-shadow-2xl">
+          <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4 text-white drop-shadow-2xl">
             {locale === 'el' ? 'Βαπτιστικά & Στολισμοί' : 'Baptism & Decorations'}
           </h2>
-          <p className="text-lg md:text-xl text-white/90 mb-8 drop-shadow-lg">
+          <p className="text-base md:text-lg lg:text-xl text-white/90 mb-6 md:mb-8 drop-shadow-lg">
             {locale === 'el' 
               ? 'Δημιουργούμε μοναδικά βαπτιστικά πακέτα και στολισμούς για κάθε περίσταση'
               : 'We create unique baptism packages and decorations for every occasion'
@@ -188,11 +190,13 @@ export default async function HomePage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/gallery/baptism">
               <Button size="lg" className="shadow-xl w-full sm:w-auto">
+                <Baby className="mr-2 h-5 w-5" />
                 {tNav('baptism')}
               </Button>
             </Link>
             <Link href="/gallery/decorations">
               <Button size="lg" variant="outline" className="bg-white/90 hover:bg-white shadow-xl w-full sm:w-auto">
+                <BsBalloonHeart className="mr-2 h-5 w-5" />
                 {tNav('decorations')}
               </Button>
             </Link>

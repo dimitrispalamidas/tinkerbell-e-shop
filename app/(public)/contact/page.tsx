@@ -13,7 +13,7 @@ export async function generateMetadata() {
 
 export default function ContactPage() {
   return (
-    <div className="container mx-auto px-4 py-12 max-w-7xl">
+    <div className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
       <ContactContent />
     </div>
   )
@@ -25,18 +25,18 @@ async function ContactContent() {
   return (
     <>
       {/* Header */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold mb-4">{t('title')}</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+      <div className="text-center mb-8 md:mb-12">
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">{t('title')}</h1>
+        <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
           {t('subtitle')}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12">
         {/* Contact Information */}
-        <div className="space-y-8">
+        <div className="space-y-6 md:space-y-8">
           <div>
-            <h2 className="text-2xl font-semibold mb-6">{t('get_in_touch')}</h2>
+            <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">{t('get_in_touch')}</h2>
             <div className="space-y-6">
               {/* Email */}
               <div className="flex items-start gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
@@ -138,7 +138,7 @@ async function ContactContent() {
 
         {/* Map */}
         <div className="lg:sticky lg:top-24 h-fit">
-          <h2 className="text-2xl font-semibold mb-6">{t('find_us')}</h2>
+          <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">{t('find_us')}</h2>
           <div className="rounded-lg overflow-hidden border shadow-sm aspect-[4/3]">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3178.3!2d22.1143!3d37.0392!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1360082dcbf45d87%3A0x8e4c8b8c8b8c8b8c!2sGeorgouli%208%2C%20Kalamata%20241%2000!5e0!3m2!1sen!2sgr!4v1699999999999"
@@ -158,12 +158,12 @@ async function ContactContent() {
       </div>
 
       {/* Additional Info */}
-      <div className="mt-16 p-8 rounded-lg bg-muted/50 border">
-        <h2 className="text-2xl font-semibold mb-4">{t('visit_us_title')}</h2>
-        <p className="text-muted-foreground mb-4">
+      <div className="mt-12 md:mt-16 p-6 md:p-8 rounded-lg bg-muted/50 border">
+        <h2 className="text-xl md:text-2xl font-semibold mb-3 md:mb-4">{t('visit_us_title')}</h2>
+        <p className="text-sm md:text-base text-muted-foreground mb-4">
           {t('visit_us_text')}
         </p>
-        <ul className="list-disc list-inside text-muted-foreground space-y-2">
+        <ul className="list-disc list-inside text-sm md:text-base text-muted-foreground space-y-2">
           <li>{t('visit_benefit_1')}</li>
           <li>{t('visit_benefit_2')}</li>
           <li>{t('visit_benefit_3')}</li>

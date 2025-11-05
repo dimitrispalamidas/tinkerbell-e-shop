@@ -19,11 +19,11 @@ export default async function DecorationsGalleryPage() {
     .order('display_order', { ascending: true });
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-6 md:py-8">
       <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold mb-4">{t('decorations')}</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+        <div className="text-center mb-8 md:mb-12">
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">{t('decorations')}</h1>
+          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
             {t('custom_order')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -43,7 +43,7 @@ export default async function DecorationsGalleryPage() {
         </div>
 
         {items && items.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
             {items.map((item) => (
               <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
                 <CardContent className="p-0">
@@ -62,12 +62,12 @@ export default async function DecorationsGalleryPage() {
                       </div>
                     )}
                   </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-lg mb-2">
+                  <div className="p-3 md:p-4">
+                    <h3 className="font-semibold text-base md:text-lg mb-2">
                       {locale === 'el' ? item.title_el : item.title_en}
                     </h3>
                     {item.description_el && item.description_en && (
-                      <p className="text-sm text-muted-foreground">
+                      <p className="text-xs md:text-sm text-muted-foreground">
                         {locale === 'el' ? item.description_el : item.description_en}
                       </p>
                     )}

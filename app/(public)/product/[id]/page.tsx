@@ -38,8 +38,8 @@ export default async function ProductPage({
     .order('color');
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+    <div className="container mx-auto px-4 py-6 md:py-8">
+      <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-6xl mx-auto">
         {/* Product Images */}
         <ProductGallery
           images={product.images || []}
@@ -47,26 +47,26 @@ export default async function ProductPage({
         />
 
         {/* Product Details */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           <div>
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-2xl md:text-3xl font-bold mb-2">
               {locale === 'el' ? product.name_el : product.name_en}
             </h1>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-xs md:text-sm text-muted-foreground">
               {t('sku')}: {product.sku}
             </p>
           </div>
 
           <div>
-            <p className="text-3xl font-bold text-primary">
+            <p className="text-2xl md:text-3xl font-bold text-primary">
               {formatPrice(product.price, locale)}
             </p>
           </div>
 
           {product.description_el && product.description_en && (
             <div>
-              <h3 className="font-semibold mb-2">{t('description')}</h3>
-              <p className="text-muted-foreground">
+              <h3 className="text-base md:text-lg font-semibold mb-2">{t('description')}</h3>
+              <p className="text-sm md:text-base text-muted-foreground">
                 {locale === 'el' ? product.description_el : product.description_en}
               </p>
             </div>
