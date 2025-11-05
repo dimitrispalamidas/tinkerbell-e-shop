@@ -26,10 +26,22 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero Section με Video Background */}
+      {/* Hero Section με Static Background */}
       <section className="relative flex items-center min-h-[calc(100vh-4rem)]">
-        {/* Video Background */}
-        <VideoBackground />
+        {/* Static Background Image */}
+        <div className="absolute inset-0 z-0">
+          <Image
+            src="/hero-children2.jpg"
+            alt="Παιδικά Ρούχα και Παπούτσια"
+            fill
+            className="object-cover object-center"
+            style={{ objectPosition: 'center 40%' }}
+            priority
+            quality={90}
+          />
+          {/* Overlay για καλύτερη αναγνωσιμότητα */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
+        </div>
         
         {/* Content */}
         <div className="container mx-auto px-4 relative z-10">
@@ -50,12 +62,6 @@ export default async function HomePage() {
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-              <Link href="/gallery/decorations">
-                <Button size="lg" variant="outline" className="w-full sm:w-auto bg-white/90 hover:bg-white shadow-xl">
-                  <BsBalloonHeart className="mr-2 h-5 w-5" />
-                  {tNav('decorations')}
-                </Button>
-              </Link>
             </div>
           </div>
         </div>
@@ -73,7 +79,7 @@ export default async function HomePage() {
                 <CardContent className="p-0">
                   <div className="aspect-video relative overflow-hidden">
                     <Image
-                      src="/ρουχα.png"
+                      src="/clothes.jpg"
                       alt={tNav('clothing')}
                       fill
                       className="object-cover"
@@ -94,7 +100,7 @@ export default async function HomePage() {
                 <CardContent className="p-0">
                   <div className="aspect-video relative overflow-hidden">
                     <Image
-                      src="/παππουτσια.png"
+                      src="/shoes.jpg"
                       alt={tNav('shoes')}
                       fill
                       className="object-cover"
@@ -162,20 +168,10 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Baptism & Decorations CTA */}
+      {/* Baptism & Decorations CTA με Video Background */}
       <section className="relative py-16 md:py-24 lg:py-32 overflow-hidden min-h-[400px] md:min-h-[500px] flex items-center">
-        {/* Background Image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/stolismoi.webp"
-            alt="Βαπτιστικά & Στολισμοί"
-            fill
-            className="object-cover"
-            priority={false}
-          />
-          {/* Overlay όπως το video section */}
-          <div className="absolute inset-0 bg-black/40" />
-        </div>
+        {/* Video Background */}
+        <VideoBackground />
 
         <div className="container mx-auto px-4 text-center max-w-3xl relative z-10">
           <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4 text-white drop-shadow-2xl">
