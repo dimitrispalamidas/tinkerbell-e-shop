@@ -81,11 +81,11 @@ SELECT
 FROM categories WHERE slug = 'boys-clothing' LIMIT 1;
 
 -- Sample Gallery Items
-INSERT INTO gallery_items (category, title_el, title_en, description_el, description_en, display_order, is_active) VALUES
-('baptism', 'Βαπτιστικό Πακέτο Premium', 'Premium Baptism Package', 'Ολοκληρωμένο πακέτο για βάπτιση με θέμα θάλασσα', 'Complete baptism package with sea theme', 1, true),
-('baptism', 'Βαπτιστικό Πακέτο Classic', 'Classic Baptism Package', 'Κλασικό πακέτο για αγόρι ή κορίτσι', 'Classic package for boy or girl', 2, true),
-('decoration', 'Στολισμός Birthday Party', 'Birthday Party Decoration', 'Πλήρης στολισμός για παιδικό πάρτι', 'Complete decoration for kids party', 1, true),
-('decoration', 'Στολισμός Baby Shower', 'Baby Shower Decoration', 'Ρομαντικός στολισμός baby shower', 'Romantic baby shower decoration', 2, true);
+-- Note: Gallery items now only store images with display_order. Add items through admin panel.
+-- Example:
+-- INSERT INTO gallery_items (category, display_order, is_active, images) VALUES
+-- ('baptism', 1, true, ARRAY['https://example.com/image1.jpg', 'https://example.com/image2.jpg']),
+-- ('decoration', 1, true, ARRAY['https://example.com/image3.jpg', 'https://example.com/image4.jpg']);
 
 -- Note: To create an admin user, first create a user in Supabase Auth, then run:
 -- INSERT INTO admin_users (user_id, role) VALUES ('your-user-id-here', 'admin');

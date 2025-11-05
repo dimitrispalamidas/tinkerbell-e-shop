@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -30,6 +31,10 @@ type Product = {
 type TabType = 'active' | 'archived' | 'sold_out';
 
 export default function AdminProductsPage() {
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
+  
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,13 +55,15 @@ export default function AdminProductsPage() {
       setProducts(data || []);
     } catch (error) {
       console.error('Error fetching products:', error);
-      toast.error('Σφάλμα φόρτωσης προϊόντων');
+      toast.error(t('failed_fetch_product'));
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleArchive = async (productId: string) => {
+    if (!confirm(t('confirm_archive'))) return;
+    
     try {
       const supabase = createClient();
       const { error } = await supabase
@@ -69,15 +76,17 @@ export default function AdminProductsPage() {
         .eq('id', productId);
 
       if (error) throw error;
-      toast.success('Το προϊόν αρχειοθετήθηκε επιτυχώς!');
+      toast.success(t('product_archived'));
       fetchProducts();
     } catch (error) {
       console.error('Error archiving product:', error);
-      toast.error('Σφάλμα αρχειοθέτησης');
+      toast.error(t('failed_archive'));
     }
   };
 
   const handleRestore = async (productId: string) => {
+    if (!confirm(t('confirm_unarchive'))) return;
+    
     try {
       const supabase = createClient();
       
@@ -100,11 +109,11 @@ export default function AdminProductsPage() {
         .eq('id', productId);
 
       if (error) throw error;
-      toast.success(`Το προϊόν επαναφέρθηκε${newStatus === 'active' ? ' και είναι ενεργό' : ' αλλά χρειάζεται stock'}!`);
+      toast.success(t('product_unarchived'));
       fetchProducts();
     } catch (error) {
       console.error('Error restoring product:', error);
-      toast.error('Σφάλμα επαναφοράς');
+      toast.error(t('failed_unarchive'));
     }
   };
 
@@ -117,19 +126,19 @@ export default function AdminProductsPage() {
   const tabs = [
     { 
       id: 'active' as TabType, 
-      label: 'Προς Πώληση', 
+      label: t('active_tab'), 
       icon: PackageCheck,
       color: 'text-green-600'
     },
     { 
       id: 'archived' as TabType, 
-      label: 'Αρχειοθετημένα', 
+      label: t('archived_tab'), 
       icon: Archive,
       color: 'text-gray-600'
     },
     { 
       id: 'sold_out' as TabType, 
-      label: 'Πωληθέντα', 
+      label: t('sold_out_tab'), 
       icon: RotateCcw,
       color: 'text-orange-600'
     },
@@ -140,8 +149,8 @@ export default function AdminProductsPage() {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold">Προϊόντα</h1>
-            <p className="text-muted-foreground">Φόρτωση...</p>
+            <h1 className="text-3xl font-bold">{t('products_title')}</h1>
+            <p className="text-muted-foreground">{tCommon('loading')}</p>
           </div>
         </div>
       </div>
@@ -152,13 +161,13 @@ export default function AdminProductsPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Προϊόντα</h1>
-          <p className="text-muted-foreground">Διαχείριση καταλόγου προϊόντων</p>
+          <h1 className="text-3xl font-bold">{t('products_title')}</h1>
+          <p className="text-muted-foreground">{t('products_subtitle')}</p>
         </div>
         <Link href="/admin/products/new">
           <Button>
             <Plus className="mr-2 h-4 w-4" />
-            Προσθήκη Προϊόντος
+            {t('add_product_btn')}
           </Button>
         </Link>
       </div>
@@ -223,39 +232,39 @@ export default function AdminProductsPage() {
                       {product.images && product.images[0] ? (
                         <Image
                           src={product.images[0]}
-                          alt={product.name_el}
+                          alt={locale === 'el' ? product.name_el : product.name_en}
                           width={80}
                           height={80}
                           className="object-cover w-full h-full"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                          No image
+                          {t('no_image')}
                         </div>
                       )}
                     </div>
 
                     {/* Product Info */}
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold">{product.name_el}</h3>
+                      <h3 className="font-semibold">{locale === 'el' ? product.name_el : product.name_en}</h3>
                       <p className="text-sm text-muted-foreground">
-                        SKU: {product.sku} • Stock: {totalStock} • Πωλήθηκαν: {totalSold}
+                        {t('sku')}: {product.sku} • {t('stock')}: {totalStock} • {t('sold')}: {totalSold}
                       </p>
-                      <p className="text-sm text-muted-foreground">{product.name_en}</p>
+                      <p className="text-sm text-muted-foreground">{locale === 'el' ? product.name_en : product.name_el}</p>
                     </div>
 
                     {/* Price & Status */}
                     <div className="text-right">
-                      <p className="font-bold text-lg">{formatPrice(product.price, 'el')}</p>
+                      <p className="font-bold text-lg">{formatPrice(product.price, locale)}</p>
                       <p className="text-sm">
                         <span className={`px-2 py-1 rounded text-xs ${
                           product.status === 'active' ? 'bg-green-100 text-green-700' :
                           product.status === 'archived' ? 'bg-gray-100 text-gray-700' :
                           'bg-orange-100 text-orange-700'
                         }`}>
-                          {product.status === 'active' ? 'Ενεργό' :
-                           product.status === 'archived' ? 'Αρχειοθετημένο' :
-                           'Πωλήθηκε'}
+                          {product.status === 'active' ? t('active') :
+                           product.status === 'archived' ? t('archived') :
+                           t('sold_out')}
                         </span>
                       </p>
                     </div>
@@ -263,7 +272,7 @@ export default function AdminProductsPage() {
                     {/* Actions */}
                     <div className="flex gap-2">
                       <Link href={`/admin/products/${product.id}`}>
-                        <Button variant="outline" size="sm">
+                        <Button variant="outline" size="sm" title={tCommon('edit')}>
                           <Pencil className="h-4 w-4" />
                         </Button>
                       </Link>
@@ -273,7 +282,7 @@ export default function AdminProductsPage() {
                           variant="outline" 
                           size="sm"
                           onClick={() => handleArchive(product.id)}
-                          title="Αρχειοθέτηση"
+                          title={t('archive')}
                         >
                           <Archive className="h-4 w-4" />
                         </Button>
@@ -284,7 +293,7 @@ export default function AdminProductsPage() {
                           variant="outline" 
                           size="sm"
                           onClick={() => handleRestore(product.id)}
-                          title={activeTab === 'sold_out' ? 'Επεξεργασία για Restock' : 'Επαναφορά'}
+                          title={t('unarchive')}
                         >
                           <RotateCcw className="h-4 w-4" />
                         </Button>
@@ -300,15 +309,13 @@ export default function AdminProductsPage() {
         <Card>
           <CardContent className="p-12 text-center">
             <p className="text-muted-foreground mb-4">
-              {activeTab === 'active' && 'Δεν υπάρχουν ενεργά προϊόντα'}
-              {activeTab === 'archived' && 'Δεν υπάρχουν αρχειοθετημένα προϊόντα'}
-              {activeTab === 'sold_out' && 'Δεν υπάρχουν πωληθέντα προϊόντα'}
+              {t('no_products')}
             </p>
             {activeTab === 'active' && (
               <Link href="/admin/products/new">
                 <Button>
                   <Plus className="mr-2 h-4 w-4" />
-                  Προσθήκη Πρώτου Προϊόντος
+                  {t('add_product_btn')}
                 </Button>
               </Link>
             )}

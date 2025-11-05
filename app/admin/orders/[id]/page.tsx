@@ -2,6 +2,7 @@
 
 import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,10 @@ import type { Order, OrderItem } from '@/lib/types/database';
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
   const router = useRouter();
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
+  
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,19 +67,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       .eq('id', unwrappedParams.id);
 
     if (error) {
-      toast.error('Failed to update order');
+      toast.error(t('failed_update_order'));
     } else {
-      toast.success('Order updated successfully');
+      toast.success(t('order_updated'));
       fetchOrder();
     }
   };
 
   if (isLoading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return <div className="text-center py-8">{tCommon('loading')}</div>;
   }
 
   if (!order) {
-    return <div className="text-center py-8">Order not found</div>;
+    return <div className="text-center py-8">{t('no_orders')}</div>;
   }
 
   return (
@@ -86,35 +91,35 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Order Details</h1>
-          <p className="text-muted-foreground">Order ID: {order.id}</p>
+          <h1 className="text-3xl font-bold">{t('order_detail_title')}</h1>
+          <p className="text-muted-foreground">{t('order_id')}: {order.id}</p>
         </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Customer Information</CardTitle>
+            <CardTitle>{t('customer_info')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div>
-              <p className="text-sm text-muted-foreground">Name</p>
+              <p className="text-sm text-muted-foreground">{t('customer_name')}</p>
               <p className="font-medium">{order.customer_name}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Email</p>
+              <p className="text-sm text-muted-foreground">{t('customer_email')}</p>
               <p className="font-medium">{order.customer_email}</p>
             </div>
             {order.customer_phone && (
               <div>
-                <p className="text-sm text-muted-foreground">Phone</p>
+                <p className="text-sm text-muted-foreground">{t('customer_phone')}</p>
                 <p className="font-medium">{order.customer_phone}</p>
               </div>
             )}
             <div>
-              <p className="text-sm text-muted-foreground">Order Date</p>
+              <p className="text-sm text-muted-foreground">{t('date')}</p>
               <p className="font-medium">
-                {new Date(order.created_at).toLocaleString('el-GR')}
+                {new Date(order.created_at).toLocaleString(locale === 'el' ? 'el-GR' : 'en-US')}
               </p>
             </div>
           </CardContent>
@@ -122,18 +127,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
         <Card>
           <CardHeader>
-            <CardTitle>Delivery Information</CardTitle>
+            <CardTitle>{t('delivery_method')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             {order.boxnow_locker_id && (
               <div>
-                <p className="text-sm text-muted-foreground">BOXNOW Locker ID</p>
+                <p className="text-sm text-muted-foreground">{t('locker_id')}</p>
                 <p className="font-medium">{order.boxnow_locker_id}</p>
               </div>
             )}
             {order.shipping_address && (
               <div>
-                <p className="text-sm text-muted-foreground">Shipping Address</p>
+                <p className="text-sm text-muted-foreground">{t('shipping_address')}</p>
                 <p className="font-medium">{JSON.stringify(order.shipping_address)}</p>
               </div>
             )}
@@ -143,7 +148,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
       <Card>
         <CardHeader>
-          <CardTitle>Order Items</CardTitle>
+          <CardTitle>{t('order_items')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -152,18 +157,18 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <div>
                   <p className="font-medium">{item.product_name}</p>
                   <p className="text-sm text-muted-foreground">
-                    Quantity: {item.quantity}
-                    {item.size && ` • Size: ${item.size}`}
-                    {item.color && ` • Color: ${item.color}`}
+                    {t('quantity')}: {item.quantity}
+                    {item.size && ` • ${t('size')}: ${item.size}`}
+                    {item.color && ` • ${t('color')}: ${item.color}`}
                   </p>
                 </div>
-                <p className="font-semibold">{formatPrice(item.price * item.quantity, 'el')}</p>
+                <p className="font-semibold">{formatPrice(item.price * item.quantity, locale)}</p>
               </div>
             ))}
             
             <div className="border-t pt-4 flex justify-between items-center">
-              <p className="text-lg font-bold">Total</p>
-              <p className="text-2xl font-bold text-primary">{formatPrice(order.total, 'el')}</p>
+              <p className="text-lg font-bold">{t('total')}</p>
+              <p className="text-2xl font-bold text-primary">{formatPrice(order.total, locale)}</p>
             </div>
           </div>
         </CardContent>
@@ -171,35 +176,35 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
       <Card>
         <CardHeader>
-          <CardTitle>Order Management</CardTitle>
+          <CardTitle>{t('update_order_status')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">Status</label>
+            <label className="block text-sm font-medium mb-2">{t('order_status')}</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               className="w-full px-3 py-2 border rounded-md"
             >
-              <option value="pending">Pending</option>
-              <option value="paid">Paid</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="pending">{t('pending')}</option>
+              <option value="paid">{t('paid')}</option>
+              <option value="shipped">{t('shipped')}</option>
+              <option value="delivered">{t('delivered')}</option>
+              <option value="cancelled">{t('cancelled')}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">BOXNOW Tracking Code</label>
+            <label className="block text-sm font-medium mb-2">{t('boxnow_locker')}</label>
             <Input
               value={trackingCode}
               onChange={(e) => setTrackingCode(e.target.value)}
-              placeholder="Enter tracking code"
+              placeholder={t('transaction_id')}
             />
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">Payment Status: {order.payment_status}</p>
+            <p className="text-sm text-muted-foreground">{t('payment_status')}: {t(order.payment_status)}</p>
             {order.viva_order_code && (
               <p className="text-sm text-muted-foreground">
                 Viva Order Code: {order.viva_order_code}
@@ -213,11 +218,10 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <Button onClick={handleUpdateOrder} className="w-full">
-            Update Order
+            {t('update_order_status')}
           </Button>
         </CardContent>
       </Card>
     </div>
   );
 }
-

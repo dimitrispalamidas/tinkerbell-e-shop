@@ -11,6 +11,7 @@ import {
   Section,
   Text,
   Hr,
+  Button,
 } from '@react-email/components';
 import * as React from 'react';
 
@@ -30,6 +31,7 @@ interface OrderConfirmationEmailProps {
   items: OrderItem[];
   boxnowTrackingCode?: string;
   boxnowLockerAddress?: string;
+  baseUrl?: string;
 }
 
 export const OrderConfirmationEmail = ({
@@ -40,9 +42,13 @@ export const OrderConfirmationEmail = ({
   items = [],
   boxnowTrackingCode,
   boxnowLockerAddress,
+  baseUrl = 'https://tinkerbell-e-shop.vercel.app',
 }: OrderConfirmationEmailProps) => (
   <Html>
-    <Head />
+    <Head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <meta name="x-apple-disable-message-reformatting" />
+    </Head>
     <Preview>Η παραγγελία σας #{orderCode} επιβεβαιώθηκε - Tinkerbell</Preview>
     <Body style={main}>
       <Container style={container}>
@@ -139,21 +145,42 @@ export const OrderConfirmationEmail = ({
             Τι ακολουθεί;
           </Heading>
           <Text style={paragraph}>
-            Επεξεργαζόμαστε την παραγγελία σας και θα σας στείλουμε ενημερώσεις μέσω email.
+            ✅ Επεξεργαζόμαστε την παραγγελία σας
           </Text>
+          <Text style={paragraph}>
+            📦 Θα προετοιμάσουμε τα προϊόντα σας
+          </Text>
+          <Text style={paragraph}>
+            📧 Θα σας στείλουμε ενημερώσεις μέσω email
+          </Text>
+          
+          <div style={buttonContainer}>
+            <Button href={`${baseUrl}/shop`} style={button}>
+              Συνέχεια Αγορών
+            </Button>
+          </div>
         </Section>
 
         {/* Footer */}
         <Section style={footer}>
           <Hr style={hr} />
+          <Heading as="h3" style={h3Footer}>
+            Χρειάζεστε βοήθεια;
+          </Heading>
           <Text style={footerText}>
-            Χρειάζεστε βοήθεια;{' '}
+            📧 Email:{' '}
             <Link href="mailto:tinkerbellkalamatas@gmail.com" style={link}>
               tinkerbellkalamatas@gmail.com
             </Link>
           </Text>
           <Text style={footerText}>
-            Τηλέφωνο: +30 123 456 7890
+            📞 Τηλέφωνο:{' '}
+            <Link href="tel:+302721406303" style={link}>
+              2721 406303
+            </Link>
+          </Text>
+          <Text style={footerText}>
+            📍 Γεωργούλη 8, Καλαμάτα
           </Text>
           <Text style={copyright}>© 2025 Tinkerbell. Με επιφύλαξη παντός δικαιώματος.</Text>
         </Section>
@@ -174,14 +201,17 @@ const main = {
 const container = {
   backgroundColor: '#ffffff',
   margin: '0 auto',
-  padding: '20px 0 48px',
+  padding: '20px 10px 48px',
   marginBottom: '64px',
   maxWidth: '600px',
+  width: '100%',
 };
 
 const header = {
   textAlign: 'center' as const,
-  padding: '32px 0',
+  padding: '24px 8px',
+  maxWidth: '100%',
+  boxSizing: 'border-box' as const,
 };
 
 const logo = {
@@ -190,7 +220,7 @@ const logo = {
 
 const h1 = {
   color: '#ffb3d9',
-  fontSize: '32px',
+  fontSize: '28px',
   fontWeight: 'bold',
   margin: '8px 0',
   padding: '0',
@@ -206,41 +236,47 @@ const tagline = {
 
 const successSection = {
   textAlign: 'center' as const,
-  padding: '24px',
+  padding: '20px 8px',
+  maxWidth: '100%',
+  boxSizing: 'border-box' as const,
 };
 
 const successIcon = {
-  fontSize: '48px',
+  fontSize: '40px',
   color: '#22c55e',
-  margin: '0 0 16px 0',
+  margin: '0 0 12px 0',
 };
 
 const h2 = {
   color: '#22c55e',
-  fontSize: '24px',
+  fontSize: '22px',
   fontWeight: 'bold',
-  margin: '0 0 16px 0',
+  margin: '0 0 12px 0',
 };
 
 const h3 = {
   color: '#333333',
-  fontSize: '18px',
+  fontSize: '17px',
   fontWeight: 'bold',
-  margin: '24px 0 16px 0',
+  margin: '20px 0 12px 0',
 };
 
 const paragraph = {
   color: '#333333',
-  fontSize: '16px',
-  lineHeight: '24px',
-  margin: '0 0 16px 0',
+  fontSize: '15px',
+  lineHeight: '22px',
+  margin: '0 0 12px 0',
+  wordBreak: 'break-word' as const,
+  overflowWrap: 'break-word' as const,
 };
 
 const orderDetails = {
-  padding: '24px',
+  padding: '16px',
   backgroundColor: '#f9f9f9',
   borderRadius: '8px',
-  margin: '24px 24px',
+  margin: '20px 8px',
+  maxWidth: '100%',
+  boxSizing: 'border-box' as const,
 };
 
 const detailTitle = {
@@ -254,13 +290,18 @@ const detailTitle = {
 
 const detailValue = {
   color: '#333333',
-  fontSize: '16px',
+  fontSize: '14px',
   margin: '0 0 16px 0',
   fontFamily: 'monospace',
+  wordBreak: 'break-word' as const,
+  overflowWrap: 'break-word' as const,
+  maxWidth: '100%',
 };
 
 const itemsSection = {
-  padding: '0 24px',
+  padding: '0 8px',
+  maxWidth: '100%',
+  boxSizing: 'border-box' as const,
 };
 
 const itemRow = {
@@ -274,9 +315,11 @@ const itemDetails = {
 
 const itemName = {
   color: '#333333',
-  fontSize: '16px',
+  fontSize: '15px',
   fontWeight: 'bold',
   margin: '0 0 4px 0',
+  wordBreak: 'break-word' as const,
+  overflowWrap: 'break-word' as const,
 };
 
 const itemVariant = {
@@ -316,10 +359,11 @@ const totalLabel = {
 
 const totalAmount = {
   color: '#ffb3d9',
-  fontSize: '24px',
+  fontSize: '20px',
   fontWeight: 'bold',
   margin: '0',
   textAlign: 'right' as const,
+  wordBreak: 'break-word' as const,
 };
 
 const hr = {
@@ -328,17 +372,21 @@ const hr = {
 };
 
 const trackingSection = {
-  padding: '24px',
+  padding: '16px',
   backgroundColor: '#f0f9ff',
   borderRadius: '8px',
-  margin: '24px 24px',
+  margin: '20px 8px',
+  maxWidth: '100%',
+  boxSizing: 'border-box' as const,
 };
 
 const nextStepsSection = {
-  padding: '24px',
+  padding: '16px',
   backgroundColor: '#eff6ff',
   borderRadius: '8px',
-  margin: '24px 24px',
+  margin: '20px 8px',
+  maxWidth: '100%',
+  boxSizing: 'border-box' as const,
 };
 
 const smallText = {
@@ -349,7 +397,17 @@ const smallText = {
 };
 
 const footer = {
-  padding: '24px',
+  padding: '20px 8px',
+  textAlign: 'center' as const,
+  maxWidth: '100%',
+  boxSizing: 'border-box' as const,
+};
+
+const h3Footer = {
+  color: '#333333',
+  fontSize: '18px',
+  fontWeight: 'bold',
+  margin: '0 0 16px 0',
   textAlign: 'center' as const,
 };
 
@@ -357,16 +415,40 @@ const footerText = {
   color: '#666666',
   fontSize: '14px',
   margin: '8px 0',
+  lineHeight: '20px',
+  wordBreak: 'break-word' as const,
+  overflowWrap: 'break-word' as const,
 };
 
 const link = {
   color: '#ffb3d9',
   textDecoration: 'underline',
+  fontWeight: '600',
 };
 
 const copyright = {
   color: '#999999',
   fontSize: '12px',
   margin: '16px 0 0 0',
+};
+
+const buttonContainer = {
+  textAlign: 'center' as const,
+  margin: '24px 0 0 0',
+};
+
+const button = {
+  backgroundColor: '#ffb3d9',
+  borderRadius: '8px',
+  color: '#ffffff',
+  fontSize: '15px',
+  fontWeight: 'bold',
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  display: 'inline-block',
+  padding: '12px 24px',
+  margin: '0 auto',
+  maxWidth: '90%',
+  boxSizing: 'border-box' as const,
 };
 

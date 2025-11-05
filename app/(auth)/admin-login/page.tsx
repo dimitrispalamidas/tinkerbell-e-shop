@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,6 +11,9 @@ import { toast } from 'sonner';
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -57,11 +61,11 @@ export default function AdminLoginPage() {
       if (error) {
         // User-friendly error messages
         if (error.message.includes('Invalid login credentials')) {
-          toast.error('Λάθος email ή password');
+          toast.error(t('wrong_credentials'));
         } else if (error.message.includes('Email not confirmed')) {
-          toast.error('Το email δεν έχει επιβεβαιωθεί');
+          toast.error(t('email_not_confirmed'));
         } else {
-          toast.error(error.message || 'Αποτυχία σύνδεσης');
+          toast.error(error.message || t('login_failed'));
         }
         return;
       }
@@ -75,10 +79,10 @@ export default function AdminLoginPage() {
         localStorage.removeItem('tinkerbell_remember_me');
       }
 
-      toast.success('Επιτυχής σύνδεση!');
+      toast.success(t('login_success'));
       router.push('/admin');
     } catch (error: any) {
-      toast.error('Κάτι πήγε στραβά. Δοκιμάστε ξανά.');
+      toast.error(t('something_wrong'));
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +95,7 @@ export default function AdminLoginPage() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p>Checking authentication...</p>
+              <p>{t('checking_auth')}</p>
             </div>
           </CardContent>
         </Card>
@@ -104,13 +108,13 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
-            Admin Login
+            {t('admin_login')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">Email</label>
+              <label className="block text-sm font-medium mb-2">{tCommon('email')}</label>
               <Input
                 type="email"
                 value={email}
@@ -120,7 +124,7 @@ export default function AdminLoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Password</label>
+              <label className="block text-sm font-medium mb-2">{tCommon('password')}</label>
               <Input
                 type="password"
                 value={password}
@@ -138,7 +142,7 @@ export default function AdminLoginPage() {
                 className="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500"
               />
               <label htmlFor="rememberMe" className="text-sm font-medium cursor-pointer">
-                Να με θυμάσαι
+                {t('remember_me')}
               </label>
             </div>
             <Button
@@ -146,7 +150,7 @@ export default function AdminLoginPage() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? t('logging_in') : t('login')}
             </Button>
           </form>
           <div className="mt-4">
@@ -156,7 +160,7 @@ export default function AdminLoginPage() {
               className="w-full"
               onClick={() => router.push('/')}
             >
-              Πίσω στην Αρχική
+              {t('back_to_home')}
             </Button>
           </div>
         </CardContent>
@@ -164,4 +168,3 @@ export default function AdminLoginPage() {
     </div>
   );
 }
-

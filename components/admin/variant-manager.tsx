@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +21,9 @@ type VariantManagerProps = {
 };
 
 export function VariantManager({ sizes, colors, variants, onChange }: VariantManagerProps) {
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
+  
   const [localVariants, setLocalVariants] = useState<Variant[]>(variants);
 
   useEffect(() => {
@@ -92,11 +96,11 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Διαχείριση Αποθέματος</CardTitle>
+          <CardTitle>{t('variant_management')}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Προσθέστε πρώτα μεγέθη και χρώματα για να διαχειριστείτε το απόθεμα.
+            {t('add_sizes_colors_first')}
           </p>
         </CardContent>
       </Card>
@@ -107,7 +111,7 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
     <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Διαχείριση Αποθέματος</CardTitle>
+          <CardTitle>{t('variant_management')}</CardTitle>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -116,7 +120,7 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
               onClick={generateAllCombinations}
             >
               <Plus className="h-4 w-4 mr-1" />
-              Δημιουργία Όλων
+              {t('generate_all')}
             </Button>
             <Button
               type="button"
@@ -125,7 +129,7 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
               onClick={addVariant}
             >
               <Plus className="h-4 w-4 mr-1" />
-              Προσθήκη
+              {t('add')}
             </Button>
           </div>
         </div>
@@ -133,14 +137,14 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
       <CardContent>
         {localVariants.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            Δεν υπάρχουν παραλλαγές. Κλικ "Δημιουργία Όλων" για αυτόματη δημιουργία όλων των συνδυασμών.
+            {t('no_variants_hint')}
           </p>
         ) : (
           <div className="space-y-3">
             <div className="grid grid-cols-[1fr_1fr_120px_40px] gap-3 text-sm font-medium text-muted-foreground pb-2 border-b">
-              <div>Μέγεθος</div>
-              <div>Χρώμα</div>
-              <div>Απόθεμα</div>
+              <div>{t('size')}</div>
+              <div>{t('color')}</div>
+              <div>{t('stock')}</div>
               <div></div>
             </div>
             {localVariants.map((variant, index) => (
@@ -179,6 +183,7 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
                   size="icon"
                   onClick={() => removeVariant(index)}
                   className="text-destructive hover:text-destructive"
+                  title={tCommon('delete')}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>
@@ -187,10 +192,9 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
           </div>
         )}
         <p className="text-xs text-muted-foreground mt-4">
-          Συνολικό απόθεμα: {localVariants.reduce((sum, v) => sum + v.stock, 0)} τεμάχια
+          {t('total_stock')}: {localVariants.reduce((sum, v) => sum + v.stock, 0)} {t('pieces')}
         </p>
       </CardContent>
     </Card>
   );
 }
-

@@ -1,0 +1,5 @@
+---
+alwaysApply: true
+---
+
+My project is with toggle language so every new import and old ones should aligned with local translation jsons and toggle values also with items from database with double descriptions/titles

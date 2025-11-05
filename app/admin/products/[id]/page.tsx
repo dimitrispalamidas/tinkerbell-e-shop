@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,9 @@ export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.id as string;
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
+  const locale = useLocale();
   
   const [isLoading, setIsLoading] = useState(false);
   const [isFetching, setIsFetching] = useState(true);
@@ -99,7 +103,7 @@ export default function EditProductPage() {
         })));
       }
     } catch (error: any) {
-      toast.error(error.message || 'Αποτυχία φόρτωσης προϊόντος');
+      toast.error(error.message || t('failed_fetch_product'));
       router.push('/admin/products');
     } finally {
       setIsFetching(false);
@@ -137,9 +141,9 @@ export default function EditProductPage() {
       }
 
       setImageUrls([...imageUrls, ...uploadedUrls]);
-      toast.success(`Uploaded ${uploadedUrls.length} image(s)`);
+      toast.success(t('uploaded_count', { count: uploadedUrls.length }));
     } catch (error: any) {
-      toast.error(error.message || 'Failed to upload images');
+      toast.error(error.message || t('failed_upload'));
     } finally {
       setUploadingImages(false);
     }
@@ -215,21 +219,21 @@ export default function EditProductPage() {
         if (variantError) throw variantError;
       }
 
-      toast.success('Το προϊόν ενημερώθηκε επιτυχώς!');
+      toast.success(t('product_updated'));
       router.push('/admin/products');
     } catch (error: any) {
       console.error('Product update error:', error);
       
       if (error.code === '23505') {
         if (error.message.includes('products_sku_key')) {
-          toast.error('Το SKU υπάρχει ήδη! Χρησιμοποίησε διαφορετικό.');
+          toast.error(t('sku_exists'));
         } else if (error.message.includes('product_variants')) {
-          toast.error('Υπάρχει duplicate variant (size/color combination).');
+          toast.error(t('duplicate_variant'));
         } else {
-          toast.error('Το στοιχείο υπάρχει ήδη.');
+          toast.error(t('item_exists'));
         }
       } else {
-        toast.error(error.message || 'Αποτυχία ενημέρωσης προϊόντος');
+        toast.error(error.message || t('failed_update_product'));
       }
     } finally {
       setIsLoading(false);
@@ -253,8 +257,8 @@ export default function EditProductPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Επεξεργασία Προϊόντος</h1>
-          <p className="text-muted-foreground">Ενημέρωση στοιχείων προϊόντος</p>
+          <h1 className="text-3xl font-bold">{t('edit_product_title')}</h1>
+          <p className="text-muted-foreground">{t('edit_product_subtitle')}</p>
         </div>
       </div>
 
@@ -262,11 +266,11 @@ export default function EditProductPage() {
         <div className="grid gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>Βασικές Πληροφορίες</CardTitle>
+              <CardTitle>{t('product_info')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Κωδικός Προϊόντος (SKU) *</label>
+                <label className="block text-sm font-medium mb-2">{t('sku_required')}</label>
                 <Input
                   value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
@@ -276,23 +280,23 @@ export default function EditProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Κατηγορία</label>
+                <label className="block text-sm font-medium mb-2">{t('category')}</label>
                 <select
                   value={formData.category_id}
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md"
                 >
-                  <option value="">Χωρίς κατηγορία</option>
+                  <option value="">{t('no_category')}</option>
                   {categories.map(cat => (
                     <option key={cat.id} value={cat.id}>
-                      {cat.name_el} ({cat.type})
+                      {locale === 'el' ? cat.name_el : cat.name_en} ({cat.type})
                     </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Τιμή (EUR) *</label>
+                <label className="block text-sm font-medium mb-2">{t('price_required')}</label>
                 <Input
                   type="number"
                   step="0.01"
@@ -308,11 +312,11 @@ export default function EditProductPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Ελληνικά</CardTitle>
+              <CardTitle>{t('greek_info')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Όνομα *</label>
+                <label className="block text-sm font-medium mb-2">{t('name_el_required')}</label>
                 <Input
                   value={formData.name_el}
                   onChange={(e) => setFormData({ ...formData, name_el: e.target.value })}
@@ -322,7 +326,7 @@ export default function EditProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Περιγραφή</label>
+                <label className="block text-sm font-medium mb-2">{t('description_el')}</label>
                 <textarea
                   className="w-full px-3 py-2 border rounded-md min-h-[100px]"
                   value={formData.description_el}
@@ -335,11 +339,11 @@ export default function EditProductPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Αγγλικά</CardTitle>
+              <CardTitle>{t('english_info')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Όνομα *</label>
+                <label className="block text-sm font-medium mb-2">{t('name_en_required')}</label>
                 <Input
                   value={formData.name_en}
                   onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
@@ -349,7 +353,7 @@ export default function EditProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Περιγραφή</label>
+                <label className="block text-sm font-medium mb-2">{t('description_en')}</label>
                 <textarea
                   className="w-full px-3 py-2 border rounded-md min-h-[100px]"
                   value={formData.description_en}
@@ -362,30 +366,30 @@ export default function EditProductPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Παραλλαγές</CardTitle>
+              <CardTitle>{t('available_options')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">Μεγέθη (χωρισμένα με κόμμα)</label>
+                <label className="block text-sm font-medium mb-2">{t('sizes')}</label>
                 <Input
                   value={formData.sizes}
                   onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
                   placeholder="4Y, 6Y, 8Y, 10Y, 12Y"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Εισάγετε μεγέθη χωρισμένα με κόμμα
+                  {t('sizes_hint')}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">Χρώματα (χωρισμένα με κόμμα)</label>
+                <label className="block text-sm font-medium mb-2">{t('colors')}</label>
                 <Input
                   value={formData.colors}
                   onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
                   placeholder="Ροζ, Μπλε, Πράσινο"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Εισάγετε χρώματα χωρισμένα με κόμμα
+                  {t('colors_hint')}
                 </p>
               </div>
             </CardContent>
@@ -400,7 +404,7 @@ export default function EditProductPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>Εικόνες Προϊόντος</CardTitle>
+              <CardTitle>{t('product_images')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -408,10 +412,10 @@ export default function EditProductPage() {
                   <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
                     <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <p className="text-sm font-medium mb-1">
-                      {uploadingImages ? 'Φόρτωση...' : 'Κλικ για ανέβασμα εικόνων'}
+                      {uploadingImages ? t('uploading') : t('click_upload')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      PNG, JPG, WEBP έως 5MB η καθεμία
+                      {t('upload_format')}
                     </p>
                   </div>
                   <input
@@ -445,7 +449,7 @@ export default function EditProductPage() {
                       </button>
                       {index === 0 && (
                         <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
-                          Κύρια
+                          {t('main_image')}
                         </span>
                       )}
                     </div>
@@ -458,11 +462,11 @@ export default function EditProductPage() {
           <div className="flex gap-4">
             <Link href="/admin/products" className="flex-1">
               <Button type="button" variant="outline" className="w-full">
-                Ακύρωση
+                {tCommon('cancel')}
               </Button>
             </Link>
             <Button type="submit" className="flex-1" disabled={isLoading}>
-              {isLoading ? 'Ενημέρωση...' : 'Ενημέρωση Προϊόντος'}
+              {isLoading ? t('updating') : t('update_product')}
             </Button>
           </div>
         </div>

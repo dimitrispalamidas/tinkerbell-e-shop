@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { LayoutDashboard, Package, ShoppingCart, Image as ImageIcon, LogOut } from 'lucide-react';
@@ -11,19 +12,21 @@ import { toast } from 'sonner';
 export function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
 
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    toast.success('Αποσυνδεθήκατε επιτυχώς');
+    toast.success(tCommon('logout'));
     router.push('/admin-login');
   };
 
   const navItems = [
-    { href: '/admin', label: 'Πίνακας', icon: LayoutDashboard },
-    { href: '/admin/products', label: 'Προϊόντα', icon: Package },
-    { href: '/admin/orders', label: 'Παραγγελίες', icon: ShoppingCart },
-    { href: '/admin/gallery', label: 'Γκαλερί', icon: ImageIcon },
+    { href: '/admin', label: t('dashboard'), icon: LayoutDashboard },
+    { href: '/admin/products', label: t('products'), icon: Package },
+    { href: '/admin/orders', label: t('orders'), icon: ShoppingCart },
+    { href: '/admin/gallery', label: t('gallery'), icon: ImageIcon },
   ];
 
   return (
@@ -32,7 +35,7 @@ export function AdminNav() {
         <Link href="/admin" className="mr-6 flex items-center gap-2">
           <Image 
             src="/logo.webp" 
-            alt="Τίνκερμπελ Admin" 
+            alt="Tinkerbell Admin" 
             width={200} 
             height={42}
             style={{ objectFit: 'contain', height: '42px', width: 'auto' }}
@@ -63,10 +66,9 @@ export function AdminNav() {
 
         <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2">
           <LogOut className="h-4 w-4" />
-          Αποσύνδεση
+          {tCommon('logout')}
         </Button>
       </div>
     </header>
   );
 }
-

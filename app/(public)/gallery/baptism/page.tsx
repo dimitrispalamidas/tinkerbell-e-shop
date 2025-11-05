@@ -1,30 +1,75 @@
-import { getTranslations, getLocale } from 'next-intl/server';
-import { createClient } from '@/lib/supabase/server';
+"use client"
+
+import { useState, useEffect } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
+import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Mail, Phone } from 'lucide-react';
+import { PhotoLightbox } from '@/components/gallery/photo-lightbox';
 
-export default async function BaptismGalleryPage() {
-  const locale = await getLocale();
-  const t = await getTranslations('gallery');
-
-  const supabase = await createClient();
+export default function BaptismGalleryPage() {
+  const t = useTranslations('gallery');
+  const locale = useLocale();
   
-  const { data: items } = await supabase
-    .from('gallery_items')
-    .select('*')
-    .eq('category', 'baptism')
-    .eq('is_active', true)
-    .order('display_order', { ascending: true });
+  const [items, setItems] = useState<any[]>([]);
+  const [allPhotos, setAllPhotos] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  useEffect(() => {
+    fetchGalleryItems();
+  }, []);
+
+  const fetchGalleryItems = async () => {
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('gallery_items')
+        .select('*')
+        .eq('category', 'baptism')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true });
+
+      if (data) {
+        setItems(data);
+        // Extract image from each item
+        const photos = data.map((item) => item.image).filter(Boolean);
+        setAllPhotos(photos);
+      }
+    } catch (error) {
+      console.error('Failed to fetch gallery items:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-6 md:py-8">
+        <div className="flex items-center justify-center min-h-[400px]">
+          <p className="text-muted-foreground">{t('loading')}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-6 md:py-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
         <div className="text-center mb-8 md:mb-12">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">{t('baptism_packages')}</h1>
-          <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
-            {t('custom_order')}
+          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
+            {t('baptism_title')}
+          </h1>
+          <p className="text-base md:text-lg text-muted-foreground max-w-5xl mx-auto mb-6 leading-relaxed">
+            {t('baptism_subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="gap-2" asChild>
@@ -42,49 +87,43 @@ export default async function BaptismGalleryPage() {
           </div>
         </div>
 
-        {items && items.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-            {items.map((item) => (
-              <Card key={item.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-                <CardContent className="p-0">
-                  <div className="aspect-square bg-gradient-to-br from-lavender/20 to-pink/20">
-                    {item.images && item.images[0] ? (
-                      <Image
-                        src={item.images[0]}
-                        alt={locale === 'el' ? item.title_el : item.title_en}
-                        width={400}
-                        height={400}
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        No image
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3 md:p-4">
-                    <h3 className="font-semibold text-base md:text-lg mb-2">
-                      {locale === 'el' ? item.title_el : item.title_en}
-                    </h3>
-                    {item.description_el && item.description_en && (
-                      <p className="text-xs md:text-sm text-muted-foreground">
-                        {locale === 'el' ? item.description_el : item.description_en}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+        {/* Photo Grid */}
+        {allPhotos.length > 0 ? (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+            {allPhotos.map((photo, index) => (
+              <button
+                key={index}
+                onClick={() => openLightbox(index)}
+                className="relative aspect-square overflow-hidden rounded-lg bg-gradient-to-br from-lavender/20 to-pink/20 hover:scale-105 transition-transform duration-300 group"
+              >
+                <Image
+                  src={photo}
+                  alt={`${t('baptism_title')} ${index + 1}`}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+              </button>
             ))}
           </div>
         ) : (
           <div className="text-center py-16">
             <p className="text-xl text-muted-foreground">
-              {locale === 'el' ? 'Σύντομα νέα έργα!' : 'New works coming soon!'}
+              {t('coming_soon')}
             </p>
           </div>
         )}
       </div>
+
+      {/* Lightbox */}
+      {lightboxOpen && (
+        <PhotoLightbox
+          images={allPhotos}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxOpen(false)}
+        />
+      )}
     </div>
   );
 }
-

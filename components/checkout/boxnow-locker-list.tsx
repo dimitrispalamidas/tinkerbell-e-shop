@@ -210,7 +210,7 @@ export function BoxnowLockerList({ selectedLockerId, onSelectLocker, locale }: B
   return (
     <div className="space-y-4">
       <div>
-        <p className="text-sm text-muted-foreground mb-4">
+        <p className="text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">
           {locale === 'el' 
             ? 'Επιλέξτε το πλησιέστερο BOXNOW locker για παραλαβή της παραγγελίας σας' 
             : 'Select the nearest BOXNOW locker to collect your order'}
@@ -221,26 +221,27 @@ export function BoxnowLockerList({ selectedLockerId, onSelectLocker, locale }: B
           placeholder={locale === 'el' ? 'Αναζήτηση περιοχής, πόλης, ΤΚ...' : 'Search area, city, postal code...'}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
+          className="text-base"
         />
       </div>
 
-      <div className="space-y-2 max-h-[500px] overflow-y-auto">
+      <div className="space-y-2 max-h-[400px] md:max-h-[500px] overflow-y-auto">
         {filteredLockers.map((locker) => (
           <Card
             key={locker.id}
-            className={`cursor-pointer transition-all hover:shadow-md ${
+            className={`cursor-pointer transition-all hover:shadow-md active:scale-[0.98] ${
               selectedLockerId === locker.id ? 'border-2 border-primary bg-primary/5' : ''
             }`}
             onClick={() => onSelectLocker(locker)}
           >
-            <CardContent className="p-4 flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+            <CardContent className="p-3 md:p-4 flex items-start gap-2 md:gap-3">
+              <MapPin className="h-4 w-4 md:h-5 md:w-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold">{locker.title || locker.name}</h4>
-                    <p className="text-sm text-muted-foreground">{locker.addressLine1}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <h4 className="font-semibold text-sm md:text-base">{locker.title || locker.name}</h4>
+                    <p className="text-xs md:text-sm text-muted-foreground">{locker.addressLine1}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       {locker.addressLine2}, {locker.postalCode}
                     </p>
                     {locker.note && (
@@ -260,7 +261,7 @@ export function BoxnowLockerList({ selectedLockerId, onSelectLocker, locale }: B
       </div>
 
       {filteredLockers.length === 0 && !loading && (
-        <p className="text-center text-muted-foreground py-8">
+        <p className="text-center text-muted-foreground py-6 md:py-8 text-sm">
           {locale === 'el' 
             ? 'Δεν βρέθηκαν lockers με αυτά τα κριτήρια' 
             : 'No lockers found matching your search'}

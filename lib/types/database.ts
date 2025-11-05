@@ -81,12 +81,8 @@ export type OrderItem = {
 export type GalleryItem = {
   id: string
   category: 'baptism' | 'decoration'
-  images: string[]
+  image: string
   display_order: number
-  title_el: string
-  title_en: string
-  description_el: string | null
-  description_en: string | null
   is_active: boolean
   created_at: string
   updated_at: string

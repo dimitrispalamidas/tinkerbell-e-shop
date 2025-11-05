@@ -59,6 +59,7 @@ export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
       items: order.order_items || [],
       boxnowTrackingCode: order.boxnow_tracking_code,
       boxnowLockerAddress: order.shipping_address?.address,
+      baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://tinkerbell-e-shop.vercel.app',
     };
 
     // Render email HTML

@@ -16,6 +16,14 @@ const getSupabaseAdmin = () => {
   );
 };
 
+export type OrderItem = {
+  product_name: string;
+  quantity: number;
+  price: number;
+  size?: string;
+  color?: string;
+};
+
 export type OrderData = {
   id: string;
   viva_order_code: string;
@@ -27,6 +35,7 @@ export type OrderData = {
   payment_status: string;
   created_at: string;
   boxnow_tracking_code?: string;
+  items?: OrderItem[];
 };
 
 export async function getOrderByVivaCode(vivaOrderCode: string): Promise<OrderData | null> {
@@ -45,8 +54,18 @@ export async function getOrderByVivaCode(vivaOrderCode: string): Promise<OrderDa
       return null;
     }
 
+    // Fetch order items
+    const { data: items, error: itemsError } = await supabase
+      .from('order_items')
+      .select('product_name, quantity, price, size, color')
+      .eq('order_id', data.id);
+
+    if (itemsError) {
+      console.error('❌ [Server] Error fetching order items:', itemsError);
+    }
+
     console.log('✅ [Server] Order found:', data?.id);
-    return data as OrderData;
+    return { ...data, items: items || [] } as OrderData;
   } catch (error) {
     console.error('❌ [Server] Exception fetching order:', error);
     return null;
@@ -69,8 +88,18 @@ export async function getOrderByTransactionId(transactionId: string): Promise<Or
       return null;
     }
 
+    // Fetch order items
+    const { data: items, error: itemsError } = await supabase
+      .from('order_items')
+      .select('product_name, quantity, price, size, color')
+      .eq('order_id', data.id);
+
+    if (itemsError) {
+      console.error('❌ [Server] Error fetching order items:', itemsError);
+    }
+
     console.log('✅ [Server] Order found:', data?.id);
-    return data as OrderData;
+    return { ...data, items: items || [] } as OrderData;
   } catch (error) {
     console.error('❌ [Server] Exception fetching order:', error);
     return null;
@@ -95,8 +124,18 @@ export async function getLatestPaidOrder(): Promise<OrderData | null> {
       return null;
     }
 
+    // Fetch order items
+    const { data: items, error: itemsError } = await supabase
+      .from('order_items')
+      .select('product_name, quantity, price, size, color')
+      .eq('order_id', data.id);
+
+    if (itemsError) {
+      console.error('❌ [Server] Error fetching order items:', itemsError);
+    }
+
     console.log('✅ [Server] Latest order found:', data?.id);
-    return data as OrderData;
+    return { ...data, items: items || [] } as OrderData;
   } catch (error) {
     console.error('❌ [Server] Exception fetching latest order:', error);
     return null;

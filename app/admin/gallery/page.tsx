@@ -1,146 +1,513 @@
-import { createClient } from '@/lib/supabase/server';
+"use client"
+
+import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
+import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Plus, Pencil } from 'lucide-react';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
 import Image from 'next/image';
+import { toast } from 'sonner';
+import { GalleryItem } from '@/lib/types/database';
 
-export default async function AdminGalleryPage() {
-  const supabase = await createClient();
+type TabType = 'baptism' | 'decoration';
 
-  const { data: baptismItems } = await supabase
-    .from('gallery_items')
-    .select('*')
-    .eq('category', 'baptism')
-    .order('display_order', { ascending: true });
+export default function AdminGalleryPage() {
+  const t = useTranslations('admin');
+  const tCommon = useTranslations('common');
+  
+  const [activeTab, setActiveTab] = useState<TabType>('baptism');
+  const [items, setItems] = useState<GalleryItem[]>([]);
+  const [baptismCount, setBaptismCount] = useState(0);
+  const [decorationCount, setDecorationCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
+  const [isSavingOrder, setIsSavingOrder] = useState(false);
 
-  const { data: decorationItems } = await supabase
-    .from('gallery_items')
-    .select('*')
-    .eq('category', 'decoration')
-    .order('display_order', { ascending: true });
+  // Check URL for tab parameter
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab') as TabType | null;
+      if (tabParam && (tabParam === 'baptism' || tabParam === 'decoration')) {
+        setActiveTab(tabParam);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGalleryItems();
+    fetchCounts();
+  }, [activeTab]);
+
+  const fetchGalleryItems = async () => {
+    try {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('gallery_items')
+        .select('*')
+        .eq('category', activeTab)
+        .order('display_order', { ascending: true });
+
+      if (error) throw error;
+      setItems(data || []);
+    } catch (error) {
+      console.error('Failed to fetch gallery items:', error);
+      toast.error(t('failed_fetch_gallery'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchCounts = async () => {
+    try {
+      const supabase = createClient();
+      const [baptismResult, decorationResult] = await Promise.all([
+        supabase.from('gallery_items').select('id', { count: 'exact', head: true }).eq('category', 'baptism'),
+        supabase.from('gallery_items').select('id', { count: 'exact', head: true }).eq('category', 'decoration'),
+      ]);
+      
+      setBaptismCount(baptismResult.count || 0);
+      setDecorationCount(decorationResult.count || 0);
+    } catch (error) {
+      console.error('Failed to fetch counts:', error);
+    }
+  };
+
+  const handleDragStart = (e: React.DragEvent, itemId: string) => {
+    setDraggedItemId(itemId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+
+  const handleDrop = (e: React.DragEvent, targetItemId: string) => {
+    e.preventDefault();
+    
+    if (!draggedItemId || draggedItemId === targetItemId) {
+      setDraggedItemId(null);
+      return;
+    }
+
+    const draggedIndex = items.findIndex(item => item.id === draggedItemId);
+    const targetIndex = items.findIndex(item => item.id === targetItemId);
+
+    if (draggedIndex === -1 || targetIndex === -1) return;
+
+    // Reorder locally
+    const newItems = [...items];
+    const [draggedItem] = newItems.splice(draggedIndex, 1);
+    newItems.splice(targetIndex, 0, draggedItem);
+
+    // Update display_order for all affected items
+    const updatedItems = newItems.map((item, index) => ({
+      ...item,
+      display_order: index,
+    }));
+
+    setItems(updatedItems);
+    setDraggedItemId(null);
+    setHasUnsavedOrder(true); // Mark as having unsaved changes
+  };
+
+  const handleSaveOrder = async () => {
+    setIsSavingOrder(true);
+    try {
+      const supabase = createClient();
+      
+      // Update all items in the category with new order
+      const updates = items.map(item => 
+        supabase
+          .from('gallery_items')
+          .update({ display_order: item.display_order })
+          .eq('id', item.id)
+          .then()
+      );
+
+      await Promise.all(updates);
+      setHasUnsavedOrder(false);
+      toast.success(t('order_saved'));
+      await fetchGalleryItems();
+    } catch (error) {
+      console.error('Failed to save order:', error);
+      toast.error(t('failed_save_order'));
+    } finally {
+      setIsSavingOrder(false);
+    }
+  };
+
+  const handleCancelOrder = () => {
+    setHasUnsavedOrder(false);
+    fetchGalleryItems(); // Reload original order
+  };
+
+  const renumberDisplayOrder = async (category: TabType) => {
+    try {
+      const supabase = createClient();
+      
+      // Get all items in order
+      const { data: items } = await supabase
+        .from('gallery_items')
+        .select('id, display_order')
+        .eq('category', category)
+        .order('display_order', { ascending: true });
+
+      if (!items || items.length === 0) return;
+
+      // Update each item with sequential order
+      const updates = items.map((item, index) => 
+        supabase
+          .from('gallery_items')
+          .update({ display_order: index })
+          .eq('id', item.id)
+          .then()
+      );
+
+      await Promise.all(updates);
+    } catch (error) {
+      console.error('Failed to renumber display order:', error);
+    }
+  };
+
+  const extractFileNameFromUrl = (url: string): string | null => {
+    try {
+      const urlParts = url.split('/');
+      return urlParts[urlParts.length - 1];
+    } catch {
+      return null;
+    }
+  };
+
+  const handleDelete = async (itemId: string) => {
+    if (!confirm(t('confirm_delete_photo'))) return;
+
+    try {
+      const supabase = createClient();
+      
+      // Get the item to extract image URL
+      const itemToDelete = items.find(item => item.id === itemId);
+      
+      if (itemToDelete?.image) {
+        const fileName = extractFileNameFromUrl(itemToDelete.image);
+        if (fileName) {
+          // Delete from storage bucket
+          const { error: storageError } = await supabase.storage
+            .from('gallery')
+            .remove([fileName]);
+          
+          if (storageError) {
+            console.error('Failed to delete from storage:', storageError);
+          }
+        }
+      }
+      
+      // Delete from database
+      const { error } = await supabase
+        .from('gallery_items')
+        .delete()
+        .eq('id', itemId);
+
+      if (error) throw error;
+      
+      // Renumber remaining items
+      await renumberDisplayOrder(activeTab);
+      
+      // Wait a bit for DB to update, then fetch
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      toast.success(t('photo_deleted'));
+      await fetchGalleryItems();
+      await fetchCounts();
+    } catch (error) {
+      console.error('Failed to delete item:', error);
+      toast.error(t('failed_delete'));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedItems.size === 0) return;
+    
+    if (!confirm(t('confirm_delete_photos', { count: selectedItems.size }))) return;
+
+    setIsDeleting(true);
+    try {
+      const supabase = createClient();
+      
+      // Get items to delete for storage cleanup
+      const itemsToDelete = items.filter(item => selectedItems.has(item.id));
+      
+      // Delete from storage bucket
+      const fileNames = itemsToDelete
+        .map(item => extractFileNameFromUrl(item.image))
+        .filter(Boolean) as string[];
+      
+      if (fileNames.length > 0) {
+        const { error: storageError } = await supabase.storage
+          .from('gallery')
+          .remove(fileNames);
+        
+        if (storageError) {
+          console.error('Failed to delete from storage:', storageError);
+        }
+      }
+      
+      // Delete from database
+      const deletePromises = Array.from(selectedItems).map(itemId =>
+        supabase.from('gallery_items').delete().eq('id', itemId).then()
+      );
+      
+      await Promise.all(deletePromises);
+      
+      // Renumber remaining items
+      await renumberDisplayOrder(activeTab);
+      
+      // Wait a bit for DB to update, then fetch
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      toast.success(t('photos_deleted', { count: selectedItems.size }));
+      setSelectedItems(new Set());
+      await fetchGalleryItems();
+      await fetchCounts();
+    } catch (error) {
+      console.error('Failed to bulk delete:', error);
+      toast.error(t('failed_bulk_delete'));
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const toggleSelectItem = (itemId: string) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(itemId)) {
+      newSelected.delete(itemId);
+    } else {
+      newSelected.add(itemId);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedItems.size === items.length) {
+      setSelectedItems(new Set());
+    } else {
+      setSelectedItems(new Set(items.map(item => item.id)));
+    }
+  };
+
+  const handleToggleActive = async (itemId: string, currentStatus: boolean) => {
+    try {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from('gallery_items')
+        .update({ is_active: !currentStatus })
+        .eq('id', itemId);
+
+      if (error) throw error;
+      
+      toast.success(t('status_updated'));
+      fetchGalleryItems();
+    } catch (error) {
+      console.error('Failed to update status:', error);
+      toast.error(t('failed_update'));
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">{tCommon('loading')}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Gallery</h1>
-          <p className="text-muted-foreground">Manage baptism packages and decorations</p>
+          <h1 className="text-3xl font-bold">{t('gallery_title')}</h1>
+          <p className="text-muted-foreground">{t('gallery_subtitle')}</p>
         </div>
-        <Link href="/admin/gallery/new">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Gallery Item
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          {hasUnsavedOrder && (
+            <>
+              <Button 
+                variant="outline"
+                onClick={handleCancelOrder}
+                disabled={isSavingOrder}
+              >
+                {t('cancel_reorder')}
+              </Button>
+              <Button 
+                onClick={handleSaveOrder}
+                disabled={isSavingOrder}
+              >
+                {isSavingOrder ? t('saving') : t('save_order')}
+              </Button>
+            </>
+          )}
+          {selectedItems.size > 0 && (
+            <Button 
+              variant="outline" 
+              onClick={handleBulkDelete}
+              disabled={isDeleting || hasUnsavedOrder}
+              className="border-red-600 text-red-600 hover:bg-red-50"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {t('delete_selected', { count: selectedItems.size })}
+            </Button>
+          )}
+          <Link href={`/admin/gallery/new?category=${activeTab}`}>
+            <Button disabled={hasUnsavedOrder}>
+              <Plus className="mr-2 h-4 w-4" />
+              {t('add_gallery_item')}
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      {/* Baptism Section */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Baptism Packages</h2>
-        {baptismItems && baptismItems.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {baptismItems.map((item) => (
-              <Card key={item.id}>
-                <CardContent className="p-4">
-                  <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-4">
-                    {item.images && item.images[0] ? (
-                      <Image
-                        src={item.images[0]}
-                        alt={item.title_el}
-                        width={300}
-                        height={300}
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        No image
-                      </div>
-                    )}
-                  </div>
-                  <h3 className="font-semibold mb-1">{item.title_el}</h3>
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                    {item.description_el}
-                  </p>
-                  <div className="flex gap-2">
-                    <Link href={`/admin/gallery/${item.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                    </Link>
-                    <span className={`px-3 py-1.5 rounded text-xs ${
-                      item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {item.is_active ? 'Active' : 'Inactive'}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground">No baptism items yet</p>
-            </CardContent>
-          </Card>
-        )}
+      {/* Tabs */}
+      <div className="border-b">
+        <nav className="flex gap-4">
+          <button
+            onClick={() => setActiveTab('baptism')}
+            className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+              activeTab === 'baptism'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t('baptism')} ({baptismCount})
+          </button>
+          <button
+            onClick={() => setActiveTab('decoration')}
+            className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+              activeTab === 'decoration'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {t('decoration')} ({decorationCount})
+          </button>
+        </nav>
       </div>
 
-      {/* Decorations Section */}
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Decorations</h2>
-        {decorationItems && decorationItems.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {decorationItems.map((item) => (
-              <Card key={item.id}>
-                <CardContent className="p-4">
-                  <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-4">
-                    {item.images && item.images[0] ? (
-                      <Image
-                        src={item.images[0]}
-                        alt={item.title_el}
-                        width={300}
-                        height={300}
-                        className="object-cover w-full h-full"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                        No image
-                      </div>
-                    )}
+      {/* Photos Grid */}
+      {items && items.length > 0 ? (
+        <>
+          {/* Select All */}
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="checkbox"
+              id="select-all"
+              checked={selectedItems.size === items.length && items.length > 0}
+              onChange={toggleSelectAll}
+              className="w-4 h-4 cursor-pointer"
+            />
+            <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
+              {t('select_all')} ({items.length})
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {items.map((item) => (
+              <Card
+                key={item.id}
+                draggable={!selectedItems.has(item.id)}
+                onDragStart={(e) => handleDragStart(e, item.id)}
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, item.id)}
+                className={`${selectedItems.has(item.id) ? '' : 'cursor-grab active:cursor-grabbing'} ${draggedItemId === item.id ? 'opacity-50' : ''} ${selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''}`}
+              >
+                <CardContent className="p-2">
+                  <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-2 relative group">
+                  {item.image ? (
+                    <Image
+                      src={item.image}
+                      alt={`Photo ${item.display_order + 1}`}
+                      width={300}
+                      height={300}
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                      {t('no_image')}
+                    </div>
+                  )}
+                  
+                  {/* Checkbox */}
+                  <input
+                    type="checkbox"
+                    checked={selectedItems.has(item.id)}
+                    onChange={() => toggleSelectItem(item.id)}
+                    className="absolute top-2 left-2 z-10 w-5 h-5 cursor-pointer"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+
+                  {/* Order Badge */}
+                  <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-bold">
+                    #{item.display_order + 1}
                   </div>
-                  <h3 className="font-semibold mb-1">{item.title_el}</h3>
-                  <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
-                    {item.description_el}
-                  </p>
-                  <div className="flex gap-2">
-                    <Link href={`/admin/gallery/${item.id}`} className="flex-1">
-                      <Button variant="outline" size="sm" className="w-full">
-                        <Pencil className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                    </Link>
-                    <span className={`px-3 py-1.5 rounded text-xs ${
-                      item.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {item.is_active ? 'Active' : 'Inactive'}
-                    </span>
+
+                  {/* Status Badge */}
+                  <div className={`absolute bottom-2 left-2 text-xs px-2 py-1 rounded ${
+                    item.is_active ? 'bg-green-500/90 text-white' : 'bg-gray-500/90 text-white'
+                  }`}>
+                    {item.is_active ? t('active') : t('inactive')}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+
+                {/* Actions */}
+                <div className="flex gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    onClick={() => handleToggleActive(item.id, item.is_active)}
+                    title={item.is_active ? t('deactivate') : t('activate')}
+                  >
+                    {item.is_active ? '👁️' : '👁️‍🗨️'}
+                  </Button>
+                  <Link href={`/admin/gallery/${item.id}?category=${activeTab}`}>
+                    <Button variant="outline" size="sm" title={tCommon('edit')}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleDelete(item.id)}
+                    title={tCommon('delete')}
+                  >
+                    <Trash2 className="h-4 w-4 text-red-600" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
             ))}
           </div>
-        ) : (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <p className="text-muted-foreground">No decoration items yet</p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+        </>
+      ) : (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <p className="text-muted-foreground mb-4">
+              {activeTab === 'baptism' ? t('no_baptism_items') : t('no_decoration_items')}
+            </p>
+            <Link href="/admin/gallery/new">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                {t('add_gallery_item')}
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
-
