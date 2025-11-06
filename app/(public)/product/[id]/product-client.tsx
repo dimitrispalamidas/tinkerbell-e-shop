@@ -91,6 +91,7 @@ export function ProductClient({ product, variants, locale, translations }: Produ
       size: selectedSize || undefined,
       color: selectedColor || undefined,
       image: product.images[0] || undefined,
+      stock: availableStock, // Pass current stock for validation
     });
 
     toast.success(locale === 'el' ? 'Προστέθηκε στο καλάθι!' : 'Added to cart!');

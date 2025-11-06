@@ -10,6 +10,7 @@ import { ShoppingCart, Globe, LogIn, Menu, X, Home, Store, Image as ImageIcon, M
 import { BsBalloonHeart } from 'react-icons/bs'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
+import { MiniCartSidebar } from '@/components/cart/mini-cart-sidebar'
 
 export function Header() {
   const t = useTranslations('nav')
@@ -17,6 +18,7 @@ export function Header() {
   const router = useRouter()
   const [itemCount, setItemCount] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [isCartOpen, setIsCartOpen] = useState(false)
   
   useEffect(() => {
     setItemCount(useCartStore.getState().getItemCount())
@@ -106,30 +108,38 @@ export function Header() {
             </Button>
           </Link>
           
-          <Link href="/cart">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs flex items-center justify-center text-primary-foreground">
-                  {itemCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative"
+            onClick={() => setIsCartOpen(true)}
+            title={locale === 'el' ? 'Καλάθι' : 'Cart'}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs flex items-center justify-center text-primary-foreground">
+                {itemCount}
+              </span>
+            )}
+          </Button>
         </div>
 
         {/* Mobile Action Buttons */}
         <div className="flex md:hidden items-center space-x-2">
-          <Link href="/cart">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="h-5 w-5" />
-              {itemCount > 0 && (
-                <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs flex items-center justify-center text-primary-foreground">
-                  {itemCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="relative"
+            onClick={() => setIsCartOpen(true)}
+            title={locale === 'el' ? 'Καλάθι' : 'Cart'}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            {itemCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-primary text-xs flex items-center justify-center text-primary-foreground">
+                {itemCount}
+              </span>
+            )}
+          </Button>
           
           <Button
             variant="ghost"
@@ -217,6 +227,9 @@ export function Header() {
           </nav>
         </div>
       )}
+
+      {/* Mini Cart Sidebar - Rendered in Portal */}
+      <MiniCartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
     </header>
   )
 }

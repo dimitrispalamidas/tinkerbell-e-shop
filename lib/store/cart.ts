@@ -9,6 +9,7 @@ export type CartItem = {
   size?: string
   color?: string
   image?: string
+  stock?: number // Available stock for this variant
 }
 
 type CartStore = {

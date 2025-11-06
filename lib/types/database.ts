@@ -54,8 +54,10 @@ export type Order = {
     address: string
     city: string
     postal_code: string
+    region?: string
     country: string
     phone: string
+    delivery_method?: 'boxnow' | 'home'
   }
   boxnow_locker_id: string | null
   boxnow_tracking_code: string | null

@@ -2,58 +2,117 @@
 
 import { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
-import { useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/store/cart';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { formatPrice } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, CheckCircle, ShoppingBag, Package, Home } from 'lucide-react';
 import { BoxnowLockerList } from '@/components/checkout/boxnow-locker-list';
 import Image from 'next/image';
+
+const CHECKOUT_STORAGE_KEY = 'tinkerbell_checkout_data';
+const HOME_DELIVERY_COST = 3.50; // €3.50 for home delivery
 
 export default function CheckoutPage() {
   const t = useTranslations('checkout');
   const tCommon = useTranslations('common');
-  const params = useParams();
   const router = useRouter();
   const locale = useLocale();
   
   const { items, getTotal, clearCart } = useCartStore();
   const [step, setStep] = useState(1);
+  const [isProcessing, setIsProcessing] = useState(false);
   
   const [formData, setFormData] = useState({
-    name: '',
+    firstName: '',
+    lastName: '',
     email: '',
     phone: '',
+    deliveryMethod: 'boxnow' as 'boxnow' | 'home',
     address: '',
     city: '',
+    region: '',
     postalCode: '',
     boxnowLockerId: '',
     boxnowLockerAddress: '',
     boxnowLockerPostalCode: '',
   });
 
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem(CHECKOUT_STORAGE_KEY);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        setFormData(prev => ({ ...prev, ...parsed }));
+      } catch (error) {
+        console.error('Failed to parse checkout data:', error);
+      }
+    }
+  }, []);
+
+  // Save to localStorage whenever formData changes
+  useEffect(() => {
+    localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(formData));
+  }, [formData]);
+
+  // Redirect if cart is empty
   useEffect(() => {
     if (items.length === 0) {
-      router.push('/cart');
+      router.push('/shop');
     }
   }, [items, router]);
 
+  // Handle cancel from Viva Wallet
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('cancel') === 'true') {
+      toast.info(
+        locale === 'el' 
+          ? 'Η πληρωμή ακυρώθηκε. Μπορείτε να δοκιμάσετε ξανά.' 
+          : 'Payment was cancelled. You can try again.'
+      );
+      // Remove cancel parameter from URL
+      window.history.replaceState({}, '', window.location.pathname);
+      // Stay on step 3 so user can try payment again
+      setStep(3);
+    }
+  }, [locale]);
+
   const handleContinue = async () => {
     if (step === 1) {
-      if (!formData.name || !formData.email || !formData.phone) {
-        toast.error(locale === 'el' ? 'Συμπληρώστε όλα τα πεδία' : 'Fill all fields');
+      // Validate customer info
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+        toast.error(t('fill_all_fields'));
         return;
       }
       setStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (step === 2) {
-      if (!formData.boxnowLockerId) {
-        toast.error(locale === 'el' ? 'Επιλέξτε locker' : 'Select a locker');
+      // Validate delivery method
+      if (!formData.deliveryMethod) {
+        toast.error(t('select_delivery_method'));
         return;
       }
+
+      // Validate based on delivery method
+      if (formData.deliveryMethod === 'boxnow') {
+        if (!formData.boxnowLockerId) {
+          toast.error(locale === 'el' ? 'Επιλέξτε locker' : 'Select a locker');
+          return;
+        }
+      } else if (formData.deliveryMethod === 'home') {
+        if (!formData.address || !formData.city || !formData.region || !formData.postalCode) {
+          toast.error(t('fill_address_fields'));
+          return;
+        }
+      }
+
       setStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -64,6 +123,12 @@ export default function CheckoutPage() {
       // Import the Viva Wallet actions dynamically
       const { createVivaPaymentOrder, createOrder } = await import('@/lib/actions/viva-wallet');
 
+      const subtotal = getTotal();
+      const shippingCost = formData.deliveryMethod === 'home' ? HOME_DELIVERY_COST : 0;
+      const total = subtotal + shippingCost;
+
+      const customerName = `${formData.firstName} ${formData.lastName}`;
+
       const orderData = {
         items: items.map(item => ({
           product_id: item.id,
@@ -73,27 +138,29 @@ export default function CheckoutPage() {
           color: item.color,
           product_name: item.name,
         })),
-        total: getTotal(),
+        total: total,
         customer_email: formData.email,
-        customer_name: formData.name,
+        customer_name: customerName,
         customer_phone: formData.phone,
         shipping_address: {
-          name: formData.name,
-          address: formData.address,
-          city: formData.city,
-          postal_code: formData.postalCode,
+          name: customerName,
+          address: formData.deliveryMethod === 'home' ? formData.address : '',
+          city: formData.deliveryMethod === 'home' ? formData.city : '',
+          postal_code: formData.deliveryMethod === 'home' ? formData.postalCode : '',
+          region: formData.deliveryMethod === 'home' ? formData.region : '',
           country: 'GR',
           phone: formData.phone,
+          delivery_method: formData.deliveryMethod,
         },
-        boxnow_locker_id: formData.boxnowLockerId,
+        boxnow_locker_id: formData.deliveryMethod === 'boxnow' ? formData.boxnowLockerId : undefined,
       };
 
       // Create Viva payment order
       const { orderCode, checkoutUrl } = await createVivaPaymentOrder({
-        amount: getTotal(),
-        orderId: `TMP-${Date.now()}`, // Temporary ID
+        amount: total,
+        orderId: `TMP-${Date.now()}`,
         customerEmail: formData.email,
-        customerName: formData.name,
+        customerName: customerName,
         customerPhone: formData.phone,
       });
 
@@ -103,25 +170,28 @@ export default function CheckoutPage() {
         viva_order_code: orderCode,
       });
 
-      console.log('Order created:', order.id);
-      console.log('Viva Order Code:', orderCode);
+      console.log('✅ Order created:', order.id);
+      console.log('💳 Viva Order Code:', orderCode);
+
+      // Clear localStorage after successful order creation
+      localStorage.removeItem(CHECKOUT_STORAGE_KEY);
 
       // Redirect to Viva checkout
       window.location.href = checkoutUrl;
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('❌ Payment error:', error);
       toast.error(locale === 'el' ? 'Σφάλμα κατά τη δημιουργία πληρωμής' : 'Error creating payment');
       setIsProcessing(false);
     }
   };
 
-  const [isProcessing, setIsProcessing] = useState(false);
-
   if (items.length === 0) {
     return null;
   }
 
-  const total = getTotal();
+  const subtotal = getTotal();
+  const shippingCost = formData.deliveryMethod === 'home' ? HOME_DELIVERY_COST : 0;
+  const total = subtotal + shippingCost;
 
   return (
     <div className="container mx-auto px-4 py-4 md:py-8">
@@ -146,78 +216,207 @@ export default function CheckoutPage() {
           ))}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-4 md:gap-8">
-          {/* Main Content */}
-          <div className="lg:col-span-2 space-y-4 md:space-y-6">
-            {step === 1 && (
-              <Card>
-                <CardHeader className="p-4 md:p-6">
-                  <CardTitle className="text-lg md:text-xl">{t('shipping_info')}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 p-4 md:p-6">
+        {/* Main Content */}
+        <div className="space-y-4 md:space-y-6">
+          {/* STEP 1: Customer Information */}
+          {step === 1 && (
+            <Card>
+              <CardHeader className="p-4 md:p-6">
+                <CardTitle className="text-lg md:text-xl">{t('customer_info')}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4 p-4 md:p-6">
+                <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">{tCommon('name')}</label>
+                    <label className="block text-sm font-medium mb-2">{tCommon('first_name')}</label>
                     <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      value={formData.firstName}
+                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                       required
                       className="text-base"
+                      placeholder={locale === 'el' ? 'π.χ. Γιάννης' : 'e.g. John'}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">{tCommon('email')}</label>
+                    <label className="block text-sm font-medium mb-2">{tCommon('last_name')}</label>
                     <Input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      value={formData.lastName}
+                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                       required
                       className="text-base"
+                      placeholder={locale === 'el' ? 'π.χ. Παπαδόπουλος' : 'e.g. Smith'}
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">{tCommon('phone')}</label>
-                    <Input
-                      type="tel"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                      required
-                      className="text-base"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {step === 2 && (
-              <Card>
-                <CardHeader className="p-4 md:p-6">
-                  <CardTitle className="text-lg md:text-xl">{t('delivery_method')}</CardTitle>
-                </CardHeader>
-                <CardContent className="p-4 md:p-6">
-                  {/* Custom Locker List using Stage API */}
-                  <BoxnowLockerList
-                    selectedLockerId={formData.boxnowLockerId}
-                    onSelectLocker={(locker) => {
-                      setFormData(prev => ({
-                        ...prev,
-                        boxnowLockerId: locker.id,
-                        boxnowLockerAddress: locker.addressLine1,
-                        boxnowLockerPostalCode: locker.postalCode,
-                      }));
-                      
-                      toast.success(
-                        locale === 'el' 
-                          ? `Επιλέξατε: ${locker.title || locker.name}` 
-                          : `Selected: ${locker.title || locker.name}`
-                      );
-                    }}
-                    locale={locale}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">{tCommon('email')}</label>
+                  <Input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    required
+                    className="text-base"
+                    placeholder="email@example.com"
                   />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">{tCommon('phone')}</label>
+                  <Input
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    required
+                    className="text-base"
+                    placeholder={locale === 'el' ? 'π.χ. 6912345678' : 'e.g. 6912345678'}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* STEP 2: Delivery Method */}
+          {step === 2 && (
+            <>
+              <Card>
+                <CardHeader className="p-4 md:p-6">
+                  <CardTitle className="text-lg md:text-xl">{t('choose_delivery')}</CardTitle>
+                </CardHeader>
+                <CardContent className="p-4 md:p-6 space-y-4">
+                  {/* Delivery Method Selection */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* BOXNOW Option */}
+                    <button
+                      onClick={() => setFormData({ ...formData, deliveryMethod: 'boxnow' })}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                        formData.deliveryMethod === 'boxnow'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-muted hover:border-primary/50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Package className={`h-6 w-6 mt-1 ${formData.deliveryMethod === 'boxnow' ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <div className="flex-1">
+                          <h3 className="font-semibold mb-1">{t('boxnow_locker')}</h3>
+                          <p className="text-sm text-muted-foreground mb-2">{t('boxnow_locker_desc')}</p>
+                          <span className="text-sm font-medium text-green-600">{t('shipping_cost_free')}</span>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          formData.deliveryMethod === 'boxnow' ? 'border-primary' : 'border-muted'
+                        }`}>
+                          {formData.deliveryMethod === 'boxnow' && (
+                            <div className="w-3 h-3 rounded-full bg-primary" />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Home Delivery Option */}
+                    <button
+                      onClick={() => setFormData({ ...formData, deliveryMethod: 'home' })}
+                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                        formData.deliveryMethod === 'home'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-muted hover:border-primary/50'
+                      }`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <Home className={`h-6 w-6 mt-1 ${formData.deliveryMethod === 'home' ? 'text-primary' : 'text-muted-foreground'}`} />
+                        <div className="flex-1">
+                          <h3 className="font-semibold mb-1">{t('home_delivery')}</h3>
+                          <p className="text-sm text-muted-foreground mb-2">{t('home_delivery_desc')}</p>
+                          <span className="text-sm font-medium">+{formatPrice(HOME_DELIVERY_COST, locale)}</span>
+                        </div>
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          formData.deliveryMethod === 'home' ? 'border-primary' : 'border-muted'
+                        }`}>
+                          {formData.deliveryMethod === 'home' && (
+                            <div className="w-3 h-3 rounded-full bg-primary" />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+
+                  {/* BOXNOW Locker Selection */}
+                  {formData.deliveryMethod === 'boxnow' && (
+                    <div className="pt-4 border-t">
+                      <h3 className="font-medium mb-4">{t('select_locker')}</h3>
+                      <BoxnowLockerList
+                        selectedLockerId={formData.boxnowLockerId}
+                        onSelectLocker={(locker) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            boxnowLockerId: locker.id,
+                            boxnowLockerAddress: locker.addressLine1,
+                            boxnowLockerPostalCode: locker.postalCode,
+                          }));
+                          
+                          toast.success(
+                            locale === 'el' 
+                              ? `Επιλέξατε: ${locker.title || locker.name}` 
+                              : `Selected: ${locker.title || locker.name}`
+                          );
+                        }}
+                        locale={locale}
+                      />
+                    </div>
+                  )}
+
+                  {/* Home Delivery Address Fields */}
+                  {formData.deliveryMethod === 'home' && (
+                    <div className="pt-4 border-t space-y-4">
+                      <h3 className="font-medium mb-4">{t('shipping_info')}</h3>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">{tCommon('address')}</label>
+                        <Input
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          required
+                          className="text-base"
+                          placeholder={locale === 'el' ? 'π.χ. Αθηνάς 123' : 'e.g. Athinas 123'}
+                        />
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">{tCommon('city')}</label>
+                          <Input
+                            value={formData.city}
+                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                            required
+                            className="text-base"
+                            placeholder={locale === 'el' ? 'π.χ. Αθήνα' : 'e.g. Athens'}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">{tCommon('postal_code')}</label>
+                          <Input
+                            value={formData.postalCode}
+                            onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                            required
+                            className="text-base"
+                            placeholder="12345"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-2">{tCommon('region')}</label>
+                        <Input
+                          value={formData.region}
+                          onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                          required
+                          className="text-base"
+                          placeholder={locale === 'el' ? 'π.χ. Αττική' : 'e.g. Attica'}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            )}
+            </>
+          )}
 
-            {step === 3 && (
+          {/* STEP 3: Payment */}
+          {step === 3 && (
+            <>
               <Card>
                 <CardHeader className="p-4 md:p-6">
                   <CardTitle className="text-lg md:text-xl">{t('payment')}</CardTitle>
@@ -245,99 +444,133 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
-                  <Button
-                    onClick={handlePayment}
-                    size="lg"
-                    className="w-full text-base"
-                    disabled={isProcessing}
-                  >
-                    {isProcessing 
-                      ? (locale === 'el' ? 'Επεξεργασία...' : 'Processing...') 
-                      : (locale === 'el' ? 'Συνέχεια στην Πληρωμή' : 'Continue to Payment')}
-                  </Button>
+                  <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setStep(2);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      size="lg"
+                      className="w-full"
+                      disabled={isProcessing}
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      {tCommon('back')}
+                    </Button>
+                    <Button
+                      onClick={handlePayment}
+                      size="lg"
+                      className="w-full text-base"
+                      disabled={isProcessing}
+                    >
+                      {isProcessing 
+                        ? (locale === 'el' ? 'Επεξεργασία...' : 'Processing...') 
+                        : (locale === 'el' ? 'Συνέχεια στην Πληρωμή' : 'Continue to Payment')}
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
-            )}
 
-            {step < 3 && (
-              <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-                {step > 1 && (
-                  <Button variant="outline" onClick={() => setStep(step - 1)} size="lg" className="w-full sm:w-auto">
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    {tCommon('back')}
-                  </Button>
-                )}
-                <Button onClick={handleContinue} size="lg" className="w-full text-base">
-                  {tCommon('continue')}
-                </Button>
-              </div>
-            )}
-          </div>
-
-          {/* Order Summary */}
-          <div className="lg:col-span-1 order-first lg:order-none mb-4 lg:mb-0">
-            <Card className="lg:sticky lg:top-20">
-              <CardHeader className="p-4 md:p-6">
-                <CardTitle className="text-lg md:text-xl">{t('order_summary')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 p-4 md:p-6">
-                <div className="space-y-3 text-xs md:text-sm max-h-[300px] md:max-h-[400px] overflow-y-auto">
-                  {items.map((item) => (
-                    <div key={`${item.id}-${item.size}-${item.color}`} className="flex gap-2 items-start">
-                      {/* Product Image */}
-                      <div className="w-12 h-12 md:w-14 md:h-14 bg-muted rounded-md overflow-hidden flex-shrink-0">
-                        {item.image ? (
-                          <Image
-                            src={item.image}
-                            alt={item.name}
-                            width={56}
-                            height={56}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingBag className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Product Details */}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs md:text-sm font-medium truncate">
-                          {item.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {item.quantity} × {formatPrice(item.price, locale)}
-                        </p>
-                        {(item.size || item.color) && (
-                          <p className="text-xs text-muted-foreground">
-                            {item.size && item.size}
-                            {item.size && item.color && ' • '}
-                            {item.color && item.color}
+              {/* Order Summary - Only shown in step 3 */}
+              <Card>
+                <CardHeader className="p-4 md:p-6">
+                  <CardTitle className="text-lg md:text-xl">{t('order_summary')}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4 p-4 md:p-6">
+                  <div className="space-y-3 text-xs md:text-sm max-h-[300px] md:max-h-[400px] overflow-y-auto">
+                    {items.map((item) => (
+                      <div key={`${item.id}-${item.size}-${item.color}`} className="flex gap-2 items-start">
+                        {/* Product Image */}
+                        <div className="w-12 h-12 md:w-14 md:h-14 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                          {item.image ? (
+                            <Image
+                              src={item.image}
+                              alt={item.name}
+                              width={56}
+                              height={56}
+                              className="object-cover w-full h-full"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Product Details */}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs md:text-sm font-medium truncate">
+                            {item.name}
                           </p>
-                        )}
+                          <p className="text-xs text-muted-foreground">
+                            {item.quantity} × {formatPrice(item.price, locale)}
+                          </p>
+                          {(item.size || item.color) && (
+                            <p className="text-xs text-muted-foreground">
+                              {item.size && item.size}
+                              {item.size && item.color && ' • '}
+                              {item.color && item.color}
+                            </p>
+                          )}
+                        </div>
+                        
+                        {/* Price */}
+                        <div className="font-medium whitespace-nowrap text-xs md:text-sm">
+                          {formatPrice(item.price * item.quantity, locale)}
+                        </div>
                       </div>
-                      
-                      {/* Price */}
-                      <div className="font-medium whitespace-nowrap text-xs md:text-sm">
-                        {formatPrice(item.price * item.quantity, locale)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="border-t pt-4">
-                  <div className="flex justify-between text-base md:text-lg font-bold">
-                    <span>{tCommon('total')}</span>
-                    <span className="text-primary">{formatPrice(total, locale)}</span>
+                    ))}
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+
+                  <div className="border-t pt-4 space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>{tCommon('subtotal')}</span>
+                      <span>{formatPrice(subtotal, locale)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span>{tCommon('shipping')}</span>
+                      <span>
+                        {shippingCost === 0 ? (
+                          <span className="text-green-600 font-medium">{t('shipping_cost_free')}</span>
+                        ) : (
+                          formatPrice(shippingCost, locale)
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-base md:text-lg font-bold pt-2 border-t">
+                      <span>{tCommon('total')}</span>
+                      <span className="text-primary">{formatPrice(total, locale)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+
+          {step < 3 && (
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+              {step > 1 && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setStep(step - 1);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                  }} 
+                  size="lg" 
+                  className="w-full"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {tCommon('back')}
+                </Button>
+              )}
+              <Button onClick={handleContinue} size="lg" className="w-full text-base">
+                {tCommon('continue')}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
   );
 }
-

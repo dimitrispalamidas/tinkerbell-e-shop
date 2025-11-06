@@ -9,6 +9,8 @@ import { CheckCircle, Package, ArrowRight, Loader2, Mail, Phone } from 'lucide-r
 import { useCartStore } from '@/lib/store/cart';
 import { getOrderByVivaCode, getOrderByTransactionId, getLatestPaidOrder, type OrderData } from '@/lib/actions/get-order';
 import { formatPrice } from '@/lib/utils';
+import Confetti from 'react-confetti';
+import { useWindowSize } from '@/hooks/use-window-size';
 
 export default function CheckoutSuccess() {
   const t = useTranslations('checkout');
@@ -21,6 +23,8 @@ export default function CheckoutSuccess() {
   const [orderData, setOrderData] = useState<OrderData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
+  const { width, height } = useWindowSize();
 
   useEffect(() => {
     async function fetchLatestOrder() {
@@ -66,6 +70,8 @@ export default function CheckoutSuccess() {
         if (order) {
           console.log('✅ Order found:', order.id);
           setOrderData(order);
+          // Trigger confetti after a short delay
+          setTimeout(() => setShowConfetti(true), 300);
         } else {
           console.log('❌ No order found');
           setError(true);
@@ -116,8 +122,21 @@ export default function CheckoutSuccess() {
   }
 
   return (
-    <div className="container max-w-3xl mx-auto px-4 py-4 md:py-16">
-      {/* Success Header */}
+    <>
+      {/* Confetti Effect */}
+      {showConfetti && (
+        <Confetti
+          width={width}
+          height={height}
+          recycle={false}
+          numberOfPieces={500}
+          gravity={0.3}
+          colors={['#ffb3d9', '#FFC700', '#FF6EC7', '#bb0000', '#00bb00', '#ffffff']}
+        />
+      )}
+
+      <div className="container max-w-3xl mx-auto px-4 py-4 md:py-16">
+        {/* Success Header */}
       <div className="text-center mb-6 md:mb-8">
         <div className="mx-auto mb-4 w-16 h-16 md:w-20 md:h-20 bg-green-100 rounded-full flex items-center justify-center">
           <CheckCircle className="w-10 h-10 md:w-12 md:h-12 text-green-600" />
@@ -240,6 +259,7 @@ export default function CheckoutSuccess() {
         </p>
       </div>
     </div>
+    </>
   );
 }
 

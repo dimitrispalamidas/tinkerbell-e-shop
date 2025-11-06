@@ -129,17 +129,58 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           <CardHeader>
             <CardTitle>{t('delivery_method')}</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
+          <CardContent className="space-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Μέθοδος' : 'Method'}</p>
+              <p className="font-medium">
+                {order.shipping_address?.delivery_method === 'home' 
+                  ? t('home_delivery')
+                  : t('boxnow_locker')}
+              </p>
+            </div>
+
             {order.boxnow_locker_id && (
               <div>
                 <p className="text-sm text-muted-foreground">{t('locker_id')}</p>
                 <p className="font-medium">{order.boxnow_locker_id}</p>
               </div>
             )}
-            {order.shipping_address && (
+
+            {order.shipping_address && order.shipping_address.delivery_method === 'home' && (
+              <>
+                {order.shipping_address.address && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Διεύθυνση' : 'Address'}</p>
+                    <p className="font-medium">{order.shipping_address.address}</p>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-4">
+                  {order.shipping_address.city && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Πόλη' : 'City'}</p>
+                      <p className="font-medium">{order.shipping_address.city}</p>
+                    </div>
+                  )}
+                  {order.shipping_address.postal_code && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Τ.Κ.' : 'Postal Code'}</p>
+                      <p className="font-medium">{order.shipping_address.postal_code}</p>
+                    </div>
+                  )}
+                </div>
+                {order.shipping_address.region && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Περιοχή' : 'Region'}</p>
+                    <p className="font-medium">{order.shipping_address.region}</p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {order.boxnow_tracking_code && (
               <div>
-                <p className="text-sm text-muted-foreground">{t('shipping_address')}</p>
-                <p className="font-medium">{JSON.stringify(order.shipping_address)}</p>
+                <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Tracking Code' : 'Tracking Code'}</p>
+                <p className="font-medium font-mono text-xs">{order.boxnow_tracking_code}</p>
               </div>
             )}
           </CardContent>
