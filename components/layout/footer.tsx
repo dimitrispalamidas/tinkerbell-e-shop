@@ -16,11 +16,11 @@ export function Footer() {
 
   return (
     <footer className="border-t bg-muted/50">
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+      <div className="container mx-auto px-4 py-6 md:py-12">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-12">
           {/* Logo & Brand Section */}
           <div className="md:col-span-3">
-            <Link href="/" className="inline-block mb-4">
+            <Link href="/" className="inline-block mb-3 md:mb-4">
               <Image 
                 src="/logo.webp" 
                 alt="Τίνκερμπελ - Παιδικά ρούχα, βαπτιστικά, στολισμοί" 
@@ -29,7 +29,7 @@ export function Footer() {
                 style={{ objectFit: 'contain', height: '40px', width: 'auto' }}
               />
             </Link>
-            <p className="text-sm text-muted-foreground mb-6">
+            <p className="text-sm text-muted-foreground mb-4 md:mb-6">
               Παιδικά & Εφηβικά Ρούχα και Παπούτσια
             </p>
             <div className="flex gap-4">
@@ -58,77 +58,80 @@ export function Footer() {
             </div>
           </div>
           
-          {/* Shop Links */}
-          <div className="md:col-span-2">
-            <h4 className="font-semibold mb-4">{t('shop')}</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/shop" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t('clothing')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/shop" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t('shoes')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
-          {/* Gallery Links */}
-          <div className="md:col-span-2">
-            <h4 className="font-semibold mb-4">{t('gallery')}</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/gallery/baptism" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t('baptism')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/gallery/decorations" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t('decorations')}
-                </Link>
-              </li>
-            </ul>
-          </div>
-          
-          {/* Legal Links */}
-          <div className="md:col-span-2">
-            <h4 className="font-semibold mb-4">{t('legal')}</h4>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t('privacy_policy')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/terms-and-conditions" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t('terms_and_conditions')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/return-policy" className="text-muted-foreground hover:text-primary transition-colors">
-                  {t('return_policy')}
-                </Link>
-              </li>
-            </ul>
+          {/* Links Grid - 2 columns on mobile, flexible on desktop */}
+          <div className="col-span-1 md:col-span-6 grid grid-cols-2 md:grid-cols-3 gap-6">
+            {/* Shop Links */}
+            <div>
+              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">{t('shop')}</h4>
+              <ul className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
+                <li>
+                  <Link href="/shop" className="text-muted-foreground hover:text-primary transition-colors">
+                    {t('clothing')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/shop" className="text-muted-foreground hover:text-primary transition-colors">
+                    {t('shoes')}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Gallery Links */}
+            <div>
+              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">{t('gallery')}</h4>
+              <ul className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
+                <li>
+                  <Link href="/gallery/baptism" className="text-muted-foreground hover:text-primary transition-colors">
+                    {t('baptism')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/gallery/decorations" className="text-muted-foreground hover:text-primary transition-colors">
+                    {t('decorations')}
+                  </Link>
+                </li>
+              </ul>
+            </div>
+            
+            {/* Legal Links */}
+            <div className="col-span-2 md:col-span-1">
+              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">{t('legal')}</h4>
+              <ul className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
+                <li>
+                  <Link href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
+                    {t('privacy_policy')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/terms-and-conditions" className="text-muted-foreground hover:text-primary transition-colors">
+                    {t('terms_and_conditions')}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/return-policy" className="text-muted-foreground hover:text-primary transition-colors">
+                    {t('return_policy')}
+                  </Link>
+                </li>
+              </ul>
+            </div>
           </div>
 
           {/* Contact Info */}
           <div className="md:col-span-3">
-            <h4 className="font-semibold mb-4">{t('contact') || 'Επικοινωνία'}</h4>
-            <div className="space-y-3 text-sm">
+            <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">{t('contact') || 'Επικοινωνία'}</h4>
+            <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
               <div className="flex items-center gap-2">
-                <Mail className="h-4 w-4 text-primary flex-shrink-0" />
+                <Mail className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary flex-shrink-0" />
                 <a 
                   href="mailto:tinkerbellkalamatas@gmail.com" 
-                  className="text-muted-foreground hover:text-primary transition-colors"
+                  className="text-muted-foreground hover:text-primary transition-colors break-all"
                 >
                   tinkerbellkalamatas@gmail.com
                 </a>
               </div>
               <div className="flex items-center gap-2">
-                <Phone className="h-4 w-4 text-primary flex-shrink-0" />
+                <Phone className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary flex-shrink-0" />
                 <a 
                   href="tel:+302721406303" 
                   className="text-muted-foreground hover:text-primary transition-colors"
@@ -136,8 +139,8 @@ export function Footer() {
                   2721 406303
                 </a>
               </div>
-              <div className="flex items-start gap-2 pt-1">
-                <MapPin className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+              <div className="flex items-start gap-2">
+                <MapPin className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary flex-shrink-0 mt-0.5" />
                 <a 
                   href="https://www.google.com/maps/search/?api=1&query=Γεωργούλη+8,+Καλαμάτα" 
                   target="_blank"
@@ -152,7 +155,7 @@ export function Footer() {
         </div>
         
         {/* Copyright */}
-        <div className="mt-12 pt-6 border-t text-center text-sm text-muted-foreground">
+        <div className="mt-6 md:mt-12 pt-4 md:pt-6 border-t text-center text-xs md:text-sm text-muted-foreground">
           <p>&copy; {year} Tinkerbell. {t('rights') || 'Με επιφύλαξη παντός δικαιώματος'}.</p>
         </div>
       </div>
