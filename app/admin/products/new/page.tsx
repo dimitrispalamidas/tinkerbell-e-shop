@@ -118,7 +118,7 @@ export default function NewProductPage() {
           name_en: formData.name_en,
           description_el: formData.description_el || null,
           description_en: formData.description_en || null,
-          price: parseFloat(formData.price),
+          price: parseFloat(formData.price.replace(',', '.')),
           category_id: formData.category_id || null,
           sizes: formData.sizes ? formData.sizes.split(',').map(s => s.trim()) : [],
           colors: formData.colors ? formData.colors.split(',').map(c => c.trim()) : [],
@@ -201,38 +201,72 @@ export default function NewProductPage() {
             <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">{t('sku_required')}</label>
+                <p className="text-xs text-muted-foreground mb-2">{t('sku_category_hint')}</p>
                 <div className="flex gap-2">
                   <Input
                     value={formData.sku}
-                    onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
+                    onChange={(e) => setFormData({ ...formData, sku: e.target.value.toUpperCase() })}
                     required
-                    placeholder="PROD-001"
+                    placeholder="BS00001, GC00002, ..."
                   />
                   <Button
                     type="button"
                     variant="outline"
                     onClick={async () => {
+                      if (!formData.category_id) {
+                        toast.error(locale === 'el' ? 'Παρακαλώ επιλέξτε πρώτα κατηγορία' : 'Please select a category first');
+                        return;
+                      }
+
                       const supabase = createClient();
-                      // Get all products with PROD- prefix
+                      
+                      // Find the selected category
+                      const selectedCategory = categories.find(c => c.id === formData.category_id);
+                      if (!selectedCategory) return;
+
+                      // Determine prefix based on category
+                      let prefix = 'PROD';
+                      const categoryName = selectedCategory.name_en.toLowerCase();
+                      const categoryType = selectedCategory.type;
+
+                      if (categoryType === 'shoes') {
+                        if (categoryName.includes('boy')) {
+                          prefix = 'BS'; // Boy Shoes
+                        } else if (categoryName.includes('girl')) {
+                          prefix = 'GS'; // Girl Shoes
+                        } else {
+                          prefix = 'SH'; // Shoes (generic)
+                        }
+                      } else if (categoryType === 'clothing') {
+                        if (categoryName.includes('boy')) {
+                          prefix = 'BC'; // Boy Clothes
+                        } else if (categoryName.includes('girl')) {
+                          prefix = 'GC'; // Girl Clothes
+                        } else {
+                          prefix = 'CL'; // Clothes (generic)
+                        }
+                      }
+
+                      // Get all products with this prefix
                       const { data } = await supabase
                         .from('products')
                         .select('sku')
-                        .like('sku', 'PROD-%')
+                        .like('sku', `${prefix}%`)
                         .order('sku', { ascending: false });
                       
                       let maxNum = 0;
                       if (data && data.length > 0) {
                         // Find the highest number
                         data.forEach(p => {
-                          const match = p.sku.match(/PROD-(\d+)/);
+                          const match = p.sku.match(new RegExp(`${prefix}(\\d+)`));
                           if (match) {
                             maxNum = Math.max(maxNum, parseInt(match[1]));
                           }
                         });
                       }
                       
-                      const newNum = (maxNum + 1).toString().padStart(3, '0');
-                      setFormData({ ...formData, sku: `PROD-${newNum}` });
+                      const newNum = (maxNum + 1).toString().padStart(5, '0');
+                      setFormData({ ...formData, sku: `${prefix}${newNum}` });
                     }}
                   >
                     {t('auto')}
@@ -248,22 +282,41 @@ export default function NewProductPage() {
                   className="w-full px-3 py-2 border rounded-md"
                 >
                   <option value="">{t('no_category')}</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>
-                      {locale === 'el' ? cat.name_el : cat.name_en} ({cat.type})
-                    </option>
-                  ))}
+                  <optgroup label={locale === 'el' ? '👕 Ρούχα' : '👕 Clothing'}>
+                    {categories.filter(cat => cat.type === 'clothing').map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {locale === 'el' ? cat.name_el : cat.name_en}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={locale === 'el' ? '👟 Παπούτσια' : '👟 Shoes'}>
+                    {categories.filter(cat => cat.type === 'shoes').map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {locale === 'el' ? cat.name_el : cat.name_en}
+                      </option>
+                    ))}
+                  </optgroup>
                 </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">{t('price_required')}</label>
                 <Input
-                  type="number"
-                  step="0.01"
-                  min="0"
+                  type="text"
                   value={formData.price}
-                  onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                  onChange={(e) => {
+                    // Allow digits, comma, and dot
+                    const value = e.target.value.replace(/[^\d.,]/g, '');
+                    setFormData({ ...formData, price: value });
+                  }}
+                  onBlur={(e) => {
+                    // Format on blur - convert comma to dot
+                    let value = e.target.value.replace(',', '.');
+                    const num = parseFloat(value);
+                    if (!isNaN(num)) {
+                      setFormData({ ...formData, price: num.toFixed(2) });
+                    }
+                  }}
                   required
                   placeholder={t('price_placeholder')}
                 />
@@ -393,29 +446,60 @@ export default function NewProductPage() {
               </div>
 
               {imageUrls.length > 0 && (
-                <div className="grid grid-cols-4 gap-4">
-                  {imageUrls.map((url, index) => (
-                    <div key={index} className="relative aspect-square group">
-                      <Image
-                        src={url}
-                        alt={`Product image ${index + 1}`}
-                        fill
-                        className="object-cover rounded-lg"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeImage(index)}
-                        className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                <div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    {locale === 'el' ? 'Σύρετε τις εικόνες για να αλλάξετε τη σειρά' : 'Drag images to reorder'}
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {imageUrls.map((url, index) => (
+                      <div
+                        key={index}
+                        draggable
+                        onDragStart={(e) => {
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.dataTransfer.setData('text/plain', index.toString());
+                        }}
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = 'move';
+                        }}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                          if (fromIndex !== index) {
+                            const newUrls = [...imageUrls];
+                            const [moved] = newUrls.splice(fromIndex, 1);
+                            newUrls.splice(index, 0, moved);
+                            setImageUrls(newUrls);
+                          }
+                        }}
+                        className="relative aspect-square group cursor-grab active:cursor-grabbing"
                       >
-                        <X className="h-4 w-4" />
-                      </button>
-                      {index === 0 && (
-                        <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
-                          {t('main_image')}
-                        </span>
-                      )}
-                    </div>
-                  ))}
+                        <Image
+                          src={url}
+                          alt={`Product image ${index + 1}`}
+                          fill
+                          className="object-cover rounded-lg pointer-events-none"
+                          draggable={false}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeImage(index)}
+                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                        {index === 0 && (
+                          <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+                            {t('main_image')}
+                          </span>
+                        )}
+                        <div className="absolute top-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded font-bold">
+                          #{index + 1}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </CardContent>

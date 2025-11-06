@@ -89,12 +89,12 @@ export default function BaptismGalleryPage() {
 
         {/* Photo Grid */}
         {allPhotos.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-3 gap-1 md:gap-2">
             {allPhotos.map((photo, index) => (
               <button
                 key={index}
                 onClick={() => openLightbox(index)}
-                className="relative aspect-square overflow-hidden rounded-lg bg-gradient-to-br from-lavender/20 to-pink/20 hover:scale-105 transition-transform duration-300 group"
+                className="relative aspect-square overflow-hidden rounded bg-gradient-to-br from-lavender/20 to-pink/20 hover:scale-105 transition-transform duration-300 group"
               >
                 <Image
                   src={photo}

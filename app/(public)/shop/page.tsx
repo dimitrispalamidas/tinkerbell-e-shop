@@ -18,6 +18,13 @@ export default async function ShopPage({
 
   const supabase = await createClient();
   
+  // Fetch all categories for filters
+  const { data: allCategories } = await supabase
+    .from('categories')
+    .select('*')
+    .order('type', { ascending: true })
+    .order('name_el', { ascending: true });
+  
   let query = supabase
     .from('products')
     .select('*, categories(*), product_variants(*)')
@@ -52,8 +59,59 @@ export default async function ShopPage({
         )}
       </div>
 
+      {/* Category Filters */}
+      {allCategories && allCategories.length > 0 && (
+        <div className="mb-6 border-b overflow-x-auto">
+          <div className="flex gap-2 md:gap-4 min-w-max pb-2">
+            <Link
+              href="/shop"
+              className={`px-3 md:px-4 py-2 md:py-3 border-b-2 font-medium transition-colors text-sm md:text-base whitespace-nowrap ${
+                !type && !category
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {locale === 'el' ? 'Όλα' : 'All'}
+            </Link>
+            <Link
+              href="/shop?type=clothing"
+              className={`px-3 md:px-4 py-2 md:py-3 border-b-2 font-medium transition-colors text-sm md:text-base whitespace-nowrap ${
+                type === 'clothing' && !category
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {locale === 'el' ? 'Ρούχα' : 'Clothing'}
+            </Link>
+            <Link
+              href="/shop?type=shoes"
+              className={`px-3 md:px-4 py-2 md:py-3 border-b-2 font-medium transition-colors text-sm md:text-base whitespace-nowrap ${
+                type === 'shoes' && !category
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {locale === 'el' ? 'Παπούτσια' : 'Shoes'}
+            </Link>
+            {allCategories.map((cat: any) => (
+              <Link
+                key={cat.id}
+                href={`/shop?category=${cat.id}`}
+                className={`px-3 md:px-4 py-2 md:py-3 border-b-2 font-medium transition-colors text-sm md:text-base whitespace-nowrap ${
+                  category === cat.id
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {locale === 'el' ? cat.name_el : cat.name_en}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
       {products && products.length > 0 ? (
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
+        <div className="grid grid-cols-3 lg:grid-cols-5 gap-1 md:gap-2">
           {products.map((product) => (
             <Link key={product.id} href={`/product/${product.id}`}>
               <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full group">
@@ -68,18 +126,18 @@ export default async function ShopPage({
                         className="object-cover w-full h-full group-hover:scale-105 transition-transform"
                       />
                     ) : (
-                      <ShoppingBag className="h-20 w-20 text-muted-foreground" />
+                      <ShoppingBag className="h-12 w-12 md:h-20 md:w-20 text-muted-foreground" />
                     )}
                   </div>
-                  <div className="p-3 md:p-4">
-                    <h3 className="text-sm md:text-base font-semibold mb-1 md:mb-2 line-clamp-2">
+                  <div className="p-2 md:p-3">
+                    <h3 className="text-xs md:text-sm font-semibold mb-1 line-clamp-2">
                       {locale === 'el' ? product.name_el : product.name_en}
                     </h3>
-                    <p className="text-xs md:text-sm text-muted-foreground mb-2 line-clamp-2">
+                    <p className="text-[10px] md:text-xs text-muted-foreground mb-1 md:mb-2 line-clamp-1 md:line-clamp-2">
                       {locale === 'el' ? product.description_el : product.description_en}
                     </p>
-                    <div className="flex justify-between items-center">
-                      <p className="text-base md:text-lg font-bold text-primary">
+                    <div className="flex justify-between items-center gap-1">
+                      <p className="text-sm md:text-base font-bold text-primary">
                         {formatPrice(product.price, locale)}
                       </p>
                       {(() => {
@@ -88,11 +146,11 @@ export default async function ShopPage({
                           product.product_variants.some((v: any) => v.stock > 0);
                         
                         return hasStock ? (
-                          <span className="text-xs bg-mint/30 text-green-700 px-2 py-1 rounded">
+                          <span className="text-[10px] md:text-xs bg-mint/30 text-green-700 px-1.5 md:px-2 py-0.5 md:py-1 rounded whitespace-nowrap">
                             {t('in_stock')}
                           </span>
                         ) : (
-                          <span className="text-xs bg-muted text-muted-foreground px-2 py-1 rounded">
+                          <span className="text-[10px] md:text-xs bg-muted text-muted-foreground px-1.5 md:px-2 py-0.5 md:py-1 rounded whitespace-nowrap">
                             {t('out_of_stock')}
                           </span>
                         );

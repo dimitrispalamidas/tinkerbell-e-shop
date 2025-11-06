@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server';
 import Image from 'next/image';
 import { formatPrice } from '@/lib/utils';
 import { VideoBackground } from '@/components/layout/video-background';
+import { FeaturedProductsCarousel } from '@/components/home/featured-products-carousel';
 
 export default async function HomePage() {
   const locale = await getLocale();
@@ -22,7 +23,7 @@ export default async function HomePage() {
     .from('products')
     .select('*')
     .eq('is_active', true)
-    .limit(6);
+    .limit(15);
 
   return (
     <div className="flex flex-col">
@@ -32,7 +33,7 @@ export default async function HomePage() {
         <div className="absolute inset-0 z-0">
           <Image
             src="/hero-children2.jpg"
-            alt="Παιδικά Ρούχα και Παπούτσια"
+            alt="Τινκερμπελ - Παιδικά Ρούχα, Βαπτιστικά, Στολισμοί"
             fill
             className="object-cover object-center"
             style={{ objectPosition: 'center 40%' }}
@@ -55,11 +56,23 @@ export default async function HomePage() {
             <p className="text-base md:text-lg text-white/80 mb-6 md:mb-8 drop-shadow-lg">
               {t('hero_description')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
               <Link href="/shop">
-                <Button size="lg" className="shadow-xl">
-                  {t('shop_now')}
-                  <Store className="ml-2 h-5 w-5" />
+                <Button size="lg" className="shadow-xl w-full sm:w-auto">
+                  <ShoppingBag className="mr-2 h-5 w-5" />
+                  {tNav('clothing')}
+                </Button>
+              </Link>
+              <Link href="/gallery/baptism">
+                <Button size="lg" variant="outline" className="bg-white/90 hover:bg-white shadow-xl w-full sm:w-auto">
+                  <Baby className="mr-2 h-5 w-5" />
+                  {tNav('baptism')}
+                </Button>
+              </Link>
+              <Link href="/gallery/decorations">
+                <Button size="lg" variant="outline" className="bg-white/90 hover:bg-white shadow-xl w-full sm:w-auto">
+                  <BsBalloonHeart className="mr-2 h-5 w-5" />
+                  {tNav('decorations')}
                 </Button>
               </Link>
             </div>
@@ -73,7 +86,7 @@ export default async function HomePage() {
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12">
             {t('categories')}
           </h2>
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-4xl mx-auto">
             <Link href="/shop?type=clothing">
               <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-2 border-pink/30 hover:border-pink">
                 <CardContent className="p-0">
@@ -85,9 +98,9 @@ export default async function HomePage() {
                       className="object-cover"
                     />
                   </div>
-                  <div className="p-4 md:p-6">
-                    <h3 className="text-xl md:text-2xl font-bold mb-2">{tNav('clothing')}</h3>
-                    <p className="text-sm md:text-base text-muted-foreground">
+                  <div className="p-3 md:p-6">
+                    <h3 className="text-base md:text-2xl font-bold mb-1 md:mb-2">{tNav('clothing')}</h3>
+                    <p className="text-xs md:text-base text-muted-foreground line-clamp-2">
                       {locale === 'el' ? 'Ανακαλύψτε τη συλλογή μας' : 'Discover our collection'}
                     </p>
                   </div>
@@ -106,9 +119,9 @@ export default async function HomePage() {
                       className="object-cover"
                     />
                   </div>
-                  <div className="p-4 md:p-6">
-                    <h3 className="text-xl md:text-2xl font-bold mb-2">{tNav('shoes')}</h3>
-                    <p className="text-sm md:text-base text-muted-foreground">
+                  <div className="p-3 md:p-6">
+                    <h3 className="text-base md:text-2xl font-bold mb-1 md:mb-2">{tNav('shoes')}</h3>
+                    <p className="text-xs md:text-base text-muted-foreground line-clamp-2">
                       {locale === 'el' ? 'Δείτε τα παπούτσια μας' : 'Browse our shoes'}
                     </p>
                   </div>
@@ -133,37 +146,7 @@ export default async function HomePage() {
               </Link>
             </div>
             
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-              {products.map((product) => (
-                <Link key={product.id} href={`/product/${product.id}`}>
-                  <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
-                    <CardContent className="p-0">
-                      <div className="aspect-square bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center">
-                        {product.images && product.images[0] ? (
-                          <Image
-                            src={product.images[0]}
-                            alt={locale === 'el' ? product.name_el : product.name_en}
-                            width={300}
-                            height={300}
-                            className="object-cover w-full h-full"
-                          />
-                        ) : (
-                          <ShoppingBag className="h-20 w-20 text-muted-foreground" />
-                        )}
-                      </div>
-                      <div className="p-2 md:p-4">
-                        <h3 className="text-xs md:text-sm font-semibold mb-1 md:mb-2 line-clamp-2">
-                          {locale === 'el' ? product.name_el : product.name_en}
-                        </h3>
-                        <p className="text-sm md:text-lg font-bold text-primary">
-                          {formatPrice(product.price, locale)}
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              ))}
-            </div>
+            <FeaturedProductsCarousel products={products} />
           </div>
         </section>
       )}
