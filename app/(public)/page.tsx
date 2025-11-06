@@ -2,7 +2,7 @@ import { getTranslations, getLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Store, Baby } from 'lucide-react';
+import { ArrowRight, Store, ShoppingBag, Baby } from 'lucide-react';
 import { BsBalloonHeart } from 'react-icons/bs';
 import { createClient } from '@/lib/supabase/server';
 import Image from 'next/image';
