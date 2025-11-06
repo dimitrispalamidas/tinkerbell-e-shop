@@ -2,7 +2,7 @@ import { getTranslations, getLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, ShoppingBag, Baby } from 'lucide-react';
+import { ArrowRight, Store, Baby } from 'lucide-react';
 import { BsBalloonHeart } from 'react-icons/bs';
 import { createClient } from '@/lib/supabase/server';
 import Image from 'next/image';
@@ -59,7 +59,7 @@ export default async function HomePage() {
               <Link href="/shop">
                 <Button size="lg" className="w-full sm:w-auto shadow-xl">
                   {t('shop_now')}
-                  <ShoppingBag className="ml-2 h-5 w-5" />
+                  <Store className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
