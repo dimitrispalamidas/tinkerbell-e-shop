@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tinkerbell.gr';
+const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.tinkerbell.gr';
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
