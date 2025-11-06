@@ -25,6 +25,7 @@ export default function CheckoutPage() {
   const { items, getTotal, clearCart } = useCartStore();
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -82,13 +83,54 @@ export default function CheckoutPage() {
     }
   }, [locale]);
 
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const validatePhone = (phone: string): boolean => {
+    // Greek phone: 10 digits starting with 2 or 6
+    const phoneRegex = /^[26]\d{9}$/;
+    return phoneRegex.test(phone.replace(/\s/g, ''));
+  };
+
+  const validatePostalCode = (postalCode: string): boolean => {
+    // Greek postal code: 5 digits
+    const postalRegex = /^\d{5}$/;
+    return postalRegex.test(postalCode.replace(/\s/g, ''));
+  };
+
   const handleContinue = async () => {
     if (step === 1) {
-      // Validate customer info
-      if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+      // Validate customer info - check required fields
+      const newErrors: Record<string, boolean> = {};
+      
+      if (!formData.firstName) newErrors.firstName = true;
+      if (!formData.lastName) newErrors.lastName = true;
+      if (!formData.email) newErrors.email = true;
+      if (!formData.phone) newErrors.phone = true;
+
+      if (Object.keys(newErrors).length > 0) {
+        setErrors(newErrors);
         toast.error(t('fill_all_fields'));
         return;
       }
+
+      // Validate email format
+      if (!validateEmail(formData.email)) {
+        setErrors({ ...errors, email: true });
+        toast.error(locale === 'el' ? 'Παρακαλώ εισάγετε σωστή διεύθυνση email' : 'Please enter a valid email address');
+        return;
+      }
+
+      // Validate phone format
+      const cleanPhone = formData.phone.replace(/\s/g, '');
+      if (!validatePhone(cleanPhone)) {
+        setErrors({ ...errors, phone: true });
+        toast.error(locale === 'el' ? 'Το τηλέφωνο πρέπει να είναι 10 ψηφία και να ξεκινά με 2 ή 6' : 'Phone must be 10 digits starting with 2 or 6');
+        return;
+      }
+
       setStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (step === 2) {
@@ -105,8 +147,23 @@ export default function CheckoutPage() {
           return;
         }
       } else if (formData.deliveryMethod === 'home') {
-        if (!formData.address || !formData.city || !formData.region || !formData.postalCode) {
+        const addressErrors: Record<string, boolean> = {};
+        
+        if (!formData.address) addressErrors.address = true;
+        if (!formData.city) addressErrors.city = true;
+        if (!formData.region) addressErrors.region = true;
+        if (!formData.postalCode) addressErrors.postalCode = true;
+
+        if (Object.keys(addressErrors).length > 0) {
+          setErrors({ ...errors, ...addressErrors });
           toast.error(t('fill_address_fields'));
+          return;
+        }
+        
+        // Validate postal code
+        if (!validatePostalCode(formData.postalCode)) {
+          setErrors({ ...errors, postalCode: true });
+          toast.error(locale === 'el' ? 'Ο Τ.Κ. πρέπει να είναι 5 ψηφία' : 'Postal code must be 5 digits');
           return;
         }
       }
@@ -289,9 +346,12 @@ export default function CheckoutPage() {
                     <label className="block text-sm font-medium mb-2">{tCommon('first_name')}</label>
                     <Input
                       value={formData.firstName}
-                      onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, firstName: e.target.value });
+                        if (errors.firstName) setErrors({ ...errors, firstName: false });
+                      }}
                       required
-                      className="text-base"
+                      className={`text-base ${errors.firstName ? 'border-red-500' : ''}`}
                       placeholder={locale === 'el' ? 'π.χ. Γιάννης' : 'e.g. John'}
                     />
                   </div>
@@ -299,9 +359,12 @@ export default function CheckoutPage() {
                     <label className="block text-sm font-medium mb-2">{tCommon('last_name')}</label>
                     <Input
                       value={formData.lastName}
-                      onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                      onChange={(e) => {
+                        setFormData({ ...formData, lastName: e.target.value });
+                        if (errors.lastName) setErrors({ ...errors, lastName: false });
+                      }}
                       required
-                      className="text-base"
+                      className={`text-base ${errors.lastName ? 'border-red-500' : ''}`}
                       placeholder={locale === 'el' ? 'π.χ. Παπαδόπουλος' : 'e.g. Smith'}
                     />
                   </div>
@@ -311,22 +374,57 @@ export default function CheckoutPage() {
                   <Input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={(e) => {
+                      setFormData({ ...formData, email: e.target.value.toLowerCase().trim() });
+                      if (errors.email) setErrors({ ...errors, email: false });
+                    }}
+                    onBlur={(e) => {
+                      if (e.target.value && !validateEmail(e.target.value)) {
+                        setErrors({ ...errors, email: true });
+                        toast.error(locale === 'el' ? 'Μη έγκυρη διεύθυνση email' : 'Invalid email address');
+                      }
+                    }}
                     required
-                    className="text-base"
+                    className={`text-base ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                     placeholder="email@example.com"
                   />
+                  {errors.email && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {locale === 'el' ? 'Παράδειγμα: name@example.com' : 'Example: name@example.com'}
+                    </p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-2">{tCommon('phone')}</label>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {locale === 'el' ? 'Κινητό (69...) ή σταθερό (2...)' : 'Mobile (69...) or landline (2...)'}
+                  </p>
                   <Input
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) => {
+                      // Allow only digits
+                      const value = e.target.value.replace(/\D/g, '');
+                      setFormData({ ...formData, phone: value });
+                      if (errors.phone) setErrors({ ...errors, phone: false });
+                    }}
+                    onBlur={(e) => {
+                      const cleanPhone = e.target.value.replace(/\s/g, '');
+                      if (cleanPhone && !validatePhone(cleanPhone)) {
+                        setErrors({ ...errors, phone: true });
+                        toast.error(locale === 'el' ? 'Το τηλέφωνο πρέπει να είναι 10 ψηφία (π.χ. 6912345678 ή 2101234567)' : 'Phone must be 10 digits (e.g. 6912345678 or 2101234567)');
+                      }
+                    }}
                     required
-                    className="text-base"
+                    maxLength={10}
+                    className={`text-base ${errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                     placeholder={locale === 'el' ? 'π.χ. 6912345678' : 'e.g. 6912345678'}
                   />
+                  {errors.phone && (
+                    <p className="text-xs text-red-500 mt-1">
+                      {locale === 'el' ? 'Μόνο 10 ψηφία, π.χ. 6912345678 ή 2101234567' : 'Only 10 digits, e.g. 6912345678 or 2101234567'}
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -428,9 +526,12 @@ export default function CheckoutPage() {
                         <label className="block text-sm font-medium mb-2">{tCommon('address')}</label>
                         <Input
                           value={formData.address}
-                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, address: e.target.value });
+                            if (errors.address) setErrors({ ...errors, address: false });
+                          }}
                           required
-                          className="text-base"
+                          className={`text-base ${errors.address ? 'border-red-500' : ''}`}
                           placeholder={locale === 'el' ? 'π.χ. Αθηνάς 123' : 'e.g. Athinas 123'}
                         />
                       </div>
@@ -439,30 +540,54 @@ export default function CheckoutPage() {
                           <label className="block text-sm font-medium mb-2">{tCommon('city')}</label>
                           <Input
                             value={formData.city}
-                            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                            onChange={(e) => {
+                              setFormData({ ...formData, city: e.target.value });
+                              if (errors.city) setErrors({ ...errors, city: false });
+                            }}
                             required
-                            className="text-base"
+                            className={`text-base ${errors.city ? 'border-red-500' : ''}`}
                             placeholder={locale === 'el' ? 'π.χ. Αθήνα' : 'e.g. Athens'}
                           />
                         </div>
                         <div>
                           <label className="block text-sm font-medium mb-2">{tCommon('postal_code')}</label>
                           <Input
+                            type="text"
                             value={formData.postalCode}
-                            onChange={(e) => setFormData({ ...formData, postalCode: e.target.value })}
+                            onChange={(e) => {
+                              // Allow only digits, max 5
+                              const value = e.target.value.replace(/\D/g, '').slice(0, 5);
+                              setFormData({ ...formData, postalCode: value });
+                              if (errors.postalCode) setErrors({ ...errors, postalCode: false });
+                            }}
+                            onBlur={(e) => {
+                              if (e.target.value && !validatePostalCode(e.target.value)) {
+                                setErrors({ ...errors, postalCode: true });
+                                toast.error(locale === 'el' ? 'Ο Τ.Κ. πρέπει να είναι 5 ψηφία' : 'Postal code must be 5 digits');
+                              }
+                            }}
                             required
-                            className="text-base"
+                            maxLength={5}
+                            className={`text-base ${errors.postalCode ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                             placeholder="12345"
                           />
+                          {errors.postalCode && (
+                            <p className="text-xs text-red-500 mt-1">
+                              {locale === 'el' ? 'Μόνο 5 ψηφία, π.χ. 12345' : 'Only 5 digits, e.g. 12345'}
+                            </p>
+                          )}
                         </div>
                       </div>
                       <div>
                         <label className="block text-sm font-medium mb-2">{tCommon('region')}</label>
                         <Input
                           value={formData.region}
-                          onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+                          onChange={(e) => {
+                            setFormData({ ...formData, region: e.target.value });
+                            if (errors.region) setErrors({ ...errors, region: false });
+                          }}
                           required
-                          className="text-base"
+                          className={`text-base ${errors.region ? 'border-red-500' : ''}`}
                           placeholder={locale === 'el' ? 'π.χ. Αττική' : 'e.g. Attica'}
                         />
                       </div>

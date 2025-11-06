@@ -26,7 +26,7 @@ export function FeaturedProductsCarousel({ products }: Props) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const autoRotateInterval = useRef<NodeJS.Timeout>();
+  const autoRotateInterval = useRef<NodeJS.Timeout | null>(null);
 
   // Auto-rotate every 5 seconds
   useEffect(() => {
