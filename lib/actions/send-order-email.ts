@@ -50,15 +50,42 @@ export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
     console.log('✅ [Email] Order found:', order.id);
     console.log('📦 [Email] Order items:', order.order_items?.length || 0);
 
+    // Calculate subtotal and shipping cost
+    const subtotal = order.order_items?.reduce((sum: number, item: any) => 
+      sum + (item.price * item.quantity), 0
+    ) || 0;
+    const shippingCost = order.total - subtotal;
+    
+    // Determine delivery method
+    const deliveryMethod = order.shipping_address?.delivery_method || 
+      (order.boxnow_locker_id ? 'boxnow' : 'home');
+
+    // Get correct locker address for BOXNOW
+    let boxnowLockerAddress = undefined;
+    if (deliveryMethod === 'boxnow') {
+      // Get from shipping_address.boxnow_locker_address
+      boxnowLockerAddress = order.shipping_address?.boxnow_locker_address || order.boxnow_locker_id;
+    }
+
     // Prepare email data
     const emailData = {
       customerName: order.customer_name,
       customerEmail: order.customer_email,
+      customerPhone: order.customer_phone || order.shipping_address?.phone || '',
       orderCode: order.viva_order_code,
       total: order.total,
+      subtotal: subtotal,
+      shippingCost: shippingCost,
       items: order.order_items || [],
+      deliveryMethod: deliveryMethod as 'boxnow' | 'home',
+      shippingAddress: deliveryMethod === 'home' ? {
+        address: order.shipping_address?.address,
+        city: order.shipping_address?.city,
+        region: order.shipping_address?.region,
+        postal_code: order.shipping_address?.postal_code,
+      } : undefined,
       boxnowTrackingCode: order.boxnow_tracking_code,
-      boxnowLockerAddress: order.shipping_address?.address,
+      boxnowLockerAddress: boxnowLockerAddress,
       baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://tinkerbell-e-shop.vercel.app',
     };
 

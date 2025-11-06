@@ -146,11 +146,12 @@ export default function CheckoutPage() {
           name: customerName,
           address: formData.deliveryMethod === 'home' ? formData.address : '',
           city: formData.deliveryMethod === 'home' ? formData.city : '',
-          postal_code: formData.deliveryMethod === 'home' ? formData.postalCode : '',
+          postal_code: formData.deliveryMethod === 'home' ? formData.postalCode : formData.boxnowLockerPostalCode,
           region: formData.deliveryMethod === 'home' ? formData.region : '',
           country: 'GR',
           phone: formData.phone,
           delivery_method: formData.deliveryMethod,
+          boxnow_locker_address: formData.deliveryMethod === 'boxnow' ? formData.boxnowLockerAddress : undefined,
         },
         boxnow_locker_id: formData.deliveryMethod === 'boxnow' ? formData.boxnowLockerId : undefined,
       };

@@ -26,9 +26,19 @@ interface OrderItem {
 interface OrderConfirmationEmailProps {
   customerName: string;
   customerEmail: string;
+  customerPhone: string;
   orderCode: string;
   total: number;
+  subtotal: number;
+  shippingCost: number;
   items: OrderItem[];
+  deliveryMethod: 'boxnow' | 'home';
+  shippingAddress?: {
+    address?: string;
+    city?: string;
+    region?: string;
+    postal_code?: string;
+  };
   boxnowTrackingCode?: string;
   boxnowLockerAddress?: string;
   baseUrl?: string;
@@ -37,9 +47,14 @@ interface OrderConfirmationEmailProps {
 export const OrderConfirmationEmail = ({
   customerName = 'Πελάτη',
   customerEmail = 'customer@example.com',
+  customerPhone = '',
   orderCode = '123456789',
   total = 0,
+  subtotal = 0,
+  shippingCost = 0,
   items = [],
+  deliveryMethod = 'boxnow',
+  shippingAddress,
   boxnowTrackingCode,
   boxnowLockerAddress,
   baseUrl = 'https://tinkerbell-e-shop.vercel.app',
@@ -81,8 +96,47 @@ export const OrderConfirmationEmail = ({
           
           <Hr style={hr} />
           
+          <Text style={detailTitle}>Όνομα</Text>
+          <Text style={detailValue}>{customerName}</Text>
+          
+          <Hr style={hr} />
+          
           <Text style={detailTitle}>Email</Text>
           <Text style={detailValue}>{customerEmail}</Text>
+          
+          <Hr style={hr} />
+          
+          <Text style={detailTitle}>Τηλέφωνο</Text>
+          <Text style={detailValue}>{customerPhone}</Text>
+          
+          <Hr style={hr} />
+          
+          <Text style={detailTitle}>Μέθοδος Παράδοσης</Text>
+          <Text style={detailValue}>
+            {deliveryMethod === 'boxnow' ? '📦 BOXNOW Locker' : '🏠 Παράδοση στο σπίτι'}
+          </Text>
+          
+          {deliveryMethod === 'home' && shippingAddress && (
+            <>
+              <Hr style={hr} />
+              <Text style={detailTitle}>Διεύθυνση Αποστολής</Text>
+              <Text style={detailValue}>
+                {shippingAddress.address}
+                <br />
+                {shippingAddress.city}, {shippingAddress.postal_code}
+                <br />
+                {shippingAddress.region}, Ελλάδα
+              </Text>
+            </>
+          )}
+          
+          {deliveryMethod === 'boxnow' && boxnowLockerAddress && (
+            <>
+              <Hr style={hr} />
+              <Text style={detailTitle}>BOXNOW Locker</Text>
+              <Text style={detailValue}>{boxnowLockerAddress}</Text>
+            </>
+          )}
         </Section>
 
         {/* Order Items */}
@@ -106,6 +160,32 @@ export const OrderConfirmationEmail = ({
               </td>
             </Row>
           ))}
+          
+          <Hr style={hr} />
+          
+          <Row style={subtotalRow}>
+            <td>
+              <Text style={subtotalLabel}>Υποσύνολο</Text>
+            </td>
+            <td>
+              <Text style={subtotalAmount}>€{subtotal.toFixed(2)}</Text>
+            </td>
+          </Row>
+          
+          <Row style={shippingRow}>
+            <td>
+              <Text style={shippingLabel}>Κόστος Αποστολής</Text>
+            </td>
+            <td>
+              <Text style={shippingAmount}>
+                {shippingCost === 0 ? (
+                  <span style={{ color: '#22c55e', fontWeight: '600' }}>ΔΩΡΕΑΝ</span>
+                ) : (
+                  `€${shippingCost.toFixed(2)}`
+                )}
+              </Text>
+            </td>
+          </Row>
           
           <Hr style={hr} />
           
@@ -344,6 +424,42 @@ const priceText = {
   fontSize: '16px',
   fontWeight: 'bold',
   margin: '0',
+};
+
+const subtotalRow = {
+  marginBottom: '8px',
+};
+
+const subtotalLabel = {
+  color: '#666666',
+  fontSize: '15px',
+  margin: '0',
+};
+
+const subtotalAmount = {
+  color: '#333333',
+  fontSize: '15px',
+  margin: '0',
+  textAlign: 'right' as const,
+  wordBreak: 'break-word' as const,
+};
+
+const shippingRow = {
+  marginBottom: '16px',
+};
+
+const shippingLabel = {
+  color: '#666666',
+  fontSize: '15px',
+  margin: '0',
+};
+
+const shippingAmount = {
+  color: '#333333',
+  fontSize: '15px',
+  margin: '0',
+  textAlign: 'right' as const,
+  wordBreak: 'break-word' as const,
 };
 
 const totalRow = {
