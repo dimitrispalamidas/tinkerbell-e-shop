@@ -249,6 +249,8 @@
     "failed_fetch": "Failed to fetch gallery item",
     "uploaded_count": "Uploaded {count} image(s)",
     "failed_upload": "Failed to upload images",
+    "image_deleted": "Image deleted successfully",
+    "failed_delete_image": "Failed to delete image",
     "remove_image": "Remove image",
     "move_left": "Move left",
     "move_right": "Move right",

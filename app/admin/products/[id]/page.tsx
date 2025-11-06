@@ -149,8 +149,34 @@ export default function EditProductPage() {
     }
   };
 
-  const removeImage = (index: number) => {
-    setImageUrls(imageUrls.filter((_, i) => i !== index));
+  const removeImage = async (index: number) => {
+    const imageUrl = imageUrls[index];
+    
+    try {
+      // Extract filename from URL
+      const urlParts = imageUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      
+      if (fileName) {
+        const supabase = createClient();
+        const { error } = await supabase.storage
+          .from('products')
+          .remove([fileName]);
+        
+        if (error) {
+          console.error('Error deleting image from storage:', error);
+          toast.error(t('failed_delete_image') || 'Failed to delete image');
+          return;
+        }
+      }
+      
+      // Remove from state
+      setImageUrls(imageUrls.filter((_, i) => i !== index));
+      toast.success(t('image_deleted') || 'Image deleted');
+    } catch (error) {
+      console.error('Error removing image:', error);
+      toast.error(t('failed_delete_image') || 'Failed to delete image');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -249,42 +275,43 @@ export default function EditProductPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <div className="flex items-center gap-4">
+    <div className="space-y-4 md:space-y-6 max-w-4xl pb-6">
+      <div className="flex items-center gap-3 md:gap-4">
         <Link href="/admin/products">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="h-9 w-9 md:h-10 md:w-10">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">{t('edit_product_title')}</h1>
-          <p className="text-muted-foreground">{t('edit_product_subtitle')}</p>
+          <h1 className="text-xl md:text-2xl lg:text-3xl font-bold">{t('edit_product_title')}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">{t('edit_product_subtitle')}</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="grid gap-6">
+        <div className="grid gap-4 md:gap-6">
           <Card>
-            <CardHeader>
-              <CardTitle>{t('product_info')}</CardTitle>
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-base md:text-lg">{t('product_info')}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 md:space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">{t('sku_required')}</label>
+                <label className="block text-xs md:text-sm font-medium mb-1.5 md:mb-2">{t('sku_required')}</label>
                 <Input
                   value={formData.sku}
                   onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                   required
                   placeholder="PROD-001"
+                  className="h-10 md:h-11 text-sm md:text-base"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">{t('category')}</label>
+                <label className="block text-xs md:text-sm font-medium mb-1.5 md:mb-2">{t('category')}</label>
                 <select
                   value={formData.category_id}
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md"
+                  className="w-full px-3 py-2.5 border rounded-md text-sm md:text-base h-10 md:h-11"
                 >
                   <option value="">{t('no_category')}</option>
                   <optgroup label={locale === 'el' ? '👕 Ρούχα' : '👕 Clothing'}>
@@ -305,7 +332,7 @@ export default function EditProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">{t('price_required')}</label>
+                <label className="block text-xs md:text-sm font-medium mb-1.5 md:mb-2">{t('price_required')}</label>
                 <Input
                   type="text"
                   value={formData.price}
@@ -324,30 +351,32 @@ export default function EditProductPage() {
                   }}
                   required
                   placeholder={t('price_placeholder')}
+                  className="h-10 md:h-11 text-sm md:text-base"
                 />
               </div>
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>{t('greek_info')}</CardTitle>
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-base md:text-lg">{t('greek_info')}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 md:space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">{t('name_el_required')}</label>
+                <label className="block text-xs md:text-sm font-medium mb-1.5 md:mb-2">{t('name_el_required')}</label>
                 <Input
                   value={formData.name_el}
                   onChange={(e) => setFormData({ ...formData, name_el: e.target.value })}
                   required
                   placeholder="Όνομα προϊόντος"
+                  className="h-10 md:h-11 text-sm md:text-base"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">{t('description_el')}</label>
+                <label className="block text-xs md:text-sm font-medium mb-1.5 md:mb-2">{t('description_el')}</label>
                 <textarea
-                  className="w-full px-3 py-2 border rounded-md min-h-[100px]"
+                  className="w-full px-3 py-2 border rounded-md min-h-[80px] md:min-h-[100px] text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   value={formData.description_el}
                   onChange={(e) => setFormData({ ...formData, description_el: e.target.value })}
                   placeholder="Περιγραφή προϊόντος"
@@ -357,24 +386,25 @@ export default function EditProductPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>{t('english_info')}</CardTitle>
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-base md:text-lg">{t('english_info')}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 md:space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">{t('name_en_required')}</label>
+                <label className="block text-xs md:text-sm font-medium mb-1.5 md:mb-2">{t('name_en_required')}</label>
                 <Input
                   value={formData.name_en}
                   onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
                   required
                   placeholder="Product name"
+                  className="h-10 md:h-11 text-sm md:text-base"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">{t('description_en')}</label>
+                <label className="block text-xs md:text-sm font-medium mb-1.5 md:mb-2">{t('description_en')}</label>
                 <textarea
-                  className="w-full px-3 py-2 border rounded-md min-h-[100px]"
+                  className="w-full px-3 py-2 border rounded-md min-h-[80px] md:min-h-[100px] text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   value={formData.description_en}
                   onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
                   placeholder="Product description"
@@ -384,16 +414,17 @@ export default function EditProductPage() {
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>{t('available_options')}</CardTitle>
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-base md:text-lg">{t('available_options')}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 md:space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">{t('sizes')}</label>
+                <label className="block text-xs md:text-sm font-medium mb-1.5 md:mb-2">{t('sizes')}</label>
                 <Input
                   value={formData.sizes}
                   onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
                   placeholder="4Y, 6Y, 8Y, 10Y, 12Y"
+                  className="h-10 md:h-11 text-sm md:text-base"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {t('sizes_hint')}
@@ -401,11 +432,12 @@ export default function EditProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">{t('colors')}</label>
+                <label className="block text-xs md:text-sm font-medium mb-1.5 md:mb-2">{t('colors')}</label>
                 <Input
                   value={formData.colors}
                   onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
                   placeholder="Ροζ, Μπλε, Πράσινο"
+                  className="h-10 md:h-11 text-sm md:text-base"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
                   {t('colors_hint')}
@@ -422,15 +454,15 @@ export default function EditProductPage() {
           />
 
           <Card>
-            <CardHeader>
-              <CardTitle>{t('product_images')}</CardTitle>
+            <CardHeader className="pb-3 md:pb-6">
+              <CardTitle className="text-base md:text-lg">{t('product_images')}</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-3 md:space-y-4">
               <div>
                 <label htmlFor="image-upload" className="cursor-pointer">
-                  <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
-                    <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-sm font-medium mb-1">
+                  <div className="border-2 border-dashed rounded-lg p-6 md:p-8 text-center hover:border-primary transition-colors active:border-primary">
+                    <Upload className="h-10 w-10 md:h-12 md:w-12 mx-auto mb-3 md:mb-4 text-muted-foreground" />
+                    <p className="text-xs md:text-sm font-medium mb-1">
                       {uploadingImages ? t('uploading') : t('click_upload')}
                     </p>
                     <p className="text-xs text-muted-foreground">
@@ -441,7 +473,6 @@ export default function EditProductPage() {
                     id="image-upload"
                     type="file"
                     accept="image/*"
-                    capture="environment"
                     multiple
                     onChange={handleImageUpload}
                     disabled={uploadingImages}
@@ -452,10 +483,10 @@ export default function EditProductPage() {
 
               {imageUrls.length > 0 && (
                 <div>
-                  <p className="text-xs text-muted-foreground mb-3">
+                  <p className="text-xs text-muted-foreground mb-2 md:mb-3">
                     {locale === 'el' ? 'Σύρετε τις εικόνες για να αλλάξετε τη σειρά' : 'Drag images to reorder'}
                   </p>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
                     {imageUrls.map((url, index) => (
                       <div
                         key={index}
@@ -490,16 +521,16 @@ export default function EditProductPage() {
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          className="absolute top-1 right-1 md:top-2 md:right-2 bg-red-500 text-white rounded-full p-1.5 md:p-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity z-10 touch-manipulation"
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-4 w-4 md:h-4 md:w-4" />
                         </button>
                         {index === 0 && (
-                          <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
+                          <span className="absolute bottom-1 left-1 md:bottom-2 md:left-2 bg-primary text-primary-foreground text-xs px-2 py-0.5 md:py-1 rounded">
                             {t('main_image')}
                           </span>
                         )}
-                        <div className="absolute top-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded font-bold">
+                        <div className="absolute top-1 left-1 md:top-2 md:left-2 bg-black/70 text-white text-xs px-1.5 md:px-2 py-0.5 md:py-1 rounded font-bold">
                           #{index + 1}
                         </div>
                       </div>
@@ -510,13 +541,13 @@ export default function EditProductPage() {
             </CardContent>
           </Card>
 
-          <div className="flex gap-4">
-            <Link href="/admin/products" className="flex-1">
-              <Button type="button" variant="outline" className="w-full">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 sticky bottom-0 bg-background pt-4 pb-2 border-t mt-6 z-20">
+            <Link href="/admin/products" className="flex-1 order-2 sm:order-1">
+              <Button type="button" variant="outline" className="w-full h-11 md:h-10 text-sm md:text-base touch-manipulation">
                 {tCommon('cancel')}
               </Button>
             </Link>
-            <Button type="submit" className="flex-1" disabled={isLoading}>
+            <Button type="submit" className="flex-1 h-11 md:h-10 text-sm md:text-base order-1 sm:order-2 touch-manipulation" disabled={isLoading}>
               {isLoading ? t('updating') : t('update_product')}
             </Button>
           </div>

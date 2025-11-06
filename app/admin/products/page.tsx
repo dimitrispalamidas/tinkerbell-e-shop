@@ -165,7 +165,7 @@ export default function AdminProductsPage() {
           <p className="text-sm md:text-base text-muted-foreground">{t('products_subtitle')}</p>
         </div>
         <Link href="/admin/products/new">
-          <Button className="w-full sm:w-auto">
+          <Button className="w-full sm:w-auto h-11 md:h-10 text-sm md:text-base touch-manipulation">
             <Plus className="mr-2 h-4 w-4" />
             {t('add_product_btn')}
           </Button>
@@ -173,8 +173,8 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b overflow-x-auto">
-        <nav className="flex gap-2 md:gap-4 min-w-max">
+      <div className="border-b overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+        <nav className="flex gap-1 md:gap-4 min-w-max">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const count = getTabCount(tab.id);
@@ -185,7 +185,7 @@ export default function AdminProductsPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 border-b-2 font-medium transition-colors text-sm md:text-base
+                  flex items-center gap-2 px-3 md:px-4 py-3 md:py-3 border-b-2 font-medium transition-colors text-sm md:text-base touch-manipulation
                   ${isActive 
                     ? 'border-primary text-primary' 
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
@@ -195,7 +195,7 @@ export default function AdminProductsPage() {
                 <Icon className={`h-4 w-4 md:h-5 md:w-5 ${isActive ? tab.color : ''}`} />
                 <span className="whitespace-nowrap">{tab.label}</span>
                 <span className={`
-                  px-2 py-0.5 rounded-full text-xs
+                  px-2 py-0.5 rounded-full text-xs font-semibold
                   ${isActive 
                     ? 'bg-primary text-primary-foreground' 
                     : 'bg-muted text-muted-foreground'
@@ -224,11 +224,11 @@ export default function AdminProductsPage() {
             ) || 0;
             
             return (
-              <Card key={product.id}>
-                <CardContent className="p-3 md:p-4">
-                  <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+              <Card key={product.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4 md:p-4">
+                  <div className="flex gap-3 md:gap-4">
                     {/* Image */}
-                    <div className="w-full sm:w-16 md:w-20 h-16 md:h-20 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                    <div className="w-20 h-20 md:w-20 md:h-20 bg-muted rounded-md overflow-hidden flex-shrink-0">
                       {product.images && product.images[0] ? (
                         <Image
                           src={product.images[0]}
@@ -247,8 +247,8 @@ export default function AdminProductsPage() {
                     <div className="flex-1 min-w-0 space-y-2">
                       {/* Product Info */}
                       <div>
-                        <h3 className="font-semibold text-sm md:text-base truncate">{locale === 'el' ? product.name_el : product.name_en}</h3>
-                        <p className="text-xs md:text-sm text-muted-foreground truncate">
+                        <h3 className="font-semibold text-base md:text-base line-clamp-1">{locale === 'el' ? product.name_el : product.name_en}</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground line-clamp-1">
                           {t('sku')}: {product.sku}
                         </p>
                         <p className="text-xs md:text-sm text-muted-foreground">
@@ -275,8 +275,8 @@ export default function AdminProductsPage() {
                         {/* Actions */}
                         <div className="flex gap-2">
                           <Link href={`/admin/products/${product.id}`}>
-                            <Button variant="outline" size="sm" title={tCommon('edit')} className="h-8 w-8 p-0">
-                              <Pencil className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                            <Button variant="outline" size="sm" title={tCommon('edit')} className="h-9 w-9 md:h-8 md:w-8 p-0 touch-manipulation">
+                              <Pencil className="h-4 w-4" />
                             </Button>
                           </Link>
                           
@@ -286,9 +286,9 @@ export default function AdminProductsPage() {
                               size="sm"
                               onClick={() => handleArchive(product.id)}
                               title={t('archive')}
-                              className="h-8 w-8 p-0"
+                              className="h-9 w-9 md:h-8 md:w-8 p-0 touch-manipulation"
                             >
-                              <Archive className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                              <Archive className="h-4 w-4" />
                             </Button>
                           )}
                           
@@ -298,9 +298,9 @@ export default function AdminProductsPage() {
                               size="sm"
                               onClick={() => handleRestore(product.id)}
                               title={t('unarchive')}
-                              className="h-8 w-8 p-0"
+                              className="h-9 w-9 md:h-8 md:w-8 p-0 touch-manipulation"
                             >
-                              <RotateCcw className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                              <RotateCcw className="h-4 w-4" />
                             </Button>
                           )}
                         </div>
@@ -320,7 +320,7 @@ export default function AdminProductsPage() {
             </p>
             {activeTab === 'active' && (
               <Link href="/admin/products/new">
-                <Button className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto h-11 md:h-10 text-sm md:text-base touch-manipulation">
                   <Plus className="mr-2 h-4 w-4" />
                   {t('add_product_btn')}
                 </Button>

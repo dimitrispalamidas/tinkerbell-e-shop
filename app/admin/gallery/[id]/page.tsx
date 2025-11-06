@@ -156,8 +156,34 @@ export default function EditGalleryItemPage() {
     }
   };
 
-  const removeImage = () => {
-    setImageUrl('');
+  const removeImage = async () => {
+    if (!imageUrl) return;
+    
+    try {
+      // Extract filename from URL
+      const urlParts = imageUrl.split('/');
+      const fileName = urlParts[urlParts.length - 1];
+      
+      if (fileName) {
+        const supabase = createClient();
+        const { error } = await supabase.storage
+          .from('gallery')
+          .remove([fileName]);
+        
+        if (error) {
+          console.error('Error deleting image from storage:', error);
+          toast.error(t('failed_delete_image') || 'Failed to delete image');
+          return;
+        }
+      }
+      
+      // Remove from state
+      setImageUrl('');
+      toast.success(t('image_deleted') || 'Image deleted');
+    } catch (error) {
+      console.error('Error removing image:', error);
+      toast.error(t('failed_delete_image') || 'Failed to delete image');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -340,7 +366,6 @@ export default function EditGalleryItemPage() {
                     type="file"
                     id="image-upload"
                     accept="image/*"
-                    capture="environment"
                     onChange={handleImageUpload}
                     className="hidden"
                     disabled={uploadingImage}
