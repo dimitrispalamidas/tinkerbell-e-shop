@@ -120,6 +120,64 @@ export default function CheckoutPage() {
     try {
       setIsProcessing(true);
 
+      // STEP 1: Validate cart stock before payment
+      console.log('🔐 [Security] Validating cart stock...');
+      const { validateCartStock } = await import('@/lib/actions/validate-cart');
+      
+      const validation = await validateCartStock(items.map(item => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+        price: item.price,
+      })));
+
+      if (!validation.valid) {
+        console.error('❌ [Security] Cart validation failed:', validation.errors);
+        
+        // Show detailed error messages to user
+        const errorMessages = validation.errors.map(err => {
+          const itemInfo = `${err.productName}${err.size ? ` (${err.size}${err.color ? `, ${err.color}` : ''})` : ''}`;
+          
+          if (err.issue === 'product_not_found') {
+            return locale === 'el' 
+              ? `❌ ${itemInfo}: Το προϊόν δεν υπάρχει πλέον`
+              : `❌ ${itemInfo}: Product no longer exists`;
+          } else if (err.issue === 'variant_not_found') {
+            return locale === 'el'
+              ? `❌ ${itemInfo}: Αυτή η παραλλαγή δεν είναι διαθέσιμη`
+              : `❌ ${itemInfo}: This variant is not available`;
+          } else if (err.issue === 'no_stock') {
+            return locale === 'el'
+              ? `❌ ${itemInfo}: Εξαντλήθηκε`
+              : `❌ ${itemInfo}: Out of stock`;
+          } else if (err.issue === 'insufficient_stock') {
+            return locale === 'el'
+              ? `⚠️ ${itemInfo}: Ζητήθηκαν ${err.requestedQuantity}, διαθέσιμα ${err.availableStock}`
+              : `⚠️ ${itemInfo}: Requested ${err.requestedQuantity}, available ${err.availableStock}`;
+          }
+          return '';
+        }).filter(Boolean);
+
+        // Show all errors
+        errorMessages.forEach(msg => toast.error(msg, { duration: 6000 }));
+        
+        // Main error message
+        toast.error(
+          locale === 'el'
+            ? 'Παρακαλώ ενημερώστε το καλάθι σας και δοκιμάστε ξανά'
+            : 'Please update your cart and try again',
+          { duration: 8000 }
+        );
+        
+        setIsProcessing(false);
+        return;
+      }
+
+      console.log('✅ [Security] Cart validation passed');
+
+      // STEP 2: Continue with payment if validation passed
       // Import the Viva Wallet actions dynamically
       const { createVivaPaymentOrder, createOrder } = await import('@/lib/actions/viva-wallet');
 
@@ -442,6 +500,10 @@ export default function CheckoutPage() {
                     <div className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                       <span>{locale === 'el' ? 'Υποστήριξη όλων των καρτών' : 'All cards supported'}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                      <span>{locale === 'el' ? 'Έλεγχος διαθεσιμότητας προϊόντων' : 'Product availability check'}</span>
                     </div>
                   </div>
 

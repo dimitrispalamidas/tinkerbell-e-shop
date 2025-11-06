@@ -28,17 +28,29 @@ export function ProductClient({ product, variants, locale, translations }: Produ
   const [quantity, setQuantity] = useState(1);
   const [availableStock, setAvailableStock] = useState(0);
   const addItem = useCartStore((state) => state.addItem);
+  const cartItems = useCartStore((state) => state.items);
+
+  // Get quantity already in cart for specific variant
+  const getCartQuantity = (size: string, color: string): number => {
+    const cartItem = cartItems.find(
+      item => item.id === product.id && item.size === size && item.color === color
+    );
+    return cartItem?.quantity || 0;
+  };
 
   // Update available stock when size/color changes
   useEffect(() => {
     if (selectedSize && selectedColor) {
       const variant = variants.find(v => v.size === selectedSize && v.color === selectedColor);
-      setAvailableStock(variant?.stock || 0);
+      const dbStock = variant?.stock || 0;
+      const cartQty = getCartQuantity(selectedSize, selectedColor);
+      // Available stock = database stock - what's already in cart
+      setAvailableStock(Math.max(0, dbStock - cartQty));
       setQuantity(1); // Reset quantity when variant changes
     } else {
       setAvailableStock(0);
     }
-  }, [selectedSize, selectedColor, variants]);
+  }, [selectedSize, selectedColor, variants, cartItems]);
 
   const getVariantStock = (size: string, color: string): number => {
     const variant = variants.find(v => v.size === size && v.color === color);
@@ -97,52 +109,47 @@ export function ProductClient({ product, variants, locale, translations }: Produ
     toast.success(locale === 'el' ? 'Προστέθηκε στο καλάθι!' : 'Added to cart!');
   };
 
+  // Get available sizes based on selected color
+  const getAvailableSizes = (): string[] => {
+    if (!selectedColor || product.sizes.length === 0) {
+      return product.sizes;
+    }
+    // Return only sizes that have stock for the selected color (accounting for cart)
+    return product.sizes.filter(size => {
+      const variant = variants.find(v => v.size === size && v.color === selectedColor);
+      if (!variant) return false;
+      const dbStock = variant.stock;
+      const cartQty = getCartQuantity(size, selectedColor);
+      return dbStock > cartQty; // Available if DB stock is more than what's in cart
+    });
+  };
+
   return (
     <div className="space-y-6">
-      {/* Size Selection */}
-      {product.sizes && product.sizes.length > 0 && (
-        <div>
-          <label className="block font-semibold mb-2">{translations.selectSize}</label>
-          <div className="flex flex-wrap gap-2">
-            {product.sizes.map((size) => {
-              const available = isVariantAvailable(size, selectedColor || undefined);
-              return (
-                <button
-                  key={size}
-                  onClick={() => available && setSelectedSize(size)}
-                  disabled={!available}
-                  className={`px-4 py-2 rounded-md border transition-colors relative ${
-                    selectedSize === size
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : available
-                      ? 'bg-background hover:bg-accent border-border'
-                      : 'bg-muted text-muted-foreground border-muted cursor-not-allowed opacity-50'
-                  }`}
-                >
-                  {size}
-                  {!available && (
-                    <span className="absolute -top-1 -right-1 text-[10px] bg-red-500 text-white px-1 rounded">
-                      X
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Color Selection */}
+      {/* Color Selection - Show First */}
       {product.colors && product.colors.length > 0 && (
         <div>
           <label className="block font-semibold mb-2">{translations.selectColor}</label>
           <div className="flex flex-wrap gap-2">
             {product.colors.map((color) => {
-              const available = isVariantAvailable(selectedSize || undefined, color);
+              // Check if this color has any size with available stock (not in cart)
+              const available = variants.some(v => {
+                if (v.color !== color) return false;
+                const cartQty = getCartQuantity(v.size, v.color);
+                return v.stock > cartQty;
+              });
               return (
                 <button
                   key={color}
-                  onClick={() => available && setSelectedColor(color)}
+                  onClick={() => {
+                    if (available) {
+                      setSelectedColor(selectedColor === color ? '' : color);
+                      // Reset size when color changes or is deselected
+                      if (selectedColor !== color) {
+                        setSelectedSize('');
+                      }
+                    }
+                  }}
                   disabled={!available}
                   className={`px-4 py-2 rounded-md border transition-colors relative ${
                     selectedColor === color
@@ -162,6 +169,34 @@ export function ProductClient({ product, variants, locale, translations }: Produ
               );
             })}
           </div>
+        </div>
+      )}
+
+      {/* Size Selection - Show Only Available Sizes */}
+      {product.sizes && product.sizes.length > 0 && (
+        <div>
+          <label className="block font-semibold mb-2">{translations.selectSize}</label>
+          {!selectedColor && product.colors.length > 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {locale === 'el' ? 'Επίλεξε πρώτα χρώμα' : 'Select a color first'}
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {getAvailableSizes().map((size) => (
+                <button
+                  key={size}
+                  onClick={() => setSelectedSize(selectedSize === size ? '' : size)}
+                  className={`px-4 py-2 rounded-md border transition-colors ${
+                    selectedSize === size
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-background hover:bg-accent border-border'
+                  }`}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -193,14 +228,29 @@ export function ProductClient({ product, variants, locale, translations }: Produ
             </Button>
           </div>
           {selectedSize && selectedColor && variants.length > 0 ? (
-            <span className={`text-sm font-medium ${availableStock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-              {availableStock > 0
-                ? `${availableStock} ${locale === 'el' ? 'διαθέσιμα' : 'in stock'}`
-                : translations.outOfStock}
-              {availableStock > 0 && availableStock <= 5 && (
-                <span className="ml-2 text-orange-600">({locale === 'el' ? 'Τελευταία' : 'Last few'}!)</span>
-              )}
-            </span>
+            <div className="flex flex-col gap-1">
+              <span className={`text-sm font-medium ${availableStock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {availableStock > 0
+                  ? `${availableStock} ${locale === 'el' ? 'διαθέσιμα' : 'in stock'}`
+                  : translations.outOfStock}
+                {availableStock > 0 && availableStock <= 5 && (
+                  <span className="ml-2 text-orange-600">({locale === 'el' ? 'Τελευταία' : 'Last few'}!)</span>
+                )}
+              </span>
+              {(() => {
+                const cartQty = getCartQuantity(selectedSize, selectedColor);
+                if (cartQty > 0) {
+                  return (
+                    <span className="text-xs text-blue-600">
+                      {locale === 'el' 
+                        ? `${cartQty} ήδη στο καλάθι` 
+                        : `${cartQty} already in cart`}
+                    </span>
+                  );
+                }
+                return null;
+              })()}
+            </div>
           ) : (
             <span className="text-sm text-muted-foreground">
               {locale === 'el' ? 'Επίλεξε μέγεθος & χρώμα' : 'Select size & color'}
