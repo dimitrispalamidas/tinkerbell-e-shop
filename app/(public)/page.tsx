@@ -53,29 +53,9 @@ export default async function HomePage() {
             <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-3 md:mb-4 drop-shadow-lg">
               {t('hero_subtitle')}
             </p>
-            <p className="text-base md:text-lg text-white/80 mb-6 md:mb-8 drop-shadow-lg">
+            <p className="text-base md:text-lg text-white/80 drop-shadow-lg">
               {t('hero_description')}
             </p>
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center">
-              <Link href="/shop">
-                <Button size="lg" className="shadow-xl w-full sm:w-auto">
-                  <ShoppingBag className="mr-2 h-5 w-5" />
-                  {tNav('clothing')}
-                </Button>
-              </Link>
-              <Link href="/gallery/baptism">
-                <Button size="lg" variant="outline" className="bg-white/90 hover:bg-white shadow-xl w-full sm:w-auto">
-                  <Baby className="mr-2 h-5 w-5" />
-                  {tNav('baptism')}
-                </Button>
-              </Link>
-              <Link href="/gallery/decorations">
-                <Button size="lg" variant="outline" className="bg-white/90 hover:bg-white shadow-xl w-full sm:w-auto">
-                  <BsBalloonHeart className="mr-2 h-5 w-5" />
-                  {tNav('decorations')}
-                </Button>
-              </Link>
-            </div>
           </div>
         </div>
       </section>
