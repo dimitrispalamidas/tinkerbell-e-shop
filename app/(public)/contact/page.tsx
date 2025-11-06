@@ -108,7 +108,7 @@ async function ContactContent() {
 
           {/* Social Media */}
           <div>
-            <h3 className="font-semibold mb-4">{t('follow_us')}</h3>
+            <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">{t('follow_us')}</h2>
             <div className="flex gap-4">
               <a 
                 href="https://www.facebook.com/profile.php?id=61567377324597" 
