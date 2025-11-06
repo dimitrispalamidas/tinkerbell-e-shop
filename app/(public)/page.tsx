@@ -59,7 +59,7 @@ export default async function HomePage() {
               <Link href="/shop">
                 <Button size="lg" className="w-full sm:w-auto shadow-xl">
                   {t('shop_now')}
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ShoppingBag className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
             </div>
