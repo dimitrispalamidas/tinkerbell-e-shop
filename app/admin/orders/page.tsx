@@ -49,58 +49,74 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">{t('orders_title')}</h1>
-        <p className="text-muted-foreground">{t('orders_subtitle')}</p>
+        <h1 className="text-2xl md:text-3xl font-bold">{t('orders_title')}</h1>
+        <p className="text-sm md:text-base text-muted-foreground">{t('orders_subtitle')}</p>
       </div>
 
       {orders && orders.length > 0 ? (
-        <div className="grid gap-4">
+        <div className="grid gap-3 md:gap-4">
           {orders.map((order) => (
             <Card key={order.id}>
-              <CardContent className="p-4">
-                <div className="flex gap-4 items-center justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-4 mb-2">
-                      <h3 className="font-semibold">{order.customer_name}</h3>
-                      <span className={`px-3 py-1 rounded text-xs font-medium ${
-                        order.status === 'paid' ? 'bg-green-100 text-green-700' :
-                        order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                        order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
-                        order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                        'bg-gray-100 text-gray-700'
-                      }`}>
-                        {t(order.status)}
-                      </span>
+              <CardContent className="p-3 md:p-4">
+                <div className="flex flex-col gap-3">
+                  {/* Header with name and status */}
+                  <div className="flex items-start justify-between gap-2 flex-wrap">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-sm md:text-base truncate">{order.customer_name}</h3>
+                      <p className="text-xs md:text-sm text-muted-foreground truncate">
+                        {order.customer_email}
+                      </p>
+                      {order.customer_phone && (
+                        <p className="text-xs md:text-sm text-muted-foreground">
+                          {order.customer_phone}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {order.customer_email} • {order.customer_phone || '-'}
+                    <span className={`px-2 md:px-3 py-1 rounded text-xs font-medium whitespace-nowrap ${
+                      order.status === 'paid' ? 'bg-green-100 text-green-700' :
+                      order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                      order.status === 'shipped' ? 'bg-blue-100 text-blue-700' :
+                      order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                      'bg-gray-100 text-gray-700'
+                    }`}>
+                      {t(order.status)}
+                    </span>
+                  </div>
+
+                  {/* Date and delivery info */}
+                  <div className="space-y-1">
+                    <p className="text-xs md:text-sm text-muted-foreground">
+                      {new Date(order.created_at).toLocaleString(locale === 'el' ? 'el-GR' : 'en-US', {
+                        dateStyle: 'short',
+                        timeStyle: 'short'
+                      })}
                     </p>
-                    <p className="text-sm text-muted-foreground">
-                      {new Date(order.created_at).toLocaleString(locale === 'el' ? 'el-GR' : 'en-US')}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-2">
+                    <p className="text-xs md:text-sm text-muted-foreground">
                       {order.order_items?.length || 0} {t('items')} • 
-                      {order.boxnow_locker_id ? ` ${t('boxnow_locker')}: ${order.boxnow_locker_id}` : ` ${t('home_delivery')}`}
+                      {order.boxnow_locker_id ? ` ${t('boxnow_locker')}` : ` ${t('home_delivery')}`}
                     </p>
                   </div>
 
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-primary">
-                      {formatPrice(order.total, locale)}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {t('payment_status')}: {t(order.payment_status)}
-                    </p>
+                  {/* Price, payment status and action button */}
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t">
+                    <div className="flex-1">
+                      <p className="text-lg md:text-2xl font-bold text-primary">
+                        {formatPrice(order.total, locale)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t('payment_status')}: {t(order.payment_status)}
+                      </p>
+                    </div>
+                    
+                    <Link href={`/admin/orders/${order.id}`}>
+                      <Button variant="outline" size="sm" className="whitespace-nowrap">
+                        <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
+                        <span className="hidden md:inline">{t('view_details')}</span>
+                      </Button>
+                    </Link>
                   </div>
-
-                  <Link href={`/admin/orders/${order.id}`}>
-                    <Button variant="outline">
-                      <Eye className="h-4 w-4 mr-2" />
-                      {t('view_details')}
-                    </Button>
-                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -108,8 +124,8 @@ export default function AdminOrdersPage() {
         </div>
       ) : (
         <Card>
-          <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground">{t('no_orders')}</p>
+          <CardContent className="p-8 md:p-12 text-center">
+            <p className="text-sm md:text-base text-muted-foreground">{t('no_orders')}</p>
           </CardContent>
         </Card>
       )}

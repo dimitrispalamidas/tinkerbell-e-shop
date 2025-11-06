@@ -67,9 +67,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       .eq('id', unwrappedParams.id);
 
     if (error) {
-      toast.error(t('failed_update_order'));
+      toast.error(t('failed_update_order_status'));
     } else {
-      toast.success(t('order_updated'));
+      toast.success(t('order_status_updated'));
       fetchOrder();
     }
   };

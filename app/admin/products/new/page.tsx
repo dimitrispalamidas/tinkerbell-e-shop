@@ -383,6 +383,7 @@ export default function NewProductPage() {
                     id="image-upload"
                     type="file"
                     accept="image/*"
+                    capture="environment"
                     multiple
                     onChange={handleImageUpload}
                     disabled={uploadingImages}

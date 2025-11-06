@@ -268,6 +268,7 @@ export default function NewGalleryItemPage() {
                   type="file"
                   id="images-upload"
                   accept="image/*"
+                  capture="environment"
                   multiple
                   onChange={handleImageUpload}
                   className="hidden"

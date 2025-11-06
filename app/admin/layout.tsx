@@ -26,7 +26,7 @@ export default async function AdminLayout({
     <NextIntlClientProvider messages={messages} locale={locale}>
       <div className="min-h-screen bg-background">
         <AdminNav />
-        <main className="container mx-auto px-4 py-8">
+        <main className="container mx-auto px-4 py-4 md:py-8">
           {children}
         </main>
         <Toaster />

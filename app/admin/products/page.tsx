@@ -158,14 +158,14 @@ export default function AdminProductsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
         <div>
-          <h1 className="text-3xl font-bold">{t('products_title')}</h1>
-          <p className="text-muted-foreground">{t('products_subtitle')}</p>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('products_title')}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">{t('products_subtitle')}</p>
         </div>
         <Link href="/admin/products/new">
-          <Button>
+          <Button className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             {t('add_product_btn')}
           </Button>
@@ -173,8 +173,8 @@ export default function AdminProductsPage() {
       </div>
 
       {/* Tabs */}
-      <div className="border-b">
-        <nav className="flex gap-4">
+      <div className="border-b overflow-x-auto">
+        <nav className="flex gap-2 md:gap-4 min-w-max">
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const count = getTabCount(tab.id);
@@ -185,17 +185,17 @@ export default function AdminProductsPage() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex items-center gap-2 px-4 py-3 border-b-2 font-medium transition-colors
+                  flex items-center gap-2 px-3 md:px-4 py-2 md:py-3 border-b-2 font-medium transition-colors text-sm md:text-base
                   ${isActive 
                     ? 'border-primary text-primary' 
                     : 'border-transparent text-muted-foreground hover:text-foreground hover:border-gray-300'
                   }
                 `}
               >
-                <Icon className={`h-5 w-5 ${isActive ? tab.color : ''}`} />
-                {tab.label}
+                <Icon className={`h-4 w-4 md:h-5 md:w-5 ${isActive ? tab.color : ''}`} />
+                <span className="whitespace-nowrap">{tab.label}</span>
                 <span className={`
-                  ml-1 px-2 py-0.5 rounded-full text-xs
+                  px-2 py-0.5 rounded-full text-xs
                   ${isActive 
                     ? 'bg-primary text-primary-foreground' 
                     : 'bg-muted text-muted-foreground'
@@ -225,10 +225,10 @@ export default function AdminProductsPage() {
             
             return (
               <Card key={product.id}>
-                <CardContent className="p-4">
-                  <div className="flex gap-4 items-center">
+                <CardContent className="p-3 md:p-4">
+                  <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
                     {/* Image */}
-                    <div className="w-20 h-20 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                    <div className="w-full sm:w-16 md:w-20 h-16 md:h-20 bg-muted rounded-md overflow-hidden flex-shrink-0">
                       {product.images && product.images[0] ? (
                         <Image
                           src={product.images[0]}
@@ -244,60 +244,67 @@ export default function AdminProductsPage() {
                       )}
                     </div>
 
-                    {/* Product Info */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold">{locale === 'el' ? product.name_el : product.name_en}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {t('sku')}: {product.sku} • {t('stock')}: {totalStock} • {t('sold')}: {totalSold}
-                      </p>
-                      <p className="text-sm text-muted-foreground">{locale === 'el' ? product.name_en : product.name_el}</p>
-                    </div>
+                    <div className="flex-1 min-w-0 space-y-2">
+                      {/* Product Info */}
+                      <div>
+                        <h3 className="font-semibold text-sm md:text-base truncate">{locale === 'el' ? product.name_el : product.name_en}</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground truncate">
+                          {t('sku')}: {product.sku}
+                        </p>
+                        <p className="text-xs md:text-sm text-muted-foreground">
+                          {t('stock')}: {totalStock} • {t('sold')}: {totalSold}
+                        </p>
+                      </div>
 
-                    {/* Price & Status */}
-                    <div className="text-right">
-                      <p className="font-bold text-lg">{formatPrice(product.price, locale)}</p>
-                      <p className="text-sm">
-                        <span className={`px-2 py-1 rounded text-xs ${
-                          product.status === 'active' ? 'bg-green-100 text-green-700' :
-                          product.status === 'archived' ? 'bg-gray-100 text-gray-700' :
-                          'bg-orange-100 text-orange-700'
-                        }`}>
-                          {product.status === 'active' ? t('active') :
-                           product.status === 'archived' ? t('archived') :
-                           t('sold_out')}
-                        </span>
-                      </p>
-                    </div>
+                      {/* Price & Status & Actions Row */}
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        {/* Price & Status */}
+                        <div className="flex items-center gap-2">
+                          <p className="font-bold text-base md:text-lg">{formatPrice(product.price, locale)}</p>
+                          <span className={`px-2 py-1 rounded text-xs whitespace-nowrap ${
+                            product.status === 'active' ? 'bg-green-100 text-green-700' :
+                            product.status === 'archived' ? 'bg-gray-100 text-gray-700' :
+                            'bg-orange-100 text-orange-700'
+                          }`}>
+                            {product.status === 'active' ? t('active') :
+                             product.status === 'archived' ? t('archived') :
+                             t('sold_out')}
+                          </span>
+                        </div>
 
-                    {/* Actions */}
-                    <div className="flex gap-2">
-                      <Link href={`/admin/products/${product.id}`}>
-                        <Button variant="outline" size="sm" title={tCommon('edit')}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                      
-                      {activeTab === 'active' && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleArchive(product.id)}
-                          title={t('archive')}
-                        >
-                          <Archive className="h-4 w-4" />
-                        </Button>
-                      )}
-                      
-                      {(activeTab === 'archived' || activeTab === 'sold_out') && (
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleRestore(product.id)}
-                          title={t('unarchive')}
-                        >
-                          <RotateCcw className="h-4 w-4" />
-                        </Button>
-                      )}
+                        {/* Actions */}
+                        <div className="flex gap-2">
+                          <Link href={`/admin/products/${product.id}`}>
+                            <Button variant="outline" size="sm" title={tCommon('edit')} className="h-8 w-8 p-0">
+                              <Pencil className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                            </Button>
+                          </Link>
+                          
+                          {activeTab === 'active' && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleArchive(product.id)}
+                              title={t('archive')}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Archive className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                            </Button>
+                          )}
+                          
+                          {(activeTab === 'archived' || activeTab === 'sold_out') && (
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => handleRestore(product.id)}
+                              title={t('unarchive')}
+                              className="h-8 w-8 p-0"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
@@ -307,13 +314,13 @@ export default function AdminProductsPage() {
         </div>
       ) : (
         <Card>
-          <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground mb-4">
+          <CardContent className="p-8 md:p-12 text-center">
+            <p className="text-sm md:text-base text-muted-foreground mb-4">
               {t('no_products')}
             </p>
             {activeTab === 'active' && (
               <Link href="/admin/products/new">
-                <Button>
+                <Button className="w-full sm:w-auto">
                   <Plus className="mr-2 h-4 w-4" />
                   {t('add_product_btn')}
                 </Button>

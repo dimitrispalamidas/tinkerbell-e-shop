@@ -340,6 +340,7 @@ export default function EditGalleryItemPage() {
                     type="file"
                     id="image-upload"
                     accept="image/*"
+                    capture="environment"
                     onChange={handleImageUpload}
                     className="hidden"
                     disabled={uploadingImage}

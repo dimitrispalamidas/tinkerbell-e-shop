@@ -27,6 +27,7 @@ export default function AdminGalleryPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [hasUnsavedOrder, setHasUnsavedOrder] = useState(false);
   const [isSavingOrder, setIsSavingOrder] = useState(false);
+  const [statusChanges, setStatusChanges] = useState<Map<string, boolean>>(new Map());
 
   // Check URL for tab parameter
   useEffect(() => {
@@ -40,6 +41,9 @@ export default function AdminGalleryPage() {
   }, []);
 
   useEffect(() => {
+    // Clear any unsaved changes when switching tabs
+    setHasUnsavedOrder(false);
+    setStatusChanges(new Map());
     fetchGalleryItems();
     fetchCounts();
   }, [activeTab]);
@@ -122,22 +126,30 @@ export default function AdminGalleryPage() {
     try {
       const supabase = createClient();
       
-      // Update all items in the category with new order
-      const updates = items.map(item => 
-        supabase
+      // Prepare all updates (both order and status changes)
+      const updates = items.map(item => {
+        const updateData: any = { display_order: item.display_order };
+        
+        // If this item has a status change, include it
+        if (statusChanges.has(item.id)) {
+          updateData.is_active = statusChanges.get(item.id);
+        }
+        
+        return supabase
           .from('gallery_items')
-          .update({ display_order: item.display_order })
+          .update(updateData)
           .eq('id', item.id)
-          .then()
-      );
+          .then();
+      });
 
       await Promise.all(updates);
       setHasUnsavedOrder(false);
-      toast.success(t('order_saved'));
+      setStatusChanges(new Map()); // Clear status changes
+      toast.success(t('changes_saved'));
       await fetchGalleryItems();
     } catch (error) {
-      console.error('Failed to save order:', error);
-      toast.error(t('failed_save_order'));
+      console.error('Failed to save changes:', error);
+      toast.error(t('failed_save_changes'));
     } finally {
       setIsSavingOrder(false);
     }
@@ -145,7 +157,8 @@ export default function AdminGalleryPage() {
 
   const handleCancelOrder = () => {
     setHasUnsavedOrder(false);
-    fetchGalleryItems(); // Reload original order
+    setStatusChanges(new Map()); // Clear status changes
+    fetchGalleryItems(); // Reload original data
   };
 
   const renumberDisplayOrder = async (category: TabType) => {
@@ -301,22 +314,25 @@ export default function AdminGalleryPage() {
     }
   };
 
-  const handleToggleActive = async (itemId: string, currentStatus: boolean) => {
-    try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from('gallery_items')
-        .update({ is_active: !currentStatus })
-        .eq('id', itemId);
-
-      if (error) throw error;
-      
-      toast.success(t('status_updated'));
-      fetchGalleryItems();
-    } catch (error) {
-      console.error('Failed to update status:', error);
-      toast.error(t('failed_update'));
-    }
+  const handleToggleActive = (itemId: string, currentStatus: boolean) => {
+    // Update local state
+    setItems(prevItems => 
+      prevItems.map(item => 
+        item.id === itemId 
+          ? { ...item, is_active: !currentStatus } 
+          : item
+      )
+    );
+    
+    // Track the change
+    setStatusChanges(prev => {
+      const newChanges = new Map(prev);
+      newChanges.set(itemId, !currentStatus);
+      return newChanges;
+    });
+    
+    // Mark as having unsaved changes
+    setHasUnsavedOrder(true);
   };
 
   if (isLoading) {
@@ -328,27 +344,31 @@ export default function AdminGalleryPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-3xl font-bold">{t('gallery_title')}</h1>
-          <p className="text-muted-foreground">{t('gallery_subtitle')}</p>
+          <h1 className="text-2xl md:text-3xl font-bold">{t('gallery_title')}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">{t('gallery_subtitle')}</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {hasUnsavedOrder && (
             <>
               <Button 
                 variant="outline"
                 onClick={handleCancelOrder}
                 disabled={isSavingOrder}
+                size="sm"
+                className="flex-1 sm:flex-none"
               >
-                {t('cancel_reorder')}
+                {t('cancel_changes')}
               </Button>
               <Button 
                 onClick={handleSaveOrder}
                 disabled={isSavingOrder}
+                size="sm"
+                className="flex-1 sm:flex-none"
               >
-                {isSavingOrder ? t('saving') : t('save_order')}
+                {isSavingOrder ? t('saving') : t('save_changes_btn')}
               </Button>
             </>
           )}
@@ -357,27 +377,28 @@ export default function AdminGalleryPage() {
               variant="outline" 
               onClick={handleBulkDelete}
               disabled={isDeleting || hasUnsavedOrder}
-              className="border-red-600 text-red-600 hover:bg-red-50"
+              size="sm"
+              className="border-red-600 text-red-600 hover:bg-red-50 flex-1 sm:flex-none"
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              {t('delete_selected', { count: selectedItems.size })}
+              <Trash2 className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
+              <span className="text-xs md:text-sm">{t('delete_selected', { count: selectedItems.size })}</span>
             </Button>
           )}
-          <Link href={`/admin/gallery/new?category=${activeTab}`}>
-            <Button disabled={hasUnsavedOrder}>
-              <Plus className="mr-2 h-4 w-4" />
-              {t('add_gallery_item')}
+          <Link href={`/admin/gallery/new?category=${activeTab}`} className="flex-1 sm:flex-none">
+            <Button disabled={hasUnsavedOrder} size="sm" className="w-full">
+              <Plus className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
+              <span className="text-xs md:text-sm">{t('add_gallery_item')}</span>
             </Button>
           </Link>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="border-b">
-        <nav className="flex gap-4">
+      <div className="border-b overflow-x-auto">
+        <nav className="flex gap-2 md:gap-4 min-w-max">
           <button
             onClick={() => setActiveTab('baptism')}
-            className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+            className={`px-3 md:px-4 py-2 md:py-3 border-b-2 font-medium transition-colors text-sm md:text-base whitespace-nowrap ${
               activeTab === 'baptism'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -387,7 +408,7 @@ export default function AdminGalleryPage() {
           </button>
           <button
             onClick={() => setActiveTab('decoration')}
-            className={`px-4 py-3 border-b-2 font-medium transition-colors ${
+            className={`px-3 md:px-4 py-2 md:py-3 border-b-2 font-medium transition-colors text-sm md:text-base whitespace-nowrap ${
               activeTab === 'decoration'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
@@ -402,7 +423,7 @@ export default function AdminGalleryPage() {
       {items && items.length > 0 ? (
         <>
           {/* Select All */}
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2">
             <input
               type="checkbox"
               id="select-all"
@@ -410,12 +431,12 @@ export default function AdminGalleryPage() {
               onChange={toggleSelectAll}
               className="w-4 h-4 cursor-pointer"
             />
-            <label htmlFor="select-all" className="text-sm font-medium cursor-pointer">
+            <label htmlFor="select-all" className="text-xs md:text-sm font-medium cursor-pointer">
               {t('select_all')} ({items.length})
             </label>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-3 gap-1 md:gap-2">
             {items.map((item) => (
               <Card
                 key={item.id}
@@ -425,8 +446,8 @@ export default function AdminGalleryPage() {
                 onDrop={(e) => handleDrop(e, item.id)}
                 className={`${selectedItems.has(item.id) ? '' : 'cursor-grab active:cursor-grabbing'} ${draggedItemId === item.id ? 'opacity-50' : ''} ${selectedItems.has(item.id) ? 'ring-2 ring-primary' : ''}`}
               >
-                <CardContent className="p-2">
-                  <div className="aspect-square bg-muted rounded-lg overflow-hidden mb-2 relative group">
+                <CardContent className="p-1 md:p-1.5">
+                  <div className="aspect-square bg-muted rounded overflow-hidden mb-1 relative group">
                   {item.image ? (
                     <Image
                       src={item.image}
@@ -446,17 +467,17 @@ export default function AdminGalleryPage() {
                     type="checkbox"
                     checked={selectedItems.has(item.id)}
                     onChange={() => toggleSelectItem(item.id)}
-                    className="absolute top-2 left-2 z-10 w-5 h-5 cursor-pointer"
+                    className="absolute top-1 md:top-1.5 left-1 md:left-1.5 z-10 w-3.5 h-3.5 md:w-4 md:h-4 cursor-pointer"
                     onClick={(e) => e.stopPropagation()}
                   />
 
                   {/* Order Badge */}
-                  <div className="absolute top-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded font-bold">
+                  <div className="absolute top-1 md:top-1.5 right-1 md:right-1.5 bg-black/70 text-white text-[9px] md:text-[10px] px-1 md:px-1.5 py-0.5 rounded font-bold">
                     #{item.display_order + 1}
                   </div>
 
                   {/* Status Badge */}
-                  <div className={`absolute bottom-2 left-2 text-xs px-2 py-1 rounded ${
+                  <div className={`absolute bottom-1 md:bottom-1.5 left-1 md:left-1.5 text-[9px] md:text-[10px] px-1 md:px-1.5 py-0.5 rounded ${
                     item.is_active ? 'bg-green-500/90 text-white' : 'bg-gray-500/90 text-white'
                   }`}>
                     {item.is_active ? t('active') : t('inactive')}
@@ -464,19 +485,19 @@ export default function AdminGalleryPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex gap-1">
+                <div className="flex gap-0.5">
                   <Button
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 h-6 md:h-7 p-0 text-sm md:text-base"
                     onClick={() => handleToggleActive(item.id, item.is_active)}
                     title={item.is_active ? t('deactivate') : t('activate')}
                   >
                     {item.is_active ? '👁️' : '👁️‍🗨️'}
                   </Button>
                   <Link href={`/admin/gallery/${item.id}?category=${activeTab}`}>
-                    <Button variant="outline" size="sm" title={tCommon('edit')}>
-                      <Pencil className="h-4 w-4" />
+                    <Button variant="outline" size="sm" title={tCommon('edit')} className="h-6 md:h-7 w-6 md:w-7 p-0">
+                      <Pencil className="h-2.5 w-2.5 md:h-3 md:w-3" />
                     </Button>
                   </Link>
                   <Button
@@ -484,8 +505,9 @@ export default function AdminGalleryPage() {
                     size="sm"
                     onClick={() => handleDelete(item.id)}
                     title={tCommon('delete')}
+                    className="h-6 md:h-7 w-6 md:w-7 p-0"
                   >
-                    <Trash2 className="h-4 w-4 text-red-600" />
+                    <Trash2 className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-600" />
                   </Button>
                 </div>
               </CardContent>
@@ -495,12 +517,12 @@ export default function AdminGalleryPage() {
         </>
       ) : (
         <Card>
-          <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground mb-4">
+          <CardContent className="p-8 md:p-12 text-center">
+            <p className="text-sm md:text-base text-muted-foreground mb-4">
               {activeTab === 'baptism' ? t('no_baptism_items') : t('no_decoration_items')}
             </p>
-            <Link href="/admin/gallery/new">
-              <Button>
+            <Link href="/admin/gallery/new" className="inline-block w-full sm:w-auto">
+              <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
                 {t('add_gallery_item')}
               </Button>

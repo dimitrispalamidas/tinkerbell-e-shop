@@ -105,78 +105,78 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 md:space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">{t('dashboard_title')}</h1>
-        <p className="text-muted-foreground">{t('dashboard_subtitle')}</p>
+        <h1 className="text-2xl md:text-3xl font-bold">{t('dashboard_title')}</h1>
+        <p className="text-sm md:text-base text-muted-foreground">{t('dashboard_subtitle')}</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('total_products')}</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
+            <CardTitle className="text-xs md:text-sm font-medium">{t('total_products')}</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.products.length || 0}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold">{stats.products.length || 0}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('total_orders')}</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
+            <CardTitle className="text-xs md:text-sm font-medium">{t('total_orders')}</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.orders.length || 0}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold">{stats.orders.length || 0}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('sales_today')}</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
+            <CardTitle className="text-xs md:text-sm font-medium">{t('sales_today')}</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatPrice(stats.todaySales, locale)}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold">{formatPrice(stats.todaySales, locale)}</div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{t('sold_out_products')}</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
+            <CardTitle className="text-xs md:text-sm font-medium">{t('sold_out_products')}</CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.soldOutProducts.length || 0}</div>
+          <CardContent className="p-4 md:p-6 pt-0">
+            <div className="text-xl md:text-2xl font-bold">{stats.soldOutProducts.length || 0}</div>
           </CardContent>
         </Card>
       </div>
 
       {/* Recent Orders */}
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t('recent_orders')}</CardTitle>
-          <Link href="/admin/orders" className="text-sm text-primary hover:underline">
+        <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+          <CardTitle className="text-base md:text-lg">{t('recent_orders')}</CardTitle>
+          <Link href="/admin/orders" className="text-xs md:text-sm text-primary hover:underline">
             {t('view_all')}
           </Link>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-4 md:p-6 pt-0">
           {stats.orders.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               {stats.orders.map((order: any) => (
-                <div key={order.id} className="flex items-center justify-between border-b pb-4 last:border-0">
-                  <div>
-                    <p className="font-medium">#{order.id.slice(0, 8)}</p>
-                    <p className="text-sm text-muted-foreground">{order.customer_name}</p>
+                <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3 md:pb-4 last:border-0">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm md:text-base truncate">#{order.id.slice(0, 8)}</p>
+                    <p className="text-xs md:text-sm text-muted-foreground truncate">{order.customer_name}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-medium">{formatPrice(order.total, locale)}</p>
-                    <p className={`text-xs ${
-                      order.status === 'delivered' ? 'text-green-600' :
-                      order.status === 'cancelled' ? 'text-red-600' :
-                      'text-yellow-600'
+                  <div className="flex items-center justify-between sm:flex-col sm:items-end gap-2">
+                    <p className="font-medium text-sm md:text-base">{formatPrice(order.total, locale)}</p>
+                    <p className={`text-xs px-2 py-1 rounded ${
+                      order.status === 'delivered' ? 'bg-green-100 text-green-700' :
+                      order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                      'bg-yellow-100 text-yellow-700'
                     }`}>
                       {t(order.status)}
                     </p>
@@ -185,53 +185,53 @@ export default function AdminDashboard() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-4">{t('no_orders')}</p>
+            <p className="text-center text-muted-foreground py-4 text-sm">{t('no_orders')}</p>
           )}
         </CardContent>
       </Card>
 
       {/* Top Selling & Sold Out Products */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-3 md:gap-4 md:grid-cols-2">
         {/* Top Selling */}
         <Card>
-          <CardHeader>
-            <CardTitle>{t('top_selling')}</CardTitle>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle className="text-base md:text-lg">{t('top_selling')}</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6 pt-0">
             {stats.topSellingProducts.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3 md:space-y-4">
                 {stats.topSellingProducts.map((product: any) => (
-                  <div key={product.id} className="flex items-center justify-between">
-                    <p className="text-sm truncate">{locale === 'el' ? product.name_el : product.name_en}</p>
-                    <span className="text-sm font-medium">{product.totalSold} {t('sold')}</span>
+                  <div key={product.id} className="flex items-center justify-between gap-2">
+                    <p className="text-xs md:text-sm truncate flex-1">{locale === 'el' ? product.name_el : product.name_en}</p>
+                    <span className="text-xs md:text-sm font-medium whitespace-nowrap">{product.totalSold} {t('sold')}</span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-4">{t('no_top_selling')}</p>
+              <p className="text-center text-muted-foreground py-4 text-sm">{t('no_top_selling')}</p>
             )}
           </CardContent>
         </Card>
 
         {/* Sold Out Products */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>{t('sold_out_products')}</CardTitle>
-            <Link href="/admin/products?tab=sold_out" className="text-sm text-primary hover:underline">
+          <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+            <CardTitle className="text-base md:text-lg">{t('sold_out_products')}</CardTitle>
+            <Link href="/admin/products?tab=sold_out" className="text-xs md:text-sm text-primary hover:underline whitespace-nowrap">
               {t('view_all')}
             </Link>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-4 md:p-6 pt-0">
             {stats.soldOutProducts.length > 0 ? (
               <div className="space-y-2">
                 {stats.soldOutProducts.map((product: any) => (
-                  <p key={product.id} className="text-sm truncate">
+                  <p key={product.id} className="text-xs md:text-sm truncate">
                     {locale === 'el' ? product.name_el : product.name_en}
                   </p>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-4">{t('no_sold_out')}</p>
+              <p className="text-center text-muted-foreground py-4 text-sm">{t('no_sold_out')}</p>
             )}
           </CardContent>
         </Card>
