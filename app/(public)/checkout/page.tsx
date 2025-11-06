@@ -501,10 +501,6 @@ export default function CheckoutPage() {
                       <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
                       <span>{locale === 'el' ? 'Υποστήριξη όλων των καρτών' : 'All cards supported'}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span>{locale === 'el' ? 'Έλεγχος διαθεσιμότητας προϊόντων' : 'Product availability check'}</span>
-                    </div>
                   </div>
 
                   <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
