@@ -5,6 +5,58 @@ import { formatPrice } from '@/lib/utils';
 import { ProductClient } from './product-client';
 import { ProductGallery } from './product-gallery';
 import type { Product } from '@/lib/types/database';
+import type { Metadata } from 'next';
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const locale = await getLocale();
+  const { id } = await params;
+  
+  const supabase = await createClient();
+  const { data: product } = await supabase
+    .from('products')
+    .select('*')
+    .eq('id', id)
+    .eq('is_active', true)
+    .single();
+
+  if (!product) {
+    return {
+      title: 'Προϊόν δεν βρέθηκε',
+    };
+  }
+
+  const productName = locale === 'el' ? product.name_el : product.name_en;
+  const description = locale === 'el' ? product.description_el : product.description_en;
+  const firstImage = product.images?.[0];
+  const price = formatPrice(product.price, locale);
+
+  return {
+    title: productName,
+    description: description || `${productName} - ${price}`,
+    openGraph: {
+      title: `${productName} | Τινκερμπελ`,
+      description: description || `${productName} - ${price}`,
+      images: firstImage ? [
+        {
+          url: firstImage,
+          width: 1200,
+          height: 630,
+          alt: productName,
+        }
+      ] : undefined,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${productName} | Τινκερμπελ`,
+      description: description || `${productName} - ${price}`,
+      images: firstImage ? [firstImage] : undefined,
+    },
+  };
+}
 
 export default async function ProductPage({
   params,
