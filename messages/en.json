@@ -131,6 +131,7 @@
   },
   "admin": {
     "dashboard": "Dashboard",
+    "analytics": "Sales",
     "products": "Products",
     "orders": "Orders",
     "gallery": "Gallery",

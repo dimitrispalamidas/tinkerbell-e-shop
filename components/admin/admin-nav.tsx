@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Package, ShoppingCart, Image as ImageIcon, LogOut, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Image as ImageIcon, LogOut, Menu, X, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function AdminNav() {
@@ -27,6 +27,7 @@ export function AdminNav() {
 
   const navItems = [
     { href: '/admin', label: t('dashboard'), icon: LayoutDashboard },
+    { href: '/admin/analytics', label: t('analytics'), icon: BarChart3 },
     { href: '/admin/products', label: t('products'), icon: Package },
     { href: '/admin/orders', label: t('orders'), icon: ShoppingCart },
     { href: '/admin/gallery', label: t('gallery'), icon: ImageIcon },

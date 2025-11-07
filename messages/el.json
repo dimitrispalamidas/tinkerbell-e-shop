@@ -131,6 +131,7 @@
   },
   "admin": {
     "dashboard": "Πίνακας Ελέγχου",
+    "analytics": "Πωλήσεις",
     "products": "Προϊόντα",
     "orders": "Παραγγελίες",
     "gallery": "Γκαλερί",

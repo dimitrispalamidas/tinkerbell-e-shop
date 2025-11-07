@@ -19,12 +19,14 @@ export default function AdminDashboard() {
     todaySales: number;
     soldOutProducts: any[];
     topSellingProducts: any[];
+    totalOrders: number;
   }>({
     products: [],
     orders: [],
     todaySales: 0,
     soldOutProducts: [],
-    topSellingProducts: []
+    topSellingProducts: [],
+    totalOrders: 0
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -36,21 +38,34 @@ export default function AdminDashboard() {
     try {
       const supabase = createClient();
 
-      // Get statistics
+      // Get active products only
       const { data: products } = await supabase
         .from('products')
-        .select('*', { count: 'exact' });
+        .select('*')
+        .neq('status', 'archived');
 
+      // Get all paid orders for total count
+      const { data: allPaidOrders, count: totalOrdersCount } = await supabase
+        .from('orders')
+        .select('*', { count: 'exact', head: false })
+        .eq('payment_status', 'paid');
+
+      // Get recent paid orders
       const { data: orders } = await supabase
         .from('orders')
         .select('*, order_items(*)')
+        .eq('payment_status', 'paid')
         .order('created_at', { ascending: false })
         .limit(5);
 
+      // Get today's sales (paid orders only)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
       const { data: todayOrders } = await supabase
         .from('orders')
         .select('total')
-        .gte('created_at', new Date().toISOString().split('T')[0]);
+        .eq('payment_status', 'paid')
+        .gte('created_at', today.toISOString());
 
       // Get sold out products
       const { data: soldOutProducts } = await supabase
@@ -87,7 +102,8 @@ export default function AdminDashboard() {
         orders: orders || [],
         todaySales,
         soldOutProducts: soldOutProducts || [],
-        topSellingProducts
+        topSellingProducts,
+        totalOrders: totalOrdersCount || 0
       });
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -129,7 +145,7 @@ export default function AdminDashboard() {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-4 md:p-6 pt-0">
-            <div className="text-xl md:text-2xl font-bold">{stats.orders.length || 0}</div>
+            <div className="text-xl md:text-2xl font-bold">{stats.totalOrders}</div>
           </CardContent>
         </Card>
 
