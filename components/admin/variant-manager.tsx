@@ -110,28 +110,26 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>{t('variant_management')}</CardTitle>
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={generateAllCombinations}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              {t('generate_all')}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={addVariant}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              {t('add')}
-            </Button>
-          </div>
+        <CardTitle className="mb-4">{t('variant_management')}</CardTitle>
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={generateAllCombinations}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            {t('generate_all')}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={addVariant}
+          >
+            <Plus className="h-4 w-4 mr-1" />
+            {t('add')}
+          </Button>
         </div>
       </CardHeader>
       <CardContent>
@@ -140,55 +138,57 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
             {t('no_variants_hint')}
           </p>
         ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-[1fr_1fr_120px_40px] gap-3 text-sm font-medium text-muted-foreground pb-2 border-b">
-              <div>{t('size')}</div>
-              <div>{t('color')}</div>
-              <div>{t('stock')}</div>
-              <div></div>
-            </div>
-            {localVariants.map((variant, index) => (
-              <div key={index} className="grid grid-cols-[1fr_1fr_120px_40px] gap-3 items-center">
-                <select
-                  value={variant.size}
-                  onChange={(e) => updateVariant(index, 'size', e.target.value)}
-                  className="px-3 py-2 border rounded-md"
-                >
-                  {sizes.map(size => (
-                    <option key={size} value={size}>{size}</option>
-                  ))}
-                </select>
-
-                <select
-                  value={variant.color}
-                  onChange={(e) => updateVariant(index, 'color', e.target.value)}
-                  className="px-3 py-2 border rounded-md"
-                >
-                  {colors.map(color => (
-                    <option key={color} value={color}>{color}</option>
-                  ))}
-                </select>
-
-                <Input
-                  type="number"
-                  min="0"
-                  value={variant.stock}
-                  onChange={(e) => updateVariant(index, 'stock', parseInt(e.target.value) || 0)}
-                  placeholder="0"
-                />
-
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeVariant(index)}
-                  className="text-destructive hover:text-destructive"
-                  title={tCommon('delete')}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
+          <div className="overflow-x-auto -mx-6 px-6">
+            <div className="space-y-3 min-w-[400px]">
+              <div className="grid grid-cols-[100px_120px_100px_40px] gap-3 text-sm font-medium text-muted-foreground pb-2 border-b">
+                <div>{t('size')}</div>
+                <div>{t('color')}</div>
+                <div>{t('stock')}</div>
+                <div></div>
               </div>
-            ))}
+              {localVariants.map((variant, index) => (
+                <div key={index} className="grid grid-cols-[100px_120px_100px_40px] gap-3 items-center">
+                  <select
+                    value={variant.size}
+                    onChange={(e) => updateVariant(index, 'size', e.target.value)}
+                    className="px-3 py-2 border rounded-md"
+                  >
+                    {sizes.map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+
+                  <select
+                    value={variant.color}
+                    onChange={(e) => updateVariant(index, 'color', e.target.value)}
+                    className="px-3 py-2 border rounded-md"
+                  >
+                    {colors.map(color => (
+                      <option key={color} value={color}>{color}</option>
+                    ))}
+                  </select>
+
+                  <Input
+                    type="number"
+                    min="0"
+                    value={variant.stock}
+                    onChange={(e) => updateVariant(index, 'stock', parseInt(e.target.value) || 0)}
+                    placeholder="0"
+                  />
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeVariant(index)}
+                    className="text-destructive hover:text-destructive"
+                    title={tCommon('delete')}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+            </div>
           </div>
         )}
         <p className="text-xs text-muted-foreground mt-4">

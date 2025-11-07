@@ -25,7 +25,7 @@ export default function NewGalleryItemPage() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     category: (categoryParam || 'baptism') as 'baptism' | 'decoration',
-    position: 'end' as 'beginning' | 'end',
+    position: 'beginning' as 'beginning' | 'end',
     is_active: true,
   });
 

@@ -226,6 +226,31 @@ export default function NewProductPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
+                <label className="block text-sm font-medium mb-2">{t('category')}</label>
+                <select
+                  value={formData.category_id}
+                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="">{t('no_category')}</option>
+                  <optgroup label={locale === 'el' ? '👕 Ρούχα' : '👕 Clothing'}>
+                    {categories.filter(cat => cat.type === 'clothing').map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {locale === 'el' ? cat.name_el : cat.name_en}
+                      </option>
+                    ))}
+                  </optgroup>
+                  <optgroup label={locale === 'el' ? '👟 Παπούτσια' : '👟 Shoes'}>
+                    {categories.filter(cat => cat.type === 'shoes').map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {locale === 'el' ? cat.name_el : cat.name_en}
+                      </option>
+                    ))}
+                  </optgroup>
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium mb-2">{t('sku_required')}</label>
                 <p className="text-xs text-muted-foreground mb-2">{t('sku_category_hint')}</p>
                 <div className="flex gap-2">
@@ -298,31 +323,6 @@ export default function NewProductPage() {
                     {t('auto')}
                   </Button>
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium mb-2">{t('category')}</label>
-                <select
-                  value={formData.category_id}
-                  onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
-                  className="w-full px-3 py-2 border rounded-md"
-                >
-                  <option value="">{t('no_category')}</option>
-                  <optgroup label={locale === 'el' ? '👕 Ρούχα' : '👕 Clothing'}>
-                    {categories.filter(cat => cat.type === 'clothing').map(cat => (
-                      <option key={cat.id} value={cat.id}>
-                        {locale === 'el' ? cat.name_el : cat.name_en}
-                      </option>
-                    ))}
-                  </optgroup>
-                  <optgroup label={locale === 'el' ? '👟 Παπούτσια' : '👟 Shoes'}>
-                    {categories.filter(cat => cat.type === 'shoes').map(cat => (
-                      <option key={cat.id} value={cat.id}>
-                        {locale === 'el' ? cat.name_el : cat.name_en}
-                      </option>
-                    ))}
-                  </optgroup>
-                </select>
               </div>
 
               <div>

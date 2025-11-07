@@ -1,6 +1,6 @@
 "use client"
 
-import { use, useState, useEffect } from 'react';
+import { use, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
@@ -25,10 +25,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState('');
   const [trackingCode, setTrackingCode] = useState('');
+  
+  // Store original data for comparison
+  const [originalStatus, setOriginalStatus] = useState('');
+  const [originalTrackingCode, setOriginalTrackingCode] = useState('');
 
   useEffect(() => {
     fetchOrder();
   }, [unwrappedParams.id]);
+
+  // Check if there are any changes
+  const hasChanges = useMemo(() => {
+    return status !== originalStatus || trackingCode !== originalTrackingCode;
+  }, [status, trackingCode, originalStatus, originalTrackingCode]);
 
   const fetchOrder = async () => {
     const supabase = createClient();
@@ -46,8 +55,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
     if (orderData) {
       setOrder(orderData as Order);
-      setStatus(orderData.status);
-      setTrackingCode(orderData.boxnow_tracking_code || '');
+      const orderStatus = orderData.status;
+      const orderTracking = orderData.boxnow_tracking_code || '';
+      
+      setStatus(orderStatus);
+      setTrackingCode(orderTracking);
+      
+      // Store original data
+      setOriginalStatus(orderStatus);
+      setOriginalTrackingCode(orderTracking);
     }
     if (itemsData) {
       setOrderItems(itemsData as OrderItem[]);
@@ -258,7 +274,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             )}
           </div>
 
-          <Button onClick={handleUpdateOrder} className="w-full">
+          <Button onClick={handleUpdateOrder} className="w-full" disabled={!hasChanges}>
             {t('update_order_status')}
           </Button>
         </CardContent>
