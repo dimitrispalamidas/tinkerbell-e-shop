@@ -18,13 +18,41 @@
   --sunny: #ffe89e;
   --coral: #ffb5a0;
   
-  /* Premium nature-inspired colors */
+  /* Premium colors from logo */
   --cream-50: #fefdf8;
   --cream-100: #f8f6f0;
   --cream-200: #ede9df;
-  --sage-100: #e8f0e3;
-  --sage-200: #d1e3c8;
-  --sage-900: #3a5239;
+  
+  /* Olive green from logo (Τίνκερ) */
+  --sage-50: #f5f7f3;
+  --sage-100: #e6ede3;
+  --sage-200: #ccdcc4;
+  --sage-300: #afc29f;
+  --sage-400: #8fa87a;
+  --sage-500: #758c5e;
+  --sage-600: #5d7049;
+  --sage-700: #4d5d3c;
+  --sage-800: #3f4d31;
+  --sage-900: #364128;
+  
+  /* Magenta from logo (μπελ) */
+  --magenta-50: #fef5fb;
+  --magenta-100: #fde8f7;
+  --magenta-200: #fbd0ef;
+  --magenta-300: #f8a8e1;
+  --magenta-400: #f470ce;
+  --magenta-500: #e83fb3;
+  --magenta-600: #d41d94;
+  --magenta-700: #b41578;
+  --magenta-800: #941462;
+  --magenta-900: #7a1554;
+  
+  /* Gold/Yellow from stars */
+  --gold-50: #fffbeb;
+  --gold-100: #fef3c7;
+  --gold-200: #fde68a;
+  --gold-300: #fcd34d;
+  --gold-400: #fbbf24;
   
   /* UI Colors */
   --primary: #ffb3d9;
@@ -62,9 +90,31 @@
   --color-cream-50: var(--cream-50);
   --color-cream-100: var(--cream-100);
   --color-cream-200: var(--cream-200);
+  --color-sage-50: var(--sage-50);
   --color-sage-100: var(--sage-100);
   --color-sage-200: var(--sage-200);
+  --color-sage-300: var(--sage-300);
+  --color-sage-400: var(--sage-400);
+  --color-sage-500: var(--sage-500);
+  --color-sage-600: var(--sage-600);
+  --color-sage-700: var(--sage-700);
+  --color-sage-800: var(--sage-800);
   --color-sage-900: var(--sage-900);
+  --color-magenta-50: var(--magenta-50);
+  --color-magenta-100: var(--magenta-100);
+  --color-magenta-200: var(--magenta-200);
+  --color-magenta-300: var(--magenta-300);
+  --color-magenta-400: var(--magenta-400);
+  --color-magenta-500: var(--magenta-500);
+  --color-magenta-600: var(--magenta-600);
+  --color-magenta-700: var(--magenta-700);
+  --color-magenta-800: var(--magenta-800);
+  --color-magenta-900: var(--magenta-900);
+  --color-gold-50: var(--gold-50);
+  --color-gold-100: var(--gold-100);
+  --color-gold-200: var(--gold-200);
+  --color-gold-300: var(--gold-300);
+  --color-gold-400: var(--gold-400);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --radius-sm: calc(var(--radius) - 0.25rem);

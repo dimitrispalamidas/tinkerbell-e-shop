@@ -41,7 +41,7 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
     } else {
       setAvailableStock(0);
     }
-  }, [selectedSize, selectedColor, variants, cartItems, getCartQuantity]);
+  }, [selectedSize, selectedColor, variants]);
 
   const getVariantStock = (size: string, color: string): number => {
     const variant = variants.find(v => v.size === size && v.color === color);
@@ -101,14 +101,14 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 bg-white rounded-2xl p-6 md:p-8 shadow-lg border border-sage-100">
       {/* Color Selection - Show First */}
       {product.colors && product.colors.length > 0 && (
-        <div>
-          <label className="block font-semibold mb-2">
+        <div className="space-y-4">
+          <label className="block text-sm tracking-[0.2em] uppercase text-sage-600 font-light">
             {locale === 'el' ? 'Επιλέξτε Χρώμα' : 'Select Color'}
           </label>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-3">
             {product.colors.map((color) => {
               // Check if this color has any size with available stock (not in cart)
               const available = variants.some(v => {
@@ -129,18 +129,18 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
                     }
                   }}
                   disabled={!available}
-                  className={`px-4 py-2 rounded-md border transition-colors relative ${
+                  className={`px-6 py-3 rounded-full border-2 transition-all duration-300 font-light relative ${
                     selectedColor === color
-                      ? 'bg-primary text-primary-foreground border-primary'
+                      ? 'bg-magenta-600 text-white border-magenta-600 shadow-md scale-105'
                       : available
-                      ? 'bg-background hover:bg-accent border-border'
-                      : 'bg-muted text-muted-foreground border-muted cursor-not-allowed opacity-50'
+                      ? 'bg-sage-50 hover:bg-sage-100 border-sage-300 hover:border-sage-500 text-sage-900 shadow-sm'
+                      : 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed opacity-50'
                   }`}
                 >
                   {color}
                   {!available && (
-                    <span className="absolute -top-1 -right-1 text-[10px] bg-red-500 text-white px-1 rounded">
-                      X
+                    <span className="absolute -top-2 -right-2 text-xs bg-red-500 text-white px-2 py-0.5 rounded-full shadow-sm">
+                      ✕
                     </span>
                   )}
                 </button>
@@ -152,24 +152,24 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
 
       {/* Size Selection - Show Only Available Sizes */}
       {product.sizes && product.sizes.length > 0 && (
-        <div>
-          <label className="block font-semibold mb-2">
+        <div className="space-y-4">
+          <label className="block text-sm tracking-[0.2em] uppercase text-sage-600 font-light">
             {locale === 'el' ? 'Επιλέξτε Μέγεθος' : 'Select Size'}
           </label>
           {!selectedColor && product.colors.length > 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-sage-500 font-light italic bg-sage-50/50 px-4 py-3 rounded-lg">
               {locale === 'el' ? 'Επίλεξε πρώτα χρώμα' : 'Select a color first'}
             </p>
           ) : (
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {getAvailableSizes().map((size) => (
                 <button
                   key={size}
                   onClick={() => setSelectedSize(selectedSize === size ? '' : size)}
-                  className={`px-4 py-2 rounded-md border transition-colors ${
+                  className={`px-6 py-3 rounded-full border-2 transition-all duration-300 font-light min-w-[3.5rem] ${
                     selectedSize === size
-                      ? 'bg-primary text-primary-foreground border-primary'
-                      : 'bg-background hover:bg-accent border-border'
+                      ? 'bg-magenta-600 text-white border-magenta-600 shadow-md scale-105'
+                      : 'bg-sage-50 hover:bg-sage-100 border-sage-300 hover:border-sage-500 text-sage-900 shadow-sm'
                   }`}
                 >
                   {size}
@@ -181,52 +181,65 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
       )}
 
       {/* Quantity */}
-      <div>
-        <label className="block font-semibold mb-2">
+      <div className="space-y-4">
+        <label className="block text-sm tracking-[0.2em] uppercase text-sage-600 font-light">
           {locale === 'el' ? 'Ποσότητα' : 'Quantity'}
         </label>
-        <div className="flex items-center gap-4">
-          <div className="flex items-center border rounded-md">
+        <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center border-2 border-sage-200 rounded-full overflow-hidden bg-white">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setQuantity(Math.max(1, quantity - 1))}
               disabled={quantity <= 1}
+              className="rounded-none h-12 w-12 hover:bg-sage-50"
             >
-              <Minus className="h-4 w-4" />
+              <Minus className="h-4 w-4 text-sage-700" />
             </Button>
-            <span className="px-4 py-2 min-w-[3rem] text-center">{quantity}</span>
+            <span className="px-6 py-2 min-w-[4rem] text-center font-light text-sage-900">{quantity}</span>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => {
-                if (variants.length > 0 && availableStock > 0) {
-                  setQuantity(Math.min(availableStock, quantity + 1));
+                // Only increase if we have stock available
+                if (variants.length > 0) {
+                  // Product with variants - check everything
+                  if (selectedSize && selectedColor && availableStock > 0 && quantity < availableStock) {
+                    setQuantity(prev => prev + 1);
+                  }
+                } else {
+                  // Simple product without variants
+                  setQuantity(prev => prev + 1);
                 }
               }}
-              disabled={variants.length > 0 && quantity >= availableStock}
+              disabled={
+                variants.length > 0
+                  ? !selectedSize || !selectedColor || availableStock === 0 || quantity >= availableStock
+                  : false
+              }
+              className="rounded-none h-12 w-12 hover:bg-sage-50"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 text-sage-700" />
             </Button>
           </div>
           {selectedSize && selectedColor && variants.length > 0 ? (
-            <div className="flex flex-col gap-1">
-              <span className={`text-sm font-medium ${availableStock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+            <div className="flex flex-col gap-1.5 bg-sage-50/50 px-4 py-2 rounded-lg">
+              <span className={`text-sm font-light ${availableStock > 0 ? 'text-green-700' : 'text-red-700'}`}>
                 {availableStock > 0
                   ? `${availableStock} ${locale === 'el' ? (availableStock === 1 ? 'διαθέσιμο' : 'διαθέσιμα') : 'in stock'}`
                   : (locale === 'el' ? 'Εξαντλημένο' : 'Out of stock')}
                 {availableStock === 1 && (
-                  <span className="ml-2 text-orange-600">({locale === 'el' ? 'Τελευταίο' : 'Last one'}!)</span>
+                  <span className="ml-2 text-orange-700 font-medium">({locale === 'el' ? 'Τελευταίο' : 'Last one'}!)</span>
                 )}
                 {availableStock === 2 && (
-                  <span className="ml-2 text-orange-600">({locale === 'el' ? 'Τελευταία' : 'Last few'}!)</span>
+                  <span className="ml-2 text-orange-700 font-medium">({locale === 'el' ? 'Τελευταία' : 'Last few'}!)</span>
                 )}
               </span>
               {(() => {
                 const cartQty = getCartQuantity(selectedSize, selectedColor);
                 if (cartQty > 0) {
                   return (
-                    <span className="text-xs text-blue-600">
+                    <span className="text-xs text-blue-700 font-light">
                       {locale === 'el' 
                         ? `${cartQty} ήδη στο καλάθι` 
                         : `${cartQty} already in cart`}
@@ -237,7 +250,7 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
               })()}
             </div>
           ) : (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-sage-500 font-light italic">
               {locale === 'el' ? 'Επίλεξε μέγεθος & χρώμα' : 'Select size & color'}
             </span>
           )}
@@ -247,11 +260,11 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
       {/* Add to Cart Button */}
       <Button
         size="lg"
-        className="w-full"
+        className="w-full bg-magenta-600 hover:bg-magenta-700 text-white py-6 rounded-full text-base md:text-lg font-light tracking-wide shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
         onClick={handleAddToCart}
         disabled={variants.length > 0 && availableStock === 0}
       >
-        <ShoppingCart className="mr-2 h-5 w-5" />
+        <ShoppingCart className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform" />
         {locale === 'el' ? 'Προσθήκη στο Καλάθι' : 'Add to Cart'}
       </Button>
     </div>

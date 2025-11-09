@@ -6,6 +6,7 @@ import { ProductClient } from './product-client';
 import { ProductGallery } from './product-gallery';
 import type { Product } from '@/lib/types/database';
 import type { Metadata } from 'next';
+import Link from 'next/link';
 
 export async function generateMetadata({
   params,
@@ -88,47 +89,67 @@ export default async function ProductPage({
     .order('color');
 
   return (
-    <div className="container mx-auto px-4 py-6 md:py-8">
-      <div className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-6xl mx-auto">
-        {/* Product Images */}
-        <ProductGallery
-          images={product.images || []}
-          productName={locale === 'el' ? product.name_el : product.name_en}
-        />
+    <div className="min-h-screen bg-gradient-to-b from-background via-sage-50/10 to-cream-50/20">
+      {/* Premium Breadcrumb/Back Navigation */}
+      <div className="border-b bg-white/80 backdrop-blur-sm sticky top-16 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <Link 
+            href="/shop"
+            className="inline-flex items-center text-sm text-sage-600 hover:text-magenta-600 transition-colors font-light"
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            {locale === 'el' ? 'Πίσω στα Προϊόντα' : 'Back to Products'}
+          </Link>
+        </div>
+      </div>
 
-        {/* Product Details */}
-        <div className="space-y-4 md:space-y-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold mb-2">
-              {locale === 'el' ? product.name_el : product.name_en}
-            </h1>
-            <p className="text-xs md:text-sm text-muted-foreground">
-              {locale === 'el' ? 'Κωδικός' : 'SKU'}: {product.sku}
-            </p>
+      {/* Premium Product Section */}
+      <div className="container mx-auto px-4 py-8 md:py-16">
+        <div className="grid md:grid-cols-2 gap-8 md:gap-16 max-w-7xl mx-auto">
+          {/* Product Images */}
+          <div className="relative">
+            <ProductGallery
+              images={product.images || []}
+              productName={locale === 'el' ? product.name_el : product.name_en}
+            />
           </div>
 
-          <div>
-            <p className="text-2xl md:text-3xl font-bold text-primary">
-              {formatPrice(product.price, locale)}
-            </p>
-          </div>
-
-          {product.description_el && product.description_en && (
-            <div>
-              <h3 className="text-base md:text-lg font-semibold mb-2">
-                {locale === 'el' ? 'Περιγραφή' : 'Description'}
-              </h3>
-              <p className="text-sm md:text-base text-muted-foreground">
-                {locale === 'el' ? product.description_el : product.description_en}
+          {/* Product Details */}
+          <div className="space-y-6 md:space-y-8">
+            {/* Title Section */}
+            <div className="border-b border-sage-100 pb-6">
+              <p className="text-xs md:text-sm tracking-[0.2em] uppercase text-sage-600 mb-3 font-light">
+                {locale === 'el' ? 'Κωδικός' : 'SKU'}: {product.sku}
+              </p>
+              <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-sage-900 tracking-tight mb-4">
+                {locale === 'el' ? product.name_el : product.name_en}
+              </h1>
+              <p className="text-3xl md:text-4xl font-light text-sage-800 tracking-wide">
+                {formatPrice(product.price, locale)}
               </p>
             </div>
-          )}
 
-          <ProductClient
-            product={product as Product}
-            variants={variants || []}
-            locale={locale}
-          />
+            {/* Description */}
+            {product.description_el && product.description_en && (
+              <div className="space-y-3">
+                <h3 className="text-sm tracking-[0.2em] uppercase text-sage-600 font-light">
+                  {locale === 'el' ? 'Περιγραφή' : 'Description'}
+                </h3>
+                <p className="text-base md:text-lg text-sage-700 leading-relaxed font-light">
+                  {locale === 'el' ? product.description_el : product.description_en}
+                </p>
+              </div>
+            )}
+
+            {/* Product Selection */}
+            <ProductClient
+              product={product as Product}
+              variants={variants || []}
+              locale={locale}
+            />
+          </div>
         </div>
       </div>
     </div>
