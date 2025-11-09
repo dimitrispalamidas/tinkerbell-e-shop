@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { VideoBackground } from '@/components/layout/video-background';
 import { HeroVideoBackground } from '@/components/layout/hero-video-background';
 import { FeaturedProductsCarousel } from '@/components/home/featured-products-carousel';
+import { PremiumHero } from '@/components/home/premium-hero';
 
 export default async function HomePage() {
   const locale = await getLocale();
@@ -29,19 +30,9 @@ export default async function HomePage() {
         {/* Video Background */}
         <HeroVideoBackground />
         
-        {/* Content */}
+        {/* Premium Hero Content */}
         <div className="container mx-auto px-4 relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 text-white drop-shadow-2xl">
-              {locale === 'el' ? 'Τινκερμπελ' : 'Tinkerbell'}
-            </h1>
-            <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-3 md:mb-4 drop-shadow-lg">
-              {locale === 'el' ? 'Παιδικά Ρούχα • Βαπτιστικά • Στολισμοί' : 'Kids Clothing • Baptism Packages • Event Decorations'}
-            </p>
-            <p className="text-base md:text-lg text-white/80 drop-shadow-lg">
-              {locale === 'el' ? 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά και εφηβικά ρούχα, παπούτσια, αλλά και ολοκληρωμένα βαπτιστικά πακέτα και στολισμούς για κάθε περίσταση.' : 'Discover our unique collection of children\'s and teen clothing, shoes, and complete baptism packages and decorations for every occasion.'}
-            </p>
-          </div>
+          <PremiumHero locale={locale} />
         </div>
       </section>
 

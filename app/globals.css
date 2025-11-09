@@ -18,6 +18,14 @@
   --sunny: #ffe89e;
   --coral: #ffb5a0;
   
+  /* Premium nature-inspired colors */
+  --cream-50: #fefdf8;
+  --cream-100: #f8f6f0;
+  --cream-200: #ede9df;
+  --sage-100: #e8f0e3;
+  --sage-200: #d1e3c8;
+  --sage-900: #3a5239;
+  
   /* UI Colors */
   --primary: #ffb3d9;
   --primary-foreground: #2d2d2d;
@@ -51,6 +59,12 @@
   --color-lavender: var(--lavender);
   --color-sunny: var(--sunny);
   --color-coral: var(--coral);
+  --color-cream-50: var(--cream-50);
+  --color-cream-100: var(--cream-100);
+  --color-cream-200: var(--cream-200);
+  --color-sage-100: var(--sage-100);
+  --color-sage-200: var(--sage-200);
+  --color-sage-900: var(--sage-900);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --radius-sm: calc(var(--radius) - 0.25rem);

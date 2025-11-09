@@ -32,8 +32,9 @@ export function HeroVideoBackground() {
         <source src="/heroVideo.mp4" type="video/mp4" />
       </video>
 
-      {/* Subtle overlay για καλύτερη αναγνωσιμότητα - πιο soft για premium look */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/40" />
+      {/* Premium subtle overlay - soft gradient for elegant readability */}
+      <div className="absolute inset-0 bg-gradient-to-b from-sage-900/20 via-transparent to-sage-900/40" />
+      <div className="absolute inset-0 bg-black/15" />
 
       {/* Loading state */}
       {isLoading && (
