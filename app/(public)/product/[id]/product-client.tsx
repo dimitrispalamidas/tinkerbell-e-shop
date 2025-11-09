@@ -11,17 +11,9 @@ interface ProductClientProps {
   product: Product;
   variants: ProductVariant[];
   locale: string;
-  translations: {
-    selectSize: string;
-    selectColor: string;
-    addToCart: string;
-    quantity: string;
-    outOfStock: string;
-    inStock: string;
-  };
 }
 
-export function ProductClient({ product, variants, locale, translations }: ProductClientProps) {
+export function ProductClient({ product, variants, locale }: ProductClientProps) {
   const [selectedSize, setSelectedSize] = useState<string>('');
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
@@ -59,18 +51,18 @@ export function ProductClient({ product, variants, locale, translations }: Produ
 
   const handleAddToCart = () => {
     if (product.sizes.length > 0 && !selectedSize) {
-      toast.error(translations.selectSize);
+      toast.error(locale === 'el' ? 'Επιλέξτε μέγεθος' : 'Select size');
       return;
     }
     if (product.colors.length > 0 && !selectedColor) {
-      toast.error(translations.selectColor);
+      toast.error(locale === 'el' ? 'Επιλέξτε χρώμα' : 'Select color');
       return;
     }
 
     // Check variant stock
     if (variants.length > 0) {
       if (availableStock === 0) {
-        toast.error(translations.outOfStock);
+        toast.error(locale === 'el' ? 'Εξαντλημένο' : 'Out of stock');
         return;
       }
       if (quantity > availableStock) {
@@ -113,7 +105,9 @@ export function ProductClient({ product, variants, locale, translations }: Produ
       {/* Color Selection - Show First */}
       {product.colors && product.colors.length > 0 && (
         <div>
-          <label className="block font-semibold mb-2">{translations.selectColor}</label>
+          <label className="block font-semibold mb-2">
+            {locale === 'el' ? 'Επιλέξτε Χρώμα' : 'Select Color'}
+          </label>
           <div className="flex flex-wrap gap-2">
             {product.colors.map((color) => {
               // Check if this color has any size with available stock (not in cart)
@@ -159,7 +153,9 @@ export function ProductClient({ product, variants, locale, translations }: Produ
       {/* Size Selection - Show Only Available Sizes */}
       {product.sizes && product.sizes.length > 0 && (
         <div>
-          <label className="block font-semibold mb-2">{translations.selectSize}</label>
+          <label className="block font-semibold mb-2">
+            {locale === 'el' ? 'Επιλέξτε Μέγεθος' : 'Select Size'}
+          </label>
           {!selectedColor && product.colors.length > 0 ? (
             <p className="text-sm text-muted-foreground">
               {locale === 'el' ? 'Επίλεξε πρώτα χρώμα' : 'Select a color first'}
@@ -186,7 +182,9 @@ export function ProductClient({ product, variants, locale, translations }: Produ
 
       {/* Quantity */}
       <div>
-        <label className="block font-semibold mb-2">{translations.quantity}</label>
+        <label className="block font-semibold mb-2">
+          {locale === 'el' ? 'Ποσότητα' : 'Quantity'}
+        </label>
         <div className="flex items-center gap-4">
           <div className="flex items-center border rounded-md">
             <Button
@@ -216,7 +214,7 @@ export function ProductClient({ product, variants, locale, translations }: Produ
               <span className={`text-sm font-medium ${availableStock > 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {availableStock > 0
                   ? `${availableStock} ${locale === 'el' ? (availableStock === 1 ? 'διαθέσιμο' : 'διαθέσιμα') : 'in stock'}`
-                  : translations.outOfStock}
+                  : (locale === 'el' ? 'Εξαντλημένο' : 'Out of stock')}
                 {availableStock === 1 && (
                   <span className="ml-2 text-orange-600">({locale === 'el' ? 'Τελευταίο' : 'Last one'}!)</span>
                 )}
@@ -254,7 +252,7 @@ export function ProductClient({ product, variants, locale, translations }: Produ
         disabled={variants.length > 0 && availableStock === 0}
       >
         <ShoppingCart className="mr-2 h-5 w-5" />
-        {translations.addToCart}
+        {locale === 'el' ? 'Προσθήκη στο Καλάθι' : 'Add to Cart'}
       </Button>
     </div>
   );

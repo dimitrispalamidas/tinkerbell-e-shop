@@ -128,14 +128,6 @@ export default async function ProductPage({
             product={product as Product}
             variants={variants || []}
             locale={locale}
-            translations={{
-              selectSize: locale === 'el' ? 'Επιλέξτε Μέγεθος' : 'Select Size',
-              selectColor: locale === 'el' ? 'Επιλέξτε Χρώμα' : 'Select Color',
-              addToCart: locale === 'el' ? 'Προσθήκη στο Καλάθι' : 'Add to Cart',
-              quantity: locale === 'el' ? 'Ποσότητα' : 'Quantity',
-              outOfStock: locale === 'el' ? 'Μη Διαθέσιμο' : 'Out of Stock',
-              inStock: locale === 'el' ? 'Διαθέσιμο' : 'In Stock',
-            }}
           />
         </div>
       </div>

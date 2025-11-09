@@ -44,13 +44,13 @@ export default async function HomePage() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 text-white drop-shadow-2xl">
-              {locale === 'el' ? 'Καλώς ήρθατε στο Tinkerbell' : 'Welcome to Tinkerbell'}
+              {locale === 'el' ? 'Τινκερμπελ' : 'Tinkerbell'}
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-3 md:mb-4 drop-shadow-lg">
-              {locale === 'el' ? 'Δημιουργούμε μοναδικές στιγμές για τα παιδιά σας' : 'Creating unique moments for your children'}
+              {locale === 'el' ? 'Παιδικά Ρούχα • Βαπτιστικά • Στολισμοί' : 'Kids Clothing • Baptism Packages • Event Decorations'}
             </p>
             <p className="text-base md:text-lg text-white/80 drop-shadow-lg">
-              {locale === 'el' ? 'Ρούχα, παπούτσια και αξεσουάρ για κάθε ιδιαίτερη περίσταση' : 'Clothing, shoes and accessories for every special occasion'}
+              {locale === 'el' ? 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά και εφηβικά ρούχα, παπούτσια, αλλά και ολοκληρωμένα βαπτιστικά πακέτα και στολισμούς για κάθε περίσταση.' : 'Discover our unique collection of children\'s and teen clothing, shoes, and complete baptism packages and decorations for every occasion.'}
             </p>
           </div>
         </div>

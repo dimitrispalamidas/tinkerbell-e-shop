@@ -29,53 +29,6 @@ import {
   ResponsiveContainer 
 } from 'recharts';
 
-// Translations
-const translations = {
-  el: {
-    analytics_title: 'Πωλήσεις',
-    analytics_subtitle: 'Ανάλυση πωλήσεων και απόδοσης καταστήματος',
-    period_today: 'Σήμερα',
-    period_week: 'Εβδομάδα',
-    period_month: 'Μήνας',
-    period_year: 'Έτος',
-    period_all: 'Όλα',
-    total_revenue: 'Συνολικά Έσοδα',
-    total_orders: 'Συνολικές Παραγγελίες',
-    products_sold: 'Προϊόντα που Πωλήθηκαν',
-    avg_order_value: 'Μέση Αξία Παραγγελίας',
-    from_previous_period: 'από προηγούμενη περίοδο',
-    revenue_trend: 'Τάση Εσόδων',
-    orders_trend: 'Τάση Παραγγελιών',
-    top_products: 'Κορυφαία Προϊόντα',
-    sold: 'πωλήθηκαν',
-    category_performance: 'Απόδοση Κατηγοριών',
-    no_sales_data: 'Δεν υπάρχουν δεδομένα πωλήσεων',
-    no_category_data: 'Δεν υπάρχουν δεδομένα κατηγοριών',
-    loading: 'Φόρτωση...'
-  },
-  en: {
-    analytics_title: 'Sales',
-    analytics_subtitle: 'Sales analysis and store performance',
-    period_today: 'Today',
-    period_week: 'Week',
-    period_month: 'Month',
-    period_year: 'Year',
-    period_all: 'All Time',
-    total_revenue: 'Total Revenue',
-    total_orders: 'Total Orders',
-    products_sold: 'Products Sold',
-    avg_order_value: 'Average Order Value',
-    from_previous_period: 'from previous period',
-    revenue_trend: 'Revenue Trend',
-    orders_trend: 'Orders Trend',
-    top_products: 'Top Products',
-    sold: 'sold',
-    category_performance: 'Category Performance',
-    no_sales_data: 'No sales data available',
-    no_category_data: 'No category data available',
-    loading: 'Loading...'
-  }
-};
 
 type TimePeriod = 'today' | 'week' | 'month' | 'year' | 'all';
 
@@ -95,7 +48,6 @@ const COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'
 
 export default function AnalyticsPage() {
   const locale = useLocale() as 'el' | 'en';
-  const t = translations[locale];
   
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('month');
   const [isLoading, setIsLoading] = useState(true);
@@ -290,7 +242,7 @@ export default function AnalyticsPage() {
             change >= 0 ? 'text-green-600' : 'text-red-600'
           }`}>
             {change >= 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
-            {Math.abs(change).toFixed(1)}% {t.from_previous_period}
+            {Math.abs(change).toFixed(1)}% {locale === 'el' ? 'από προηγούμενη περίοδο' : 'from previous period'}
           </p>
         )}
       </CardContent>
@@ -300,7 +252,9 @@ export default function AnalyticsPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground">{t.loading}</p>
+        <p className="text-muted-foreground">
+          {locale === 'el' ? 'Φόρτωση...' : 'Loading...'}
+        </p>
       </div>
     );
   }
@@ -310,50 +264,73 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">{t.analytics_title}</h1>
-          <p className="text-muted-foreground">{t.analytics_subtitle}</p>
+          <h1 className="text-3xl font-bold">
+            {locale === 'el' ? 'Πωλήσεις' : 'Sales'}
+          </h1>
+          <p className="text-muted-foreground">
+            {locale === 'el' ? 'Ανάλυση πωλήσεων και απόδοσης καταστήματος' : 'Sales analysis and store performance'}
+          </p>
         </div>
 
         {/* Time Period Selector */}
         <div className="flex gap-2 flex-wrap">
-          {(['today', 'week', 'month', 'year', 'all'] as TimePeriod[]).map((period) => (
-            <button
-              key={period}
-              onClick={() => setTimePeriod(period)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                timePeriod === period
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-secondary hover:bg-secondary/80'
-              }`}
-            >
-              {t[`period_${period}` as keyof typeof t]}
-            </button>
-          ))}
+          {(['today', 'week', 'month', 'year', 'all'] as TimePeriod[]).map((period) => {
+            const periodLabels = {
+              el: {
+                today: 'Σήμερα',
+                week: 'Εβδομάδα',
+                month: 'Μήνας',
+                year: 'Έτος',
+                all: 'Όλα'
+              },
+              en: {
+                today: 'Today',
+                week: 'Week',
+                month: 'Month',
+                year: 'Year',
+                all: 'All Time'
+              }
+            };
+            
+            return (
+              <button
+                key={period}
+                onClick={() => setTimePeriod(period)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  timePeriod === period
+                    ? 'bg-primary text-primary-foreground'
+                    : 'bg-secondary hover:bg-secondary/80'
+                }`}
+              >
+                {periodLabels[locale][period]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
       {/* Key Metrics */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title={t.total_revenue}
+          title={locale === 'el' ? 'Συνολικά Έσοδα' : 'Total Revenue'}
           value={analytics.totalRevenue}
           icon={DollarSign}
           change={analytics.revenueChange}
           format="currency"
         />
         <StatCard
-          title={t.total_orders}
+          title={locale === 'el' ? 'Συνολικές Παραγγελίες' : 'Total Orders'}
           value={analytics.totalOrders}
           icon={ShoppingCart}
           change={analytics.ordersChange}
         />
         <StatCard
-          title={t.products_sold}
+          title={locale === 'el' ? 'Προϊόντα που Πωλήθηκαν' : 'Products Sold'}
           value={analytics.totalProductsSold}
           icon={Package}
         />
         <StatCard
-          title={t.avg_order_value}
+          title={locale === 'el' ? 'Μέση Αξία Παραγγελίας' : 'Average Order Value'}
           value={analytics.avgOrderValue}
           icon={TrendingUp}
           format="currency"
@@ -367,7 +344,7 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <TrendingUp className="h-5 w-5" />
-              {t.revenue_trend}
+              {locale === 'el' ? 'Τάση Εσόδων' : 'Revenue Trend'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -409,7 +386,7 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <ShoppingCart className="h-5 w-5" />
-              {t.orders_trend}
+              {locale === 'el' ? 'Τάση Παραγγελιών' : 'Orders Trend'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -450,7 +427,7 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Package className="h-5 w-5" />
-              {t.top_products}
+              {locale === 'el' ? 'Κορυφαία Προϊόντα' : 'Top Products'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -465,7 +442,7 @@ export default function AnalyticsPage() {
                       <div>
                         <p className="font-medium text-sm">{product.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {product.sold} {t.sold}
+                          {product.sold} {locale === 'el' ? 'πωλήθηκαν' : 'sold'}
                         </p>
                       </div>
                     </div>
@@ -477,7 +454,7 @@ export default function AnalyticsPage() {
               </div>
             ) : (
               <p className="text-center text-muted-foreground py-8">
-                {t.no_sales_data}
+                {locale === 'el' ? 'Δεν υπάρχουν δεδομένα πωλήσεων' : 'No sales data available'}
               </p>
             )}
           </CardContent>
@@ -488,7 +465,7 @@ export default function AnalyticsPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              {t.category_performance}
+              {locale === 'el' ? 'Απόδοση Κατηγοριών' : 'Category Performance'}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -547,7 +524,7 @@ export default function AnalyticsPage() {
               </div>
             ) : (
               <p className="text-center text-muted-foreground py-8">
-                {t.no_category_data}
+                {locale === 'el' ? 'Δεν υπάρχουν δεδομένα κατηγοριών' : 'No category data available'}
               </p>
             )}
           </CardContent>
