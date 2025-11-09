@@ -60,10 +60,12 @@ export const metadata: Metadata = {
     description: 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά ρούχα, παπούτσια, και βαπτιστικά πακέτα. Βαπτιστικά, στολισμοί εκδηλώσεων με αγάπη και φροντίδα.',
     images: [
       {
-        url: '/share_soscial_screen.png',
+        url: `${siteUrl}/share_soscial_screen.png`,
+        secureUrl: `${siteUrl}/share_soscial_screen.png`,
         width: 1200,
         height: 630,
         alt: 'Τινκερμπελ - Παιδικά & Εφηβικά Ρούχα και Παπούτσια',
+        type: 'image/png',
       }
     ],
   },
@@ -124,6 +126,10 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Τινκερμπελ" />
+        
+        {/* Additional Facebook/Messenger specific meta tags */}
+        <meta property="fb:app_id" content="" />
+        <meta property="og:image:secure_url" content={`${siteUrl}/share_soscial_screen.png`} />
         
         {/* Structured Data for Google */}
         <script
