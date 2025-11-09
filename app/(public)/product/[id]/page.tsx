@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation';
-import { getTranslations, getLocale } from 'next-intl/server';
+import { getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { formatPrice } from '@/lib/utils';
 import { ProductClient } from './product-client';
@@ -65,8 +65,6 @@ export default async function ProductPage({
 }) {
   const locale = await getLocale();
   const { id } = await params;
-  const t = await getTranslations('product');
-  const tCommon = await getTranslations('common');
 
   const supabase = await createClient();
   
@@ -105,7 +103,7 @@ export default async function ProductPage({
               {locale === 'el' ? product.name_el : product.name_en}
             </h1>
             <p className="text-xs md:text-sm text-muted-foreground">
-              {t('sku')}: {product.sku}
+              {locale === 'el' ? 'Κωδικός' : 'SKU'}: {product.sku}
             </p>
           </div>
 
@@ -117,7 +115,9 @@ export default async function ProductPage({
 
           {product.description_el && product.description_en && (
             <div>
-              <h3 className="text-base md:text-lg font-semibold mb-2">{t('description')}</h3>
+              <h3 className="text-base md:text-lg font-semibold mb-2">
+                {locale === 'el' ? 'Περιγραφή' : 'Description'}
+              </h3>
               <p className="text-sm md:text-base text-muted-foreground">
                 {locale === 'el' ? product.description_el : product.description_en}
               </p>
@@ -129,12 +129,12 @@ export default async function ProductPage({
             variants={variants || []}
             locale={locale}
             translations={{
-              selectSize: t('select_size'),
-              selectColor: t('select_color'),
-              addToCart: tCommon('add_to_cart'),
-              quantity: tCommon('quantity'),
-              outOfStock: locale === 'el' ? 'Μη διαθέσιμο' : 'Out of stock',
-              inStock: locale === 'el' ? 'Διαθέσιμο' : 'In stock',
+              selectSize: locale === 'el' ? 'Επιλέξτε Μέγεθος' : 'Select Size',
+              selectColor: locale === 'el' ? 'Επιλέξτε Χρώμα' : 'Select Color',
+              addToCart: locale === 'el' ? 'Προσθήκη στο Καλάθι' : 'Add to Cart',
+              quantity: locale === 'el' ? 'Ποσότητα' : 'Quantity',
+              outOfStock: locale === 'el' ? 'Μη Διαθέσιμο' : 'Out of Stock',
+              inStock: locale === 'el' ? 'Διαθέσιμο' : 'In Stock',
             }}
           />
         </div>

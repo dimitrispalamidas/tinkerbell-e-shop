@@ -2,7 +2,7 @@
 
 import { use, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,6 @@ import type { Order, OrderItem } from '@/lib/types/database';
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
-  const t = useTranslations('admin');
-  const tCommon = useTranslations('common');
   const locale = useLocale();
   
   const [order, setOrder] = useState<Order | null>(null);
@@ -82,19 +80,19 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       .eq('id', unwrappedParams.id);
 
     if (error) {
-      toast.error(t('failed_update_order_status'));
+      toast.error(locale === 'el' ? 'Αποτυχία ενημέρωσης κατάστασης' : 'Failed to update order status');
     } else {
-      toast.success(t('order_status_updated'));
+      toast.success(locale === 'el' ? 'Η κατάσταση ενημερώθηκε' : 'Order status updated');
       fetchOrder();
     }
   };
 
   if (isLoading) {
-    return <div className="text-center py-8">{tCommon('loading')}</div>;
+    return <div className="text-center py-8">{locale === 'el' ? 'Φόρτωση...' : 'Loading...'}</div>;
   }
 
   if (!order) {
-    return <div className="text-center py-8">{t('no_orders')}</div>;
+    return <div className="text-center py-8">{locale === 'el' ? 'Δεν υπάρχουν παραγγελίες ακόμα' : 'No orders yet'}</div>;
   }
 
   return (
@@ -106,33 +104,33 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">{t('order_detail_title')}</h1>
-          <p className="text-muted-foreground">{t('order_id')}: {order.id}</p>
+          <h1 className="text-3xl font-bold">{locale === 'el' ? 'Λεπτομέρειες Παραγγελίας' : 'Order Details'}</h1>
+          <p className="text-muted-foreground">{locale === 'el' ? 'Αριθμός Παραγγελίας' : 'Order ID'}: {order.id}</p>
         </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>{t('customer_info')}</CardTitle>
+            <CardTitle>{locale === 'el' ? 'Στοιχεία Πελάτη' : 'Customer Information'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
             <div>
-              <p className="text-sm text-muted-foreground">{t('customer_name')}</p>
+              <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Όνομα' : 'Name'}</p>
               <p className="font-medium">{order.customer_name}</p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">{t('customer_email')}</p>
+              <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Email' : 'Email'}</p>
               <p className="font-medium">{order.customer_email}</p>
             </div>
             {order.customer_phone && (
               <div>
-                <p className="text-sm text-muted-foreground">{t('customer_phone')}</p>
+                <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Τηλέφωνο' : 'Phone'}</p>
                 <p className="font-medium">{order.customer_phone}</p>
               </div>
             )}
             <div>
-              <p className="text-sm text-muted-foreground">{t('date')}</p>
+              <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Ημερομηνία' : 'Date'}</p>
               <p className="font-medium">
                 {new Date(order.created_at).toLocaleString(locale === 'el' ? 'el-GR' : 'en-US')}
               </p>
@@ -142,21 +140,21 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
         <Card>
           <CardHeader>
-            <CardTitle>{t('delivery_method')}</CardTitle>
+            <CardTitle>{locale === 'el' ? 'Τρόπος Παράδοσης' : 'Delivery Method'}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
               <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Μέθοδος' : 'Method'}</p>
               <p className="font-medium">
                 {order.shipping_address?.delivery_method === 'home' 
-                  ? t('home_delivery')
-                  : t('boxnow_locker')}
+                  ? (locale === 'el' ? 'Παράδοση στο Σπίτι' : 'Home Delivery')
+                  : (locale === 'el' ? 'BoxNow Locker' : 'BoxNow Locker')}
               </p>
             </div>
 
             {order.boxnow_locker_id && (
               <div>
-                <p className="text-sm text-muted-foreground">{t('locker_id')}</p>
+                <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Κωδικός Locker' : 'Locker ID'}</p>
                 <p className="font-medium">{order.boxnow_locker_id}</p>
               </div>
             )}
@@ -204,7 +202,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('order_items')}</CardTitle>
+          <CardTitle>{locale === 'el' ? 'Προϊόντα Παραγγελίας' : 'Order Items'}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
@@ -213,9 +211,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
                 <div>
                   <p className="font-medium">{item.product_name}</p>
                   <p className="text-sm text-muted-foreground">
-                    {t('quantity')}: {item.quantity}
-                    {item.size && ` • ${t('size')}: ${item.size}`}
-                    {item.color && ` • ${t('color')}: ${item.color}`}
+                    {locale === 'el' ? 'Ποσότητα' : 'Quantity'}: {item.quantity}
+                    {item.size && ` • ${locale === 'el' ? 'Μέγεθος' : 'Size'}: ${item.size}`}
+                    {item.color && ` • ${locale === 'el' ? 'Χρώμα' : 'Color'}: ${item.color}`}
                   </p>
                 </div>
                 <p className="font-semibold">{formatPrice(item.price * item.quantity, locale)}</p>
@@ -223,7 +221,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             ))}
             
             <div className="border-t pt-4 flex justify-between items-center">
-              <p className="text-lg font-bold">{t('total')}</p>
+              <p className="text-lg font-bold">{locale === 'el' ? 'Σύνολο' : 'Total'}</p>
               <p className="text-2xl font-bold text-primary">{formatPrice(order.total, locale)}</p>
             </div>
           </div>
@@ -232,35 +230,35 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
       <Card>
         <CardHeader>
-          <CardTitle>{t('update_order_status')}</CardTitle>
+          <CardTitle>{locale === 'el' ? 'Ενημέρωση Κατάστασης' : 'Update Status'}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">{t('order_status')}</label>
+            <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Κατάσταση Παραγγελίας' : 'Order Status'}</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               className="w-full px-3 py-2 border rounded-md"
             >
-              <option value="pending">{t('pending')}</option>
-              <option value="paid">{t('paid')}</option>
-              <option value="shipped">{t('shipped')}</option>
-              <option value="delivered">{t('delivered')}</option>
-              <option value="cancelled">{t('cancelled')}</option>
+              <option value="pending">{locale === 'el' ? 'Εκκρεμεί' : 'Pending'}</option>
+              <option value="paid">{locale === 'el' ? 'Πληρώθηκε' : 'Paid'}</option>
+              <option value="shipped">{locale === 'el' ? 'Απεστάλη' : 'Shipped'}</option>
+              <option value="delivered">{locale === 'el' ? 'Παραδόθηκε' : 'Delivered'}</option>
+              <option value="cancelled">{locale === 'el' ? 'Ακυρώθηκε' : 'Cancelled'}</option>
             </select>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">{t('boxnow_locker')}</label>
+            <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'BOXNOW Locker' : 'BOXNOW Locker'}</label>
             <Input
               value={trackingCode}
               onChange={(e) => setTrackingCode(e.target.value)}
-              placeholder={t('transaction_id')}
+              placeholder={locale === 'el' ? 'Κωδικός Συναλλαγής' : 'Transaction ID'}
             />
           </div>
 
           <div className="space-y-1">
-            <p className="text-sm text-muted-foreground">{t('payment_status')}: {t(order.payment_status)}</p>
+            <p className="text-sm text-muted-foreground">{locale === 'el' ? 'Κατάσταση Πληρωμής' : 'Payment Status'}: {order.payment_status === 'paid' ? (locale === 'el' ? 'Πληρώθηκε' : 'Paid') : (locale === 'el' ? 'Εκκρεμεί' : 'Pending')}</p>
             {order.viva_order_code && (
               <p className="text-sm text-muted-foreground">
                 Viva Order Code: {order.viva_order_code}
@@ -274,7 +272,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
           </div>
 
           <Button onClick={handleUpdateOrder} className="w-full" disabled={!hasChanges}>
-            {t('update_order_status')}
+            {locale === 'el' ? 'Ενημέρωση Κατάστασης' : 'Update Status'}
           </Button>
         </CardContent>
       </Card>

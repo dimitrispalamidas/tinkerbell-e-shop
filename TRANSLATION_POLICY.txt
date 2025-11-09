@@ -1,0 +1,252 @@
+===============================================
+TINKERBELL - TRANSLATION POLICY (Ternary-First)
+===============================================
+
+Last Updated: November 2024
+Approach: Ternary-First (Inline Visibility)
+
+===============================================
+🎯 PRIMARY RULE: USE TERNARIES
+===============================================
+
+DEFAULT APPROACH: Use inline ternary operators for ALL user-facing text
+
+✅ ALWAYS USE TERNARIES:
+```tsx
+import { useLocale } from 'next-intl';
+
+const locale = useLocale();
+
+// Simple text
+<p>{locale === 'el' ? 'Ελληνικό κείμενο' : 'English text'}</p>
+
+// With variables
+<p>{locale === 'el' ? `Μόνο ${count} διαθέσιμα` : `Only ${count} available`}</p>
+
+// Database fields
+<h1>{locale === 'el' ? product.name_el : product.name_en}</h1>
+
+// Buttons, labels, messages - EVERYTHING!
+<Button>{locale === 'el' ? 'Αποθήκευση' : 'Save'}</Button>
+```
+
+WHY TERNARIES?
+✅ Instant visibility - see both languages at once
+✅ Easy to spot inconsistencies with your eyes
+✅ No need to jump between files
+✅ Faster development and debugging
+✅ Self-documenting code
+
+===============================================
+📦 NO JSON FILES - 100% Ternaries
+===============================================
+
+JSON translation files have been REMOVED.
+
+ALL translations use inline ternaries now.
+
+For 100% of cases → Use ternaries!
+
+===============================================
+💾 DATABASE FIELDS (_el / _en)
+===============================================
+
+For user-managed content:
+
+✅ Products: name_el, name_en, description_el, description_en
+✅ Categories: name_el, name_en
+✅ Gallery: Any admin-editable content
+
+USAGE:
+```tsx
+<h1>{locale === 'el' ? product.name_el : product.name_en}</h1>
+```
+
+===============================================
+📋 EXAMPLES BY SCENARIO
+===============================================
+
+BUTTONS:
+✅ <Button>{locale === 'el' ? 'Αποθήκευση' : 'Save'}</Button>
+✅ <Button>{locale === 'el' ? 'Ακύρωση' : 'Cancel'}</Button>
+
+LABELS:
+✅ <label>{locale === 'el' ? 'Όνομα' : 'Name'}</label>
+✅ <label>{locale === 'el' ? 'Email' : 'Email'}</label>
+
+MESSAGES:
+✅ toast.success(locale === 'el' ? 'Επιτυχία!' : 'Success!')
+✅ toast.error(locale === 'el' ? 'Σφάλμα' : 'Error')
+
+DYNAMIC TEXT:
+✅ {locale === 'el' ? `Μόνο ${stock} διαθέσιμα` : `Only ${stock} available`}
+✅ {locale === 'el' ? `${count} προϊόντα` : `${count} products`}
+
+VALIDATION:
+✅ {locale === 'el' ? 'Συμπληρώστε το πεδίο' : 'Fill the field'}
+✅ {locale === 'el' ? 'Μη έγκυρο email' : 'Invalid email'}
+
+PLACEHOLDERS:
+✅ placeholder={locale === 'el' ? 'π.χ. Γιάννης' : 'e.g. John'}
+✅ placeholder={locale === 'el' ? 'Αναζήτηση...' : 'Search...'}
+
+DATABASE CONTENT:
+✅ {locale === 'el' ? product.name_el : product.name_en}
+✅ {locale === 'el' ? category.name_el : category.name_en}
+
+DATE FORMATTING:
+✅ .toLocaleString(locale === 'el' ? 'el-GR' : 'en-US')
+✅ .toLocaleDateString(locale === 'el' ? 'el-GR' : 'en-US')
+
+===============================================
+✅ CONSISTENCY CHECKLIST
+===============================================
+
+Before committing code, visually scan for:
+
+1. SPELLING: Are Greek/English texts correct?
+   ✓ "Αποθήκευση" not "Αποθηκευση"
+   ✓ "Save" not "Sav"
+
+2. CONSISTENCY: Same text = same translation
+   ✓ "Save" always "Αποθήκευση" (not "Αποθήκευση" / "Σώσιμο")
+
+3. COMPLETENESS: Both languages present?
+   ✓ {locale === 'el' ? 'ΕΛ' : 'EN'} ✅
+   ✗ {locale === 'el' ? 'ΕΛ' : ''} ❌
+
+4. VARIABLES: Same variables in both?
+   ✓ {locale === 'el' ? `Μόνο ${x}` : `Only ${x}`} ✅
+   ✗ {locale === 'el' ? `Μόνο ${x}` : `Only ${y}`} ❌
+
+===============================================
+🔧 HELPER FUNCTION
+===============================================
+
+For database fields, you can use the helper:
+
+```typescript
+// lib/utils/translate.ts
+export function getLocalizedField<T>(
+  obj: T, 
+  field: string, 
+  locale: string
+): string {
+  const key = `${field}_${locale}` as keyof T;
+  return (obj[key] as string) || '';
+}
+
+// Usage:
+const name = getLocalizedField(product, 'name', locale);
+const desc = getLocalizedField(product, 'description', locale);
+```
+
+But direct ternaries are also fine:
+```tsx
+{locale === 'el' ? product.name_el : product.name_en}
+```
+
+===============================================
+🚫 WHAT NOT TO DO
+===============================================
+
+❌ Don't hardcode only Greek:
+<Button>Αποθήκευση</Button>  // Missing English!
+
+❌ Don't hardcode only English:
+<Button>Save</Button>  // Missing Greek!
+
+❌ Don't use JSON for one-off text:
+<Button>{t('save_button_in_checkout_page')}</Button>  // Overkill!
+
+❌ Don't forget the ternary:
+<p>Ελληνικό κείμενο</p>  // Where's English?
+
+===============================================
+📊 CURRENT STATE (November 2024)
+===============================================
+
+✅ Ternaries: 100% - ALL user-facing text
+❌ JSON Files: DELETED (not needed anymore)
+💾 Database: Products, Categories, Gallery (_el/_en fields)
+
+FILES WITH TERNARIES (Keep this approach):
+- app/(public)/checkout/page.tsx (22 ternaries)
+- app/admin/products/new/page.tsx (14 ternaries)  
+- app/admin/products/[id]/page.tsx (13 ternaries)
+- app/(public)/checkout/success/page.tsx (14 ternaries)
+- app/(public)/shop/page.tsx (7 ternaries)
+- components/checkout/boxnow-locker-list.tsx (4 ternaries)
+- components/layout/header.tsx (5 ternaries)
+- And all other components...
+
+===============================================
+🎯 DECISION FLOWCHART
+===============================================
+
+START: Need to add translated text
+  |
+  ├─ Is it database content (product name, description)?
+  │  └─ YES → Use DB fields: {locale === 'el' ? x.name_el : x.name_en}
+  │
+  └─ Is it UI text (button, label, message, etc)?
+     └─ YES → Use TERNARY: {locale === 'el' ? 'ΕΛ' : 'EN'}
+
+DONE! That's it. No complicated rules. 🎉
+
+===============================================
+💡 PRO TIPS
+===============================================
+
+1. COPY-PASTE TEMPLATE:
+   {locale === 'el' ? '' : ''}
+   Fill in the blanks!
+
+2. USE FIND/REPLACE:
+   If you need to change a translation, use VS Code's 
+   Find in Files to locate all instances.
+
+3. VISUAL SCAN:
+   Ctrl+F for "locale ===" to see all translations
+   in a file at once.
+
+4. CONSISTENCY CHECK:
+   Search for common words:
+   - "Save" / "Αποθήκευση"
+   - "Cancel" / "Ακύρωση"  
+   - "Delete" / "Διαγραφή"
+   
+   Make sure they're always the same!
+
+===============================================
+🔍 SCANNING FOR INCONSISTENCIES
+===============================================
+
+To scan your project for translation issues:
+
+```bash
+# Find all ternaries
+grep -r "locale === 'el' \?" --include="*.tsx" --include="*.ts"
+
+# Find potential missing translations (hardcoded Greek)
+grep -r "[Α-Ωα-ω]" --include="*.tsx" | grep -v "locale ==="
+
+# Find potential missing translations (hardcoded English in JSX)
+grep -r "<[^>]*>[A-Z][a-z]" --include="*.tsx" | grep -v "locale ==="
+```
+
+Or just ask an AI to scan it! 🤖
+
+===============================================
+END OF POLICY
+===============================================
+
+REMEMBER: 
+👀 Visibility > Abstraction
+🎯 Ternaries First, Always!
+🚀 Simple > Complex
+
+Next time you add text, just use:
+{locale === 'el' ? 'Ελληνικά' : 'English'}
+
+That's it! 🎉

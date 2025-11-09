@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -15,9 +15,7 @@ export default function NewGalleryItemPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const categoryParam = searchParams.get('category') as 'baptism' | 'decoration' | null;
-  
-  const t = useTranslations('admin');
-  const tCommon = useTranslations('common');
+  const locale = useLocale();
 
   const [uploadingImages, setUploadingImages] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
@@ -95,13 +93,13 @@ export default function NewGalleryItemPage() {
       } else {
         // Show "ready for upload" message instead of "uploaded"
         if (uploadedUrls.length === 1) {
-          toast.info(t('photo_ready_for_upload'));
+          toast.info(locale === 'el' ? 'Η φωτογραφία είναι έτοιμη για ανέβασμα' : 'Photo ready for upload');
         } else {
-          toast.info(t('photos_ready_for_upload', { count: uploadedUrls.length }));
+          toast.info(locale === 'el' ? `${uploadedUrls.length} φωτογραφίες είναι έτοιμες για ανέβασμα` : `${uploadedUrls.length} photos ready for upload`);
         }
       }
     } catch (error: any) {
-      toast.error(error.message || t('failed_upload'));
+      toast.error(error.message || (locale === 'el' ? 'Αποτυχία ανεβάσματος' : 'Upload failed'));
     } finally {
       setUploadingImages(false);
       setUploadProgress({ current: 0, total: 0 });
@@ -124,17 +122,17 @@ export default function NewGalleryItemPage() {
         
         if (error) {
           console.error('Error deleting image from storage:', error);
-          toast.error(t('failed_delete_image') || 'Failed to delete image');
+          toast.error(locale === 'el' ? 'Αποτυχία διαγραφής εικόνας' : 'Failed to delete image');
           return;
         }
       }
       
       // Remove from state
       setImageUrls(imageUrls.filter((_, i) => i !== index));
-      toast.success(t('image_deleted') || 'Image deleted');
+      toast.success(locale === 'el' ? 'Η εικόνα διαγράφηκε' : 'Image deleted');
     } catch (error) {
       console.error('Error removing image:', error);
-      toast.error(t('failed_delete_image') || 'Failed to delete image');
+      toast.error(locale === 'el' ? 'Αποτυχία διαγραφής εικόνας' : 'Failed to delete image');
     }
   };
 
@@ -142,7 +140,7 @@ export default function NewGalleryItemPage() {
     e.preventDefault();
     
     if (imageUrls.length === 0) {
-      toast.error(t('image_required'));
+      toast.error(locale === 'el' ? 'Απαιτείται εικόνα' : 'Image is required');
       return;
     }
 
@@ -206,15 +204,15 @@ export default function NewGalleryItemPage() {
 
       // Success message after actual upload to database
       if (imageUrls.length === 1) {
-        toast.success(t('photo_uploaded_success'));
+        toast.success(locale === 'el' ? 'Η φωτογραφία ανέβηκε επιτυχώς' : 'Photo uploaded successfully');
       } else {
-        toast.success(t('photos_uploaded_success', { count: imageUrls.length }));
+        toast.success(locale === 'el' ? `${imageUrls.length} φωτογραφίες ανέβηκαν επιτυχώς` : `${imageUrls.length} photos uploaded successfully`);
       }
       
       router.push(`/admin/gallery${formData.category ? `?tab=${formData.category}` : ''}`);
     } catch (error: any) {
       console.error('Failed to create gallery items:', error);
-      toast.error(error.message || t('failed_create_gallery'));
+      toast.error(error.message || (locale === 'el' ? 'Αποτυχία δημιουργίας gallery' : 'Failed to create gallery'));
     } finally {
       setIsLoading(false);
     }
@@ -229,8 +227,8 @@ export default function NewGalleryItemPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">{t('add_gallery_item')}</h1>
-          <p className="text-muted-foreground">{t('add_gallery_subtitle_bulk')}</p>
+          <h1 className="text-3xl font-bold">{locale === 'el' ? 'Προσθήκη Φωτογραφίας' : 'Add Photo'}</h1>
+          <p className="text-muted-foreground">{locale === 'el' ? 'Ανεβάστε πολλές φωτογραφίες μαζί στη γκαλερί' : 'Upload multiple photos to the gallery at once'}</p>
         </div>
       </div>
 
@@ -238,34 +236,34 @@ export default function NewGalleryItemPage() {
         <div className="grid gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t('basic_info')}</CardTitle>
+              <CardTitle>{locale === 'el' ? 'Βασικές Πληροφορίες' : 'Basic Information'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">{t('category_required')}</label>
+                <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Κατηγορία *' : 'Category *'}</label>
                 <select
                   value={formData.category}
                   onChange={(e) => setFormData({ ...formData, category: e.target.value as 'baptism' | 'decoration' })}
                   className="w-full px-3 py-2 border rounded-md"
                   required
                 >
-                  <option value="baptism">{t('baptism')}</option>
-                  <option value="decoration">{t('decoration')}</option>
+                  <option value="baptism">{locale === 'el' ? 'Βαπτιστικά' : 'Baptism'}</option>
+                  <option value="decoration">{locale === 'el' ? 'Στολισμός' : 'Decoration'}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">{t('position')}</label>
+                <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Θέση' : 'Position'}</label>
                 <select
                   value={formData.position}
                   onChange={(e) => setFormData({ ...formData, position: e.target.value as 'beginning' | 'end' })}
                   className="w-full px-3 py-2 border rounded-md"
                 >
-                  <option value="end">{t('add_to_end')}</option>
-                  <option value="beginning">{t('add_to_beginning')}</option>
+                  <option value="end">{locale === 'el' ? 'Προσθήκη στο τέλος' : 'Add to end'}</option>
+                  <option value="beginning">{locale === 'el' ? 'Προσθήκη στην αρχή' : 'Add to beginning'}</option>
                 </select>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t('position_hint_bulk')}
+                  {locale === 'el' ? 'Όλες οι φωτογραφίες θα προστεθούν στην επιλεγμένη θέση' : 'All photos will be added at the selected position'}
                 </p>
               </div>
 
@@ -278,7 +276,7 @@ export default function NewGalleryItemPage() {
                   className="w-4 h-4"
                 />
                 <label htmlFor="is_active" className="text-sm">
-                  {t('is_active_label')}
+                  {locale === 'el' ? 'Ενεργό (ορατό στην ιστοσελίδα)' : 'Active (visible on website)'}
                 </label>
               </div>
             </CardContent>
@@ -286,7 +284,7 @@ export default function NewGalleryItemPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>{t('gallery_images_required')}</CardTitle>
+              <CardTitle>{locale === 'el' ? 'Φωτογραφίες Γκαλερί *' : 'Gallery Images *'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="border-2 border-dashed rounded-lg p-8 text-center">
@@ -304,7 +302,7 @@ export default function NewGalleryItemPage() {
                   {uploadingImages ? (
                     <>
                       <p className="text-sm font-medium mb-2">
-                        {t('uploading_progress', { current: uploadProgress.current, total: uploadProgress.total })}
+                        {locale === 'el' ? `Ανέβασμα ${uploadProgress.current} από ${uploadProgress.total} φωτογραφίες...` : `Uploading ${uploadProgress.current} of ${uploadProgress.total} photos...`}
                       </p>
                       <div className="w-full max-w-md mx-auto bg-gray-200 rounded-full h-2.5 mb-2">
                         <div 
@@ -319,10 +317,10 @@ export default function NewGalleryItemPage() {
                   ) : (
                     <>
                       <p className="text-sm text-muted-foreground mb-2">
-                        {t('click_to_upload_multiple')}
+                        {locale === 'el' ? 'Κάντε κλικ για ανέβασμα ή βγάλτε φωτογραφίες' : 'Click to upload or take photos'}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {t('select_multiple_hint')}
+                        {locale === 'el' ? 'Επιλέξτε πολλές φωτογραφίες μαζί (Ctrl/Cmd + κλικ)' : 'Select multiple images at once (Ctrl/Cmd + click)'}
                       </p>
                     </>
                   )}
@@ -332,7 +330,7 @@ export default function NewGalleryItemPage() {
               {imageUrls.length > 0 && (
                 <div>
                   <p className="text-sm font-medium mb-3">
-                    {t('selected_images')}: {imageUrls.length}
+                    {locale === 'el' ? 'Επιλεγμένες φωτογραφίες' : 'Selected images'}: {imageUrls.length}
                   </p>
                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {imageUrls.map((url, index) => (
@@ -364,11 +362,11 @@ export default function NewGalleryItemPage() {
           <div className="flex gap-3">
             <Link href={`/admin/gallery${categoryParam ? `?tab=${categoryParam}` : ''}`} className="flex-1">
               <Button type="button" variant="outline" className="w-full">
-                {tCommon('cancel')}
+                {locale === 'el' ? 'Ακύρωση' : 'Cancel'}
               </Button>
             </Link>
             <Button type="submit" disabled={isLoading || imageUrls.length === 0} className="flex-1">
-              {isLoading ? t('creating') : t('create_items', { count: imageUrls.length })}
+              {isLoading ? (locale === 'el' ? 'Δημιουργία...' : 'Creating...') : (locale === 'el' ? `Ανέβασμα ${imageUrls.length} φωτογραφιών` : `Upload ${imageUrls.length} images`)}
             </Button>
           </div>
         </div>

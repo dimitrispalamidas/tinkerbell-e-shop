@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/lib/store/cart';
 import { Button } from '@/components/ui/button';
@@ -18,8 +18,6 @@ const CHECKOUT_STORAGE_KEY = 'tinkerbell_checkout_data';
 const HOME_DELIVERY_COST = 3.50; // €3.50 for home delivery
 
 export default function CheckoutPage() {
-  const t = useTranslations('checkout');
-  const tCommon = useTranslations('common');
   const router = useRouter();
   const locale = useLocale();
   
@@ -133,7 +131,7 @@ export default function CheckoutPage() {
 
       if (Object.keys(newErrors).length > 0) {
         setErrors(newErrors);
-        toast.error(t('fill_all_fields'));
+        toast.error(locale === 'el' ? 'Παρακαλώ συμπληρώστε όλα τα υποχρεωτικά πεδία' : 'Please fill in all required fields');
         return;
       }
 
@@ -160,7 +158,7 @@ export default function CheckoutPage() {
     } else if (step === 2) {
       // Validate delivery method
       if (!formData.deliveryMethod) {
-        toast.error(t('select_delivery_method'));
+        toast.error(locale === 'el' ? 'Παρακαλώ επιλέξτε τρόπο παράδοσης' : 'Please select a delivery method');
         return;
       }
 
@@ -180,7 +178,7 @@ export default function CheckoutPage() {
 
         if (Object.keys(addressErrors).length > 0) {
           setErrors({ ...errors, ...addressErrors });
-          toast.error(t('fill_address_fields'));
+          toast.error(locale === 'el' ? 'Παρακαλώ συμπληρώστε όλα τα πεδία διεύθυνσης' : 'Please fill in all address fields');
           return;
         }
         
@@ -354,7 +352,7 @@ export default function CheckoutPage() {
   return (
     <div className="container mx-auto px-4 py-4 md:py-8">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-8">{t('checkout')}</h1>
+        <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-8">{locale === 'el' ? 'Ολοκλήρωση Παραγγελίας' : 'Checkout'}</h1>
 
         {/* Progress Steps */}
         <div className="flex items-center justify-center mb-6 md:mb-8">
@@ -380,12 +378,12 @@ export default function CheckoutPage() {
           {step === 1 && (
             <Card>
               <CardHeader className="p-4 md:p-6">
-                <CardTitle className="text-lg md:text-xl">{t('customer_info')}</CardTitle>
+                <CardTitle className="text-lg md:text-xl">{locale === 'el' ? 'Στοιχεία Πελάτη' : 'Customer Information'}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4 p-4 md:p-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2">{tCommon('first_name')}</label>
+                    <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Όνομα' : 'First Name'}</label>
                     <Input
                       value={formData.firstName}
                       onChange={(e) => {
@@ -398,7 +396,7 @@ export default function CheckoutPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">{tCommon('last_name')}</label>
+                    <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Επώνυμο' : 'Last Name'}</label>
                     <Input
                       value={formData.lastName}
                       onChange={(e) => {
@@ -412,7 +410,7 @@ export default function CheckoutPage() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">{tCommon('email')}</label>
+                  <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Email' : 'Email'}</label>
                   <Input
                     type="email"
                     value={formData.email}
@@ -436,7 +434,7 @@ export default function CheckoutPage() {
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">{tCommon('phone')}</label>
+                  <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Τηλέφωνο' : 'Phone'}</label>
                   <p className="text-xs text-muted-foreground mb-2">
                     {locale === 'el' ? 'Κινητό (69...) ή σταθερό (2...)' : 'Mobile (69...) or landline (2...)'}
                   </p>
@@ -475,7 +473,7 @@ export default function CheckoutPage() {
             <>
               <Card>
                 <CardHeader className="p-4 md:p-6">
-                  <CardTitle className="text-lg md:text-xl">{t('choose_delivery')}</CardTitle>
+                  <CardTitle className="text-lg md:text-xl">{locale === 'el' ? 'Επιλέξτε Τρόπο Παράδοσης' : 'Choose Delivery Method'}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 md:p-6 space-y-4">
                   {/* Delivery Method Selection */}
@@ -492,9 +490,9 @@ export default function CheckoutPage() {
                       <div className="flex items-start gap-3">
                         <Package className={`h-6 w-6 mt-1 ${formData.deliveryMethod === 'boxnow' ? 'text-primary' : 'text-muted-foreground'}`} />
                         <div className="flex-1">
-                          <h3 className="font-semibold mb-1">{t('boxnow_locker')}</h3>
-                          <p className="text-sm text-muted-foreground mb-2">{t('boxnow_locker_desc')}</p>
-                          <span className="text-sm font-medium text-green-600">{t('shipping_cost_free')}</span>
+                          <h3 className="font-semibold mb-1">{locale === 'el' ? 'BOXNOW Locker' : 'BOXNOW Locker'}</h3>
+                          <p className="text-sm text-muted-foreground mb-2">{locale === 'el' ? 'Παραλάβετε από locker στο σημείο της επιλογής σας' : 'Pick up from locker at your preferred location'}</p>
+                          <span className="text-sm font-medium text-green-600">{locale === 'el' ? 'Δωρεάν' : 'Free'}</span>
                         </div>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                           formData.deliveryMethod === 'boxnow' ? 'border-primary' : 'border-muted'
@@ -518,8 +516,8 @@ export default function CheckoutPage() {
                       <div className="flex items-start gap-3">
                         <Home className={`h-6 w-6 mt-1 ${formData.deliveryMethod === 'home' ? 'text-primary' : 'text-muted-foreground'}`} />
                         <div className="flex-1">
-                          <h3 className="font-semibold mb-1">{t('home_delivery')}</h3>
-                          <p className="text-sm text-muted-foreground mb-2">{t('home_delivery_desc')}</p>
+                          <h3 className="font-semibold mb-1">{locale === 'el' ? 'Παράδοση στο Σπίτι' : 'Home Delivery'}</h3>
+                          <p className="text-sm text-muted-foreground mb-2">{locale === 'el' ? 'Παραλάβετε στην πόρτα σας' : 'Delivered to your doorstep'}</p>
                           <span className="text-sm font-medium">+{formatPrice(HOME_DELIVERY_COST, locale)}</span>
                         </div>
                         <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
@@ -536,7 +534,7 @@ export default function CheckoutPage() {
                   {/* BOXNOW Locker Selection */}
                   {formData.deliveryMethod === 'boxnow' && (
                     <div className="pt-4 border-t">
-                      <h3 className="font-medium mb-4">{t('select_locker')}</h3>
+                      <h3 className="font-medium mb-4">{locale === 'el' ? 'Επιλέξτε Locker' : 'Select Locker'}</h3>
                       <BoxnowLockerList
                         selectedLockerId={formData.boxnowLockerId}
                         onSelectLocker={(locker) => {
@@ -561,9 +559,9 @@ export default function CheckoutPage() {
                   {/* Home Delivery Address Fields */}
                   {formData.deliveryMethod === 'home' && (
                     <div className="pt-4 border-t space-y-4">
-                      <h3 className="font-medium mb-4">{t('shipping_info')}</h3>
+                      <h3 className="font-medium mb-4">{locale === 'el' ? 'Στοιχεία Αποστολής' : 'Shipping Information'}</h3>
                       <div>
-                        <label className="block text-sm font-medium mb-2">{tCommon('address')}</label>
+                        <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Διεύθυνση' : 'Address'}</label>
                         <Input
                           value={formData.address}
                           onChange={(e) => {
@@ -587,7 +585,7 @@ export default function CheckoutPage() {
                       </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
-                          <label className="block text-sm font-medium mb-2">{tCommon('city')}</label>
+                          <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Πόλη' : 'City'}</label>
                           <Input
                             value={formData.city}
                             onChange={(e) => {
@@ -610,7 +608,7 @@ export default function CheckoutPage() {
                           )}
                         </div>
                         <div>
-                          <label className="block text-sm font-medium mb-2">{tCommon('postal_code')}</label>
+                          <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Τ.Κ.' : 'Postal Code'}</label>
                           <Input
                             type="text"
                             value={formData.postalCode}
@@ -638,7 +636,7 @@ export default function CheckoutPage() {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">{tCommon('region')}</label>
+                        <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Περιοχή / Νομός' : 'Region / State'}</label>
                         <Input
                           value={formData.region}
                           onChange={(e) => {
@@ -672,7 +670,7 @@ export default function CheckoutPage() {
             <>
               <Card>
                 <CardHeader className="p-4 md:p-6">
-                  <CardTitle className="text-lg md:text-xl">{t('payment')}</CardTitle>
+                  <CardTitle className="text-lg md:text-xl">{locale === 'el' ? 'Πληρωμή' : 'Payment'}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
                   <div className="bg-muted p-3 md:p-4 rounded-lg">
@@ -709,7 +707,7 @@ export default function CheckoutPage() {
                       disabled={isProcessing}
                     >
                       <ArrowLeft className="mr-2 h-4 w-4" />
-                      {tCommon('back')}
+                      {locale === 'el' ? 'Πίσω' : 'Back'}
                     </Button>
                     <Button
                       onClick={handlePayment}
@@ -728,7 +726,7 @@ export default function CheckoutPage() {
               {/* Order Summary - Only shown in step 3 */}
               <Card>
                 <CardHeader className="p-4 md:p-6">
-                  <CardTitle className="text-lg md:text-xl">{t('order_summary')}</CardTitle>
+                  <CardTitle className="text-lg md:text-xl">{locale === 'el' ? 'Σύνοψη Παραγγελίας' : 'Order Summary'}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 p-4 md:p-6">
                   <div className="space-y-3 text-xs md:text-sm max-h-[300px] md:max-h-[400px] overflow-y-auto">
@@ -778,21 +776,21 @@ export default function CheckoutPage() {
 
                   <div className="border-t pt-4 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span>{tCommon('subtotal')}</span>
+                      <span>{locale === 'el' ? 'Υποσύνολο' : 'Subtotal'}</span>
                       <span>{formatPrice(subtotal, locale)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>{tCommon('shipping')}</span>
+                      <span>{locale === 'el' ? 'Μεταφορικά' : 'Shipping'}</span>
                       <span>
                         {shippingCost === 0 ? (
-                          <span className="text-green-600 font-medium">{t('shipping_cost_free')}</span>
+                          <span className="text-green-600 font-medium">{locale === 'el' ? 'Δωρεάν' : 'Free'}</span>
                         ) : (
                           formatPrice(shippingCost, locale)
                         )}
                       </span>
                     </div>
                     <div className="flex justify-between text-base md:text-lg font-bold pt-2 border-t">
-                      <span>{tCommon('total')}</span>
+                      <span>{locale === 'el' ? 'Σύνολο' : 'Total'}</span>
                       <span className="text-primary">{formatPrice(total, locale)}</span>
                     </div>
                   </div>
@@ -814,11 +812,11 @@ export default function CheckoutPage() {
                   className="w-full"
                 >
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  {tCommon('back')}
+                  {locale === 'el' ? 'Πίσω' : 'Back'}
                 </Button>
               )}
               <Button onClick={handleContinue} size="lg" className="w-full text-base">
-                {tCommon('continue')}
+                {locale === 'el' ? 'Συνέχεια' : 'Continue'}
               </Button>
             </div>
           )}

@@ -1,13 +1,13 @@
 "use client"
 
-import { useState, useEffect } from 'react'
-import { useTranslations } from 'next-intl'
+import { useState } from 'react'
+import { useLocale } from 'next-intl'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Mail, Phone, MapPin } from 'lucide-react'
 
 export function Footer() {
-  const t = useTranslations('nav')
+  const locale = useLocale()
   const [year] = useState(() => new Date().getFullYear())
 
   return (
@@ -58,16 +58,18 @@ export function Footer() {
           <div className="col-span-1 md:col-span-6 grid grid-cols-2 md:grid-cols-3 gap-6">
             {/* Shop Links */}
             <div>
-              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">{t('shop')}</h4>
+              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">
+                {locale === 'el' ? 'Κατάστημα' : 'Shop'}
+              </h4>
               <ul className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
                 <li>
                   <Link href="/shop" className="text-muted-foreground hover:text-primary transition-colors">
-                    {t('clothing')}
+                    {locale === 'el' ? 'Ρούχα' : 'Clothing'}
                   </Link>
                 </li>
                 <li>
                   <Link href="/shop" className="text-muted-foreground hover:text-primary transition-colors">
-                    {t('shoes')}
+                    {locale === 'el' ? 'Παπούτσια' : 'Shoes'}
                   </Link>
                 </li>
               </ul>
@@ -75,16 +77,18 @@ export function Footer() {
             
             {/* Gallery Links */}
             <div>
-              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">{t('gallery')}</h4>
+              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">
+                {locale === 'el' ? 'Γκαλερί' : 'Gallery'}
+              </h4>
               <ul className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
                 <li>
                   <Link href="/gallery/baptism" className="text-muted-foreground hover:text-primary transition-colors">
-                    {t('baptism')}
+                    {locale === 'el' ? 'Βαπτιστικά' : 'Baptism'}
                   </Link>
                 </li>
                 <li>
                   <Link href="/gallery/decorations" className="text-muted-foreground hover:text-primary transition-colors">
-                    {t('decorations')}
+                    {locale === 'el' ? 'Στολισμοί' : 'Decorations'}
                   </Link>
                 </li>
               </ul>
@@ -92,21 +96,23 @@ export function Footer() {
             
             {/* Legal Links */}
             <div className="col-span-2 md:col-span-1">
-              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">{t('legal')}</h4>
+              <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">
+                {locale === 'el' ? 'Νομικά' : 'Legal'}
+              </h4>
               <ul className="space-y-1.5 md:space-y-2 text-xs md:text-sm">
                 <li>
                   <Link href="/privacy-policy" className="text-muted-foreground hover:text-primary transition-colors">
-                    {t('privacy_policy')}
+                    {locale === 'el' ? 'Πολιτική Απορρήτου' : 'Privacy Policy'}
                   </Link>
                 </li>
                 <li>
                   <Link href="/terms-and-conditions" className="text-muted-foreground hover:text-primary transition-colors">
-                    {t('terms_and_conditions')}
+                    {locale === 'el' ? 'Όροι και Προϋποθέσεις' : 'Terms and Conditions'}
                   </Link>
                 </li>
                 <li>
                   <Link href="/return-policy" className="text-muted-foreground hover:text-primary transition-colors">
-                    {t('return_policy')}
+                    {locale === 'el' ? 'Πολιτική Επιστροφών' : 'Return Policy'}
                   </Link>
                 </li>
               </ul>
@@ -115,7 +121,9 @@ export function Footer() {
 
           {/* Contact Info */}
           <div className="md:col-span-3">
-            <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">{t('contact') || 'Επικοινωνία'}</h4>
+            <h4 className="font-semibold mb-3 md:mb-4 text-sm md:text-base">
+              {locale === 'el' ? 'Επικοινωνία' : 'Contact'}
+            </h4>
             <div className="space-y-2 md:space-y-3 text-xs md:text-sm">
               <div className="flex items-center gap-2">
                 <Mail className="h-3.5 w-3.5 md:h-4 md:w-4 text-primary flex-shrink-0" />
@@ -152,7 +160,9 @@ export function Footer() {
         
         {/* Copyright */}
         <div className="mt-6 md:mt-12 pt-4 md:pt-6 border-t text-center text-xs md:text-sm text-muted-foreground">
-          <p>&copy; {year} Tinkerbell. {t('rights') || 'Με επιφύλαξη παντός δικαιώματος'}.</p>
+          <p>
+            &copy; {year} Tinkerbell. {locale === 'el' ? 'Με επιφύλαξη παντός δικαιώματος' : 'All rights reserved'}.
+          </p>
         </div>
       </div>
     </footer>

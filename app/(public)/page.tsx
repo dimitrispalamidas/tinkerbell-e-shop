@@ -1,4 +1,4 @@
-import { getTranslations, getLocale } from 'next-intl/server';
+import { getLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -11,8 +11,6 @@ import { FeaturedProductsCarousel } from '@/components/home/featured-products-ca
 
 export default async function HomePage() {
   const locale = await getLocale();
-  const t = await getTranslations('home');
-  const tNav = await getTranslations('nav');
 
   const supabase = await createClient();
   
@@ -46,13 +44,13 @@ export default async function HomePage() {
         <div className="container mx-auto px-4 relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 text-white drop-shadow-2xl">
-              {t('hero_title')}
+              {locale === 'el' ? 'Καλώς ήρθατε στο Tinkerbell' : 'Welcome to Tinkerbell'}
             </h1>
             <p className="text-lg md:text-xl lg:text-2xl text-white/90 mb-3 md:mb-4 drop-shadow-lg">
-              {t('hero_subtitle')}
+              {locale === 'el' ? 'Δημιουργούμε μοναδικές στιγμές για τα παιδιά σας' : 'Creating unique moments for your children'}
             </p>
             <p className="text-base md:text-lg text-white/80 drop-shadow-lg">
-              {t('hero_description')}
+              {locale === 'el' ? 'Ρούχα, παπούτσια και αξεσουάρ για κάθε ιδιαίτερη περίσταση' : 'Clothing, shoes and accessories for every special occasion'}
             </p>
           </div>
         </div>
@@ -62,7 +60,7 @@ export default async function HomePage() {
       <section className="py-12 md:py-16 bg-background">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl md:text-3xl font-bold text-center mb-8 md:mb-12">
-            {t('categories')}
+            {locale === 'el' ? 'Κατηγορίες' : 'Categories'}
           </h2>
           <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-4xl mx-auto">
             <Link href="/shop?type=clothing" className="h-full">
@@ -71,13 +69,15 @@ export default async function HomePage() {
                   <div className="aspect-video relative overflow-hidden">
                     <Image
                       src="/clothes.jpg"
-                      alt={tNav('clothing')}
+                      alt={locale === 'el' ? 'Ρούχα' : 'Clothing'}
                       fill
                       className="object-cover"
                     />
                   </div>
                   <div className="p-3 md:p-6">
-                    <h3 className="text-base md:text-2xl font-bold mb-1 md:mb-2">{tNav('clothing')}</h3>
+                    <h3 className="text-base md:text-2xl font-bold mb-1 md:mb-2">
+                      {locale === 'el' ? 'Ρούχα' : 'Clothing'}
+                    </h3>
                     <p className="text-xs md:text-base text-muted-foreground line-clamp-2">
                       {locale === 'el' ? 'Ανακαλύψτε τη συλλογή μας' : 'Discover our collection'}
                     </p>
@@ -92,13 +92,15 @@ export default async function HomePage() {
                   <div className="aspect-video relative overflow-hidden">
                     <Image
                       src="/shoes.jpg"
-                      alt={tNav('shoes')}
+                      alt={locale === 'el' ? 'Παπούτσια' : 'Shoes'}
                       fill
                       className="object-cover"
                     />
                   </div>
                   <div className="p-3 md:p-6">
-                    <h3 className="text-base md:text-2xl font-bold mb-1 md:mb-2">{tNav('shoes')}</h3>
+                    <h3 className="text-base md:text-2xl font-bold mb-1 md:mb-2">
+                      {locale === 'el' ? 'Παπούτσια' : 'Shoes'}
+                    </h3>
                     <p className="text-xs md:text-base text-muted-foreground line-clamp-2">
                       {locale === 'el' ? 'Δείτε τα παπούτσια μας' : 'Browse our shoes'}
                     </p>
@@ -115,10 +117,12 @@ export default async function HomePage() {
         <section className="py-12 md:py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             <div className="flex justify-between items-center mb-8 md:mb-12">
-              <h2 className="text-2xl md:text-3xl font-bold">{t('featured_products')}</h2>
+              <h2 className="text-2xl md:text-3xl font-bold">
+                {locale === 'el' ? 'Προτεινόμενα Προϊόντα' : 'Featured Products'}
+              </h2>
               <Link href="/shop">
                 <Button variant="outline">
-                  {t('view_all')}
+                  {locale === 'el' ? 'Προβολή όλων' : 'View All'}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
@@ -148,13 +152,13 @@ export default async function HomePage() {
             <Link href="/gallery/baptism">
               <Button size="lg" className="shadow-xl w-full sm:w-auto">
                 <Baby className="mr-2 h-5 w-5" />
-                {tNav('baptism')}
+                {locale === 'el' ? 'Βάπτιση' : 'Baptism'}
               </Button>
             </Link>
             <Link href="/gallery/decorations">
               <Button size="lg" variant="outline" className="bg-white/90 hover:bg-white shadow-xl w-full sm:w-auto">
                 <BsBalloonHeart className="mr-2 h-5 w-5" />
-                {tNav('decorations')}
+                {locale === 'el' ? 'Διακόσμηση' : 'Decorations'}
               </Button>
             </Link>
           </div>

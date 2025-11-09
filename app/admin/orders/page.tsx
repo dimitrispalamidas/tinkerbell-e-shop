@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,12 +10,21 @@ import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function AdminOrdersPage() {
-  const t = useTranslations('admin');
-  const tCommon = useTranslations('common');
   const locale = useLocale();
   
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const getStatusLabel = (status: string) => {
+    const statusMap: Record<string, { el: string; en: string }> = {
+      pending: { el: 'Εκκρεμεί', en: 'Pending' },
+      paid: { el: 'Πληρώθηκε', en: 'Paid' },
+      shipped: { el: 'Απεστάλη', en: 'Shipped' },
+      delivered: { el: 'Παραδόθηκε', en: 'Delivered' },
+      cancelled: { el: 'Ακυρώθηκε', en: 'Cancelled' },
+    };
+    return locale === 'el' ? statusMap[status]?.el || status : statusMap[status]?.en || status;
+  };
 
   useEffect(() => {
     fetchOrders();
@@ -41,8 +50,8 @@ export default function AdminOrdersPage() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold">{t('orders_title')}</h1>
-          <p className="text-muted-foreground">{tCommon('loading')}</p>
+          <h1 className="text-3xl font-bold">{locale === 'el' ? 'Παραγγελίες' : 'Orders'}</h1>
+          <p className="text-muted-foreground">{locale === 'el' ? 'Φόρτωση...' : 'Loading...'}</p>
         </div>
       </div>
     );
@@ -51,8 +60,8 @@ export default function AdminOrdersPage() {
   return (
     <div className="space-y-4 md:space-y-6">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold">{t('orders_title')}</h1>
-        <p className="text-sm md:text-base text-muted-foreground">{t('orders_subtitle')}</p>
+        <h1 className="text-2xl md:text-3xl font-bold">{locale === 'el' ? 'Παραγγελίες' : 'Orders'}</h1>
+        <p className="text-sm md:text-base text-muted-foreground">{locale === 'el' ? 'Διαχείριση παραγγελιών πελατών' : 'Manage customer orders'}</p>
       </div>
 
       {orders && orders.length > 0 ? (
@@ -81,7 +90,7 @@ export default function AdminOrdersPage() {
                       order.status === 'delivered' ? 'bg-green-100 text-green-700' :
                       'bg-gray-100 text-gray-700'
                     }`}>
-                      {t(order.status)}
+                      {getStatusLabel(order.status)}
                     </span>
                   </div>
 
@@ -94,8 +103,8 @@ export default function AdminOrdersPage() {
                       })}
                     </p>
                     <p className="text-xs md:text-sm text-muted-foreground">
-                      {order.order_items?.length || 0} {t('items')} • 
-                      {order.boxnow_locker_id ? ` ${t('boxnow_locker')}` : ` ${t('home_delivery')}`}
+                      {order.order_items?.length || 0} {locale === 'el' ? 'τεμάχια' : 'items'} • 
+                      {order.boxnow_locker_id ? ` ${locale === 'el' ? 'BOXNOW Locker' : 'BOXNOW Locker'}` : ` ${locale === 'el' ? 'Παράδοση στο Σπίτι' : 'Home Delivery'}`}
                     </p>
                   </div>
 
@@ -106,14 +115,14 @@ export default function AdminOrdersPage() {
                         {formatPrice(order.total, locale)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {t('payment_status')}: {t(order.payment_status)}
+                        {locale === 'el' ? 'Κατάσταση Πληρωμής' : 'Payment Status'}: {getStatusLabel(order.payment_status)}
                       </p>
                     </div>
                     
                     <Link href={`/admin/orders/${order.id}`}>
                       <Button variant="outline" size="sm" className="whitespace-nowrap">
                         <Eye className="h-3.5 w-3.5 md:h-4 md:w-4 md:mr-2" />
-                        <span className="hidden md:inline">{t('view_details')}</span>
+                        <span className="hidden md:inline">{locale === 'el' ? 'Προβολή' : 'View'}</span>
                       </Button>
                     </Link>
                   </div>
@@ -125,7 +134,7 @@ export default function AdminOrdersPage() {
       ) : (
         <Card>
           <CardContent className="p-8 md:p-12 text-center">
-            <p className="text-sm md:text-base text-muted-foreground">{t('no_orders')}</p>
+            <p className="text-sm md:text-base text-muted-foreground">{locale === 'el' ? 'Δεν υπάρχουν παραγγελίες ακόμα' : 'No orders yet'}</p>
           </CardContent>
         </Card>
       )}

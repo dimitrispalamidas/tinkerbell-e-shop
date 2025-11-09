@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCartStore } from '@/lib/store/cart';
@@ -18,8 +18,6 @@ interface MiniCartSidebarProps {
 }
 
 export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
-  const t = useTranslations('cart');
-  const tCommon = useTranslations('common');
   const locale = useLocale();
   
   const { items, removeItem, updateQuantity, getTotal } = useCartStore();
@@ -89,7 +87,9 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
           <div className="flex items-center justify-between p-4 border-b">
             <div className="flex items-center gap-2">
               <ShoppingBag className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-bold">{t('your_cart')}</h2>
+              <h2 className="text-lg font-bold">
+                {locale === 'el' ? 'Το Καλάθι σας' : 'Your Cart'}
+              </h2>
               <span className="text-sm text-muted-foreground">({items.length})</span>
             </div>
             <button
@@ -106,9 +106,11 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
             {items.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-center">
                 <ShoppingBag className="h-16 w-16 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">{t('empty_cart')}</p>
+                <p className="text-muted-foreground mb-4">
+                  {locale === 'el' ? 'Το καλάθι σας είναι άδειο' : 'Your cart is empty'}
+                </p>
                 <Button onClick={onClose} variant="outline">
-                  {t('continue_shopping')}
+                  {locale === 'el' ? 'Συνεχίστε τις Αγορές' : 'Continue Shopping'}
                 </Button>
               </div>
             ) : (
@@ -139,8 +141,12 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
                     <div className="flex-1 min-w-0 space-y-2">
                       <h3 className="font-medium text-sm truncate">{item.name}</h3>
                       <div className="text-xs text-muted-foreground space-y-0.5">
-                        {item.size && <p>{tCommon('size')}: {item.size}</p>}
-                        {item.color && <p>{tCommon('color')}: {item.color}</p>}
+                        {item.size && (
+                          <p>{locale === 'el' ? 'Μέγεθος' : 'Size'}: {item.size}</p>
+                        )}
+                        {item.color && (
+                          <p>{locale === 'el' ? 'Χρώμα' : 'Color'}: {item.color}</p>
+                        )}
                       </div>
                       
                       {/* Quantity Controls & Price */}
@@ -190,7 +196,7 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
             <div className="border-t p-4 space-y-4">
               {/* Total */}
               <div className="flex justify-between items-center text-lg font-bold">
-                <span>{tCommon('total')}</span>
+                <span>{locale === 'el' ? 'Σύνολο' : 'Total'}</span>
                 <span className="text-primary">{formatPrice(getTotal(), locale)}</span>
               </div>
 
@@ -198,13 +204,13 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
               <div className="space-y-2">
                 <Link href="/checkout" onClick={onClose} className="block">
                   <Button size="lg" className="w-full">
-                    {t('proceed_to_checkout')}
+                    {locale === 'el' ? 'Ολοκλήρωση Παραγγελίας' : 'Proceed to Checkout'}
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link href="/shop" onClick={onClose} className="block">
                   <Button variant="outline" className="w-full">
-                    {t('continue_shopping')}
+                    {locale === 'el' ? 'Συνεχίστε τις Αγορές' : 'Continue Shopping'}
                     <ShoppingBag className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>

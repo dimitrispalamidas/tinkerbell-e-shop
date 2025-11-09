@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,8 +17,6 @@ import { translateText } from '@/lib/utils/translate';
 
 export default function NewProductPage() {
   const router = useRouter();
-  const t = useTranslations('admin');
-  const tCommon = useTranslations('common');
   const locale = useLocale();
   const [isLoading, setIsLoading] = useState(false);
   const [uploadingImages, setUploadingImages] = useState(false);
@@ -125,9 +123,9 @@ export default function NewProductPage() {
       }
 
       setImageUrls([...imageUrls, ...uploadedUrls]);
-      toast.success(t('uploaded_count', { count: uploadedUrls.length }));
+      toast.success(locale === 'el' ? `Ανέβηκαν ${uploadedUrls.length} εικόνες` : `Uploaded ${uploadedUrls.length} images`);
     } catch (error: any) {
-      toast.error(error.message || t('failed_upload'));
+      toast.error(error.message || (locale === 'el' ? 'Αποτυχία ανεβάσματος' : 'Upload failed'));
     } finally {
       setUploadingImages(false);
     }
@@ -149,17 +147,17 @@ export default function NewProductPage() {
         
         if (error) {
           console.error('Error deleting image from storage:', error);
-          toast.error(t('failed_delete_image') || 'Failed to delete image');
+          toast.error(locale === 'el' ? 'Αποτυχία διαγραφής εικόνας' : 'Failed to delete image');
           return;
         }
       }
-      
+
       // Remove from state
       setImageUrls(imageUrls.filter((_, i) => i !== index));
-      toast.success(t('image_deleted') || 'Image deleted');
+      toast.success(locale === 'el' ? 'Η εικόνα διαγράφηκε' : 'Image deleted');
     } catch (error) {
       console.error('Error removing image:', error);
-      toast.error(t('failed_delete_image') || 'Failed to delete image');
+      toast.error(locale === 'el' ? 'Αποτυχία διαγραφής εικόνας' : 'Failed to delete image');
     }
   };
 
@@ -221,7 +219,7 @@ export default function NewProductPage() {
         if (variantError) throw variantError;
       }
 
-      toast.success(t('product_created'));
+      toast.success(locale === 'el' ? 'Το προϊόν δημιουργήθηκε' : 'Product created');
       router.push('/admin/products');
     } catch (error: any) {
       console.error('Product creation error:', error);
@@ -229,14 +227,14 @@ export default function NewProductPage() {
       // User-friendly error messages
       if (error.code === '23505') {
         if (error.message.includes('products_sku_key')) {
-          toast.error(t('sku_exists'));
+          toast.error(locale === 'el' ? 'Το SKU υπάρχει ήδη' : 'SKU already exists');
         } else if (error.message.includes('product_variants')) {
-          toast.error(t('duplicate_variant'));
+          toast.error(locale === 'el' ? 'Διπλότυπη παραλλαγή' : 'Duplicate variant');
         } else {
-          toast.error(t('item_exists'));
+          toast.error(locale === 'el' ? 'Το προϊόν υπάρχει ήδη' : 'Product already exists');
         }
       } else {
-        toast.error(error.message || t('failed_create_product'));
+        toast.error(error.message || (locale === 'el' ? 'Αποτυχία δημιουργίας προϊόντος' : 'Failed to create product'));
       }
     } finally {
       setIsLoading(false);
@@ -252,8 +250,12 @@ export default function NewProductPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">{t('add_product_title')}</h1>
-          <p className="text-muted-foreground">{t('add_product_subtitle')}</p>
+          <h1 className="text-3xl font-bold">
+            {locale === 'el' ? 'Προσθήκη Προϊόντος' : 'Add Product'}
+          </h1>
+          <p className="text-muted-foreground">
+            {locale === 'el' ? 'Δημιουργία νέου προϊόντος στον κατάλογο' : 'Create new product in catalog'}
+          </p>
         </div>
       </div>
 
@@ -261,17 +263,19 @@ export default function NewProductPage() {
         <div className="grid gap-6">
           <Card>
             <CardHeader>
-              <CardTitle>{t('product_info')}</CardTitle>
+              <CardTitle>{locale === 'el' ? 'Πληροφορίες Προϊόντος' : 'Product Information'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">{t('category')}</label>
+                <label className="block text-sm font-medium mb-2">
+                  {locale === 'el' ? 'Κατηγορία' : 'Category'}
+                </label>
                 <select
                   value={formData.category_id}
                   onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                   className="w-full px-3 py-2 border rounded-md"
                 >
-                  <option value="">{t('no_category')}</option>
+                  <option value="">{locale === 'el' ? 'Χωρίς κατηγορία' : 'No category'}</option>
                   <optgroup label={locale === 'el' ? '👕 Ρούχα' : '👕 Clothing'}>
                     {categories.filter(cat => cat.type === 'clothing').map(cat => (
                       <option key={cat.id} value={cat.id}>
@@ -290,8 +294,8 @@ export default function NewProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">{t('sku_required')}</label>
-                <p className="text-xs text-muted-foreground mb-2">{t('sku_category_hint')}</p>
+                <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'SKU (Υποχρεωτικό)' : 'SKU (Required)'}</label>
+                <p className="text-xs text-muted-foreground mb-2">{locale === 'el' ? 'Πρότυπο: XXX-YYYY (πχ. BPT-0001, TOY-0001)' : 'Format: XXX-YYYY (e.g. BPT-0001, TOY-0001)'}</p>
                 <div className="flex gap-2">
                   <Input
                     value={formData.sku}
@@ -359,13 +363,13 @@ export default function NewProductPage() {
                       setFormData({ ...formData, sku: `${prefix}${newNum}` });
                     }}
                   >
-                    {t('auto')}
+                    {locale === 'el' ? 'Αυτόματο' : 'Auto'}
                   </Button>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">{t('price_required')}</label>
+                <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Τιμή (€) *' : 'Price (€) *'}</label>
                 <Input
                   type="text"
                   value={formData.price}
@@ -383,7 +387,7 @@ export default function NewProductPage() {
                     }
                   }}
                   required
-                  placeholder={t('price_placeholder')}
+                  placeholder={locale === 'el' ? 'π.χ. 9.99 ή 10' : 'e.g. 9.99 or 10'}
                 />
               </div>
             </CardContent>
@@ -391,11 +395,13 @@ export default function NewProductPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>{t('greek_info')}</CardTitle>
+              <CardTitle>{locale === 'el' ? 'Ελληνικά' : 'Greek'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">{t('name_el_required')}</label>
+                <label className="block text-sm font-medium mb-2">
+                  {locale === 'el' ? 'Όνομα (Ελληνικά) *' : 'Name (Greek) *'}
+                </label>
                 <Input
                   value={formData.name_el}
                   onChange={(e) => setFormData({ ...formData, name_el: e.target.value })}
@@ -417,11 +423,13 @@ export default function NewProductPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>{t('english_info')}</CardTitle>
+              <CardTitle>{locale === 'el' ? 'Αγγλικά' : 'English'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">{t('name_en_required')}</label>
+                <label className="block text-sm font-medium mb-2">
+                  {locale === 'el' ? 'Όνομα (Αγγλικά) *' : 'Name (English) *'}
+                </label>
                 <div className="flex gap-2">
                   <Input
                     value={formData.name_en}
@@ -443,7 +451,9 @@ export default function NewProductPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">{t('description_en')}</label>
+                <label className="block text-sm font-medium mb-2">
+                  {locale === 'el' ? 'Περιγραφή (Αγγλικά)' : 'Description (English)'}
+                </label>
                 <div className="flex gap-2 items-start">
                   <Textarea
                     className="flex-1"
@@ -468,30 +478,34 @@ export default function NewProductPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>{t('available_options')}</CardTitle>
+              <CardTitle>{locale === 'el' ? 'Διαθέσιμες Επιλογές' : 'Available Options'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">{t('sizes')}</label>
+                <label className="block text-sm font-medium mb-2">
+                  {locale === 'el' ? 'Μεγέθη' : 'Sizes'}
+                </label>
                 <Input
                   value={formData.sizes}
                   onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
                   placeholder="4Y, 6Y, 8Y, 10Y, 12Y"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t('sizes_hint')}
+                  {locale === 'el' ? 'Χωρίστε με κόμμα (π.χ. S, M, L, XL)' : 'Comma separated (e.g. S, M, L, XL)'}
                 </p>
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">{t('colors')}</label>
+                <label className="block text-sm font-medium mb-2">
+                  {locale === 'el' ? 'Χρώματα' : 'Colors'}
+                </label>
                 <Input
                   value={formData.colors}
                   onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
                   placeholder="Ροζ, Μπλε, Πράσινο"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t('colors_hint')}
+                  {locale === 'el' ? 'Χωρίστε με κόμμα (π.χ. Κόκκινο, Μπλε, Πράσινο)' : 'Comma separated (e.g. Red, Blue, Green)'}
                 </p>
               </div>
             </CardContent>
@@ -506,7 +520,7 @@ export default function NewProductPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle>{t('product_images')}</CardTitle>
+              <CardTitle>{locale === 'el' ? 'Εικόνες Προϊόντος' : 'Product Images'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -514,10 +528,10 @@ export default function NewProductPage() {
                   <div className="border-2 border-dashed rounded-lg p-8 text-center hover:border-primary transition-colors">
                     <Upload className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                     <p className="text-sm font-medium mb-1">
-                      {uploadingImages ? t('uploading') : t('click_upload')}
+                      {uploadingImages ? (locale === 'el' ? 'Ανέβασμα...' : 'Uploading...') : (locale === 'el' ? 'Κλικ για ανέβασμα' : 'Click to upload')}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {t('upload_format')}
+                      {locale === 'el' ? 'JPG, PNG, WEBP (μέγ. 5MB ανά εικόνα)' : 'JPG, PNG, WEBP (max. 5MB per image)'}
                     </p>
                   </div>
                     <input
@@ -578,7 +592,7 @@ export default function NewProductPage() {
                         </button>
                         {index === 0 && (
                           <span className="absolute bottom-1 left-1 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
-                            {t('main_image')}
+                            {locale === 'el' ? 'Κύρια' : 'Main'}
                           </span>
                         )}
                         <div className="absolute top-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded font-bold">
@@ -601,7 +615,9 @@ export default function NewProductPage() {
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                   className="rounded"
                 />
-                <span className="text-sm font-medium">{t('product_active')}</span>
+                <span className="text-sm font-medium">
+                  {locale === 'el' ? 'Το προϊόν είναι ενεργό' : 'Product is active'}
+                </span>
               </label>
             </CardContent>
           </Card>
@@ -609,11 +625,13 @@ export default function NewProductPage() {
           <div className="flex gap-4">
             <Link href="/admin/products" className="flex-1">
               <Button type="button" variant="outline" className="w-full">
-                {tCommon('cancel')}
+                {locale === 'el' ? 'Ακύρωση' : 'Cancel'}
               </Button>
             </Link>
             <Button type="submit" className="flex-1" disabled={isLoading}>
-              {isLoading ? t('creating') : t('create_product')}
+              {isLoading 
+                ? (locale === 'el' ? 'Δημιουργία...' : 'Creating...') 
+                : (locale === 'el' ? 'Δημιουργία Προϊόντος' : 'Create Product')}
             </Button>
           </div>
         </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatPrice } from '@/lib/utils';
@@ -9,8 +9,6 @@ import { Package, ShoppingCart, TrendingUp, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 
 export default function AdminDashboard() {
-  const t = useTranslations('admin');
-  const tCommon = useTranslations('common');
   const locale = useLocale();
   
   const [stats, setStats] = useState<{
@@ -112,10 +110,23 @@ export default function AdminDashboard() {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    const statusMap: Record<string, { el: string; en: string }> = {
+      pending: { el: 'Εκκρεμεί', en: 'Pending' },
+      paid: { el: 'Πληρώθηκε', en: 'Paid' },
+      shipped: { el: 'Απεστάλη', en: 'Shipped' },
+      delivered: { el: 'Παραδόθηκε', en: 'Delivered' },
+      cancelled: { el: 'Ακυρώθηκε', en: 'Cancelled' },
+    };
+    return locale === 'el' ? statusMap[status]?.el || status : statusMap[status]?.en || status;
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground">{tCommon('loading')}</p>
+        <p className="text-muted-foreground">
+          {locale === 'el' ? 'Φόρτωση...' : 'Loading...'}
+        </p>
       </div>
     );
   }
@@ -123,15 +134,21 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-4 md:space-y-8">
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold">{t('dashboard_title')}</h1>
-        <p className="text-sm md:text-base text-muted-foreground">{t('dashboard_subtitle')}</p>
+        <h1 className="text-2xl md:text-3xl font-bold">
+          {locale === 'el' ? 'Πίνακας Ελέγχου' : 'Dashboard'}
+        </h1>
+        <p className="text-sm md:text-base text-muted-foreground">
+          {locale === 'el' ? 'Επισκόπηση του καταστήματος' : 'Store overview'}
+        </p>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">{t('total_products')}</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">
+              {locale === 'el' ? 'Σύνολο Προϊόντων' : 'Total Products'}
+            </CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-4 md:p-6 pt-0">
@@ -141,7 +158,9 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">{t('total_orders')}</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">
+              {locale === 'el' ? 'Σύνολο Παραγγελιών' : 'Total Orders'}
+            </CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-4 md:p-6 pt-0">
@@ -151,7 +170,9 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">{t('sales_today')}</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">
+              {locale === 'el' ? 'Πωλήσεις Σήμερα' : 'Sales Today'}
+            </CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-4 md:p-6 pt-0">
@@ -161,7 +182,9 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 md:p-6">
-            <CardTitle className="text-xs md:text-sm font-medium">{t('sold_out_products')}</CardTitle>
+            <CardTitle className="text-xs md:text-sm font-medium">
+              {locale === 'el' ? 'Εξαντλημένα Προϊόντα' : 'Sold Out Products'}
+            </CardTitle>
             <AlertTriangle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent className="p-4 md:p-6 pt-0">
@@ -173,9 +196,11 @@ export default function AdminDashboard() {
       {/* Recent Orders */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
-          <CardTitle className="text-base md:text-lg">{t('recent_orders')}</CardTitle>
+          <CardTitle className="text-base md:text-lg">
+            {locale === 'el' ? 'Πρόσφατες Παραγγελίες' : 'Recent Orders'}
+          </CardTitle>
           <Link href="/admin/orders" className="text-xs md:text-sm text-primary hover:underline">
-            {t('view_all')}
+            {locale === 'el' ? 'Προβολή Όλων' : 'View All'}
           </Link>
         </CardHeader>
         <CardContent className="p-4 md:p-6 pt-0">
@@ -194,14 +219,16 @@ export default function AdminDashboard() {
                       order.status === 'cancelled' ? 'bg-red-100 text-red-700' :
                       'bg-yellow-100 text-yellow-700'
                     }`}>
-                      {t(order.status)}
+                      {getStatusLabel(order.status)}
                     </p>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="text-center text-muted-foreground py-4 text-sm">{t('no_orders')}</p>
+            <p className="text-center text-muted-foreground py-4 text-sm">
+              {locale === 'el' ? 'Δεν υπάρχουν παραγγελίες ακόμα' : 'No orders yet'}
+            </p>
           )}
         </CardContent>
       </Card>
@@ -211,7 +238,9 @@ export default function AdminDashboard() {
         {/* Top Selling */}
         <Card>
           <CardHeader className="p-4 md:p-6">
-            <CardTitle className="text-base md:text-lg">{t('top_selling')}</CardTitle>
+            <CardTitle className="text-base md:text-lg">
+              {locale === 'el' ? 'Κορυφαίες Πωλήσεις' : 'Top Selling'}
+            </CardTitle>
           </CardHeader>
           <CardContent className="p-4 md:p-6 pt-0">
             {stats.topSellingProducts.length > 0 ? (
@@ -219,12 +248,16 @@ export default function AdminDashboard() {
                 {stats.topSellingProducts.map((product: any) => (
                   <div key={product.id} className="flex items-center justify-between gap-2">
                     <p className="text-xs md:text-sm truncate flex-1">{locale === 'el' ? product.name_el : product.name_en}</p>
-                    <span className="text-xs md:text-sm font-medium whitespace-nowrap">{product.totalSold} {t('sold')}</span>
+                    <span className="text-xs md:text-sm font-medium whitespace-nowrap">
+                      {product.totalSold} {locale === 'el' ? 'Πωλήθηκαν' : 'Sold'}
+                    </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-4 text-sm">{t('no_top_selling')}</p>
+              <p className="text-center text-muted-foreground py-4 text-sm">
+                {locale === 'el' ? 'Δεν υπάρχουν πωλήσεις ακόμα' : 'No sales yet'}
+              </p>
             )}
           </CardContent>
         </Card>
@@ -232,9 +265,11 @@ export default function AdminDashboard() {
         {/* Sold Out Products */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
-            <CardTitle className="text-base md:text-lg">{t('sold_out_products')}</CardTitle>
+            <CardTitle className="text-base md:text-lg">
+              {locale === 'el' ? 'Εξαντλημένα Προϊόντα' : 'Sold Out Products'}
+            </CardTitle>
             <Link href="/admin/products?tab=sold_out" className="text-xs md:text-sm text-primary hover:underline whitespace-nowrap">
-              {t('view_all')}
+              {locale === 'el' ? 'Προβολή Όλων' : 'View All'}
             </Link>
           </CardHeader>
           <CardContent className="p-4 md:p-6 pt-0">
@@ -247,7 +282,9 @@ export default function AdminDashboard() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-muted-foreground py-4 text-sm">{t('no_sold_out')}</p>
+              <p className="text-center text-muted-foreground py-4 text-sm">
+                {locale === 'el' ? 'Δεν υπάρχουν εξαντλημένα προϊόντα' : 'No sold out products'}
+              </p>
             )}
           </CardContent>
         </Card>

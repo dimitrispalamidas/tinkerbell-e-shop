@@ -1,33 +1,20 @@
-import { getTranslations } from 'next-intl/server'
+"use client"
+
+import { useLocale } from 'next-intl'
 import { Mail, Phone, Clock, MapPin } from 'lucide-react'
 
-export async function generateMetadata() {
-  const t = await getTranslations('contact')
-  
-  return {
-    title: t('title') + ' | Tinkerbell',
-    description: t('description')
-  }
-}
-
 export default function ContactPage() {
+  const locale = useLocale()
+  
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
-      <ContactContent />
-    </div>
-  )
-}
-
-async function ContactContent() {
-  const t = await getTranslations('contact')
-  
-  return (
-    <>
       {/* Header */}
       <div className="text-center mb-8 md:mb-12">
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">{t('title')}</h1>
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
+          {locale === 'el' ? 'Επικοινωνία' : 'Contact Us'}
+        </h1>
         <p className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto">
-          {t('subtitle')}
+          {locale === 'el' ? 'Έχετε ερωτήσεις; Θέλετε να κλείσετε ραντεβού; Επικοινωνήστε μαζί μας!' : 'Have questions? Want to book an appointment? Get in touch with us!'}
         </p>
       </div>
 
@@ -35,7 +22,9 @@ async function ContactContent() {
         {/* Contact Information */}
         <div className="space-y-6 md:space-y-8">
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">{t('get_in_touch')}</h2>
+            <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">
+              {locale === 'el' ? 'Επικοινωνήστε μαζί μας' : 'Get in Touch'}
+            </h2>
             <div className="space-y-4 md:space-y-6">
               {/* Email */}
               <div className="flex items-start gap-3 md:gap-4 p-3 md:p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors">
@@ -43,7 +32,9 @@ async function ContactContent() {
                   <Mail className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base md:text-lg font-semibold mb-1">{t('email')}</h3>
+                  <h3 className="text-base md:text-lg font-semibold mb-1">
+                    {locale === 'el' ? 'Email' : 'Email'}
+                  </h3>
                   <a 
                     href="mailto:tinkerbellkalamatas@gmail.com" 
                     className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors break-all"
@@ -59,7 +50,9 @@ async function ContactContent() {
                   <Phone className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base md:text-lg font-semibold mb-1">{t('phone')}</h3>
+                  <h3 className="text-base md:text-lg font-semibold mb-1">
+                    {locale === 'el' ? 'Τηλέφωνο' : 'Phone'}
+                  </h3>
                   <a 
                     href="tel:+302721406303" 
                     className="text-sm md:text-base text-muted-foreground hover:text-primary transition-colors"
@@ -75,11 +68,13 @@ async function ContactContent() {
                   <Clock className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base md:text-lg font-semibold mb-2">{t('hours')}</h3>
+                  <h3 className="text-base md:text-lg font-semibold mb-2">
+                    {locale === 'el' ? 'Ωράριο' : 'Hours'}
+                  </h3>
                   <div className="text-sm md:text-base text-muted-foreground space-y-1">
-                    <p>{t('hours_weekdays')}: 9:00 - 17:00</p>
-                    <p>{t('hours_saturday')}: 10:00 - 14:00</p>
-                    <p>{t('hours_sunday')}: {t('closed')}</p>
+                    <p>{locale === 'el' ? 'Δευτέρα - Παρασκευή' : 'Monday - Friday'}: 9:00 - 17:00</p>
+                    <p>{locale === 'el' ? 'Σάββατο' : 'Saturday'}: 10:00 - 14:00</p>
+                    <p>{locale === 'el' ? 'Κυριακή' : 'Sunday'}: {locale === 'el' ? 'Κλειστά' : 'Closed'}</p>
                   </div>
                 </div>
               </div>
@@ -90,7 +85,9 @@ async function ContactContent() {
                   <MapPin className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base md:text-lg font-semibold mb-1">{t('address')}</h3>
+                  <h3 className="text-base md:text-lg font-semibold mb-1">
+                    {locale === 'el' ? 'Διεύθυνση' : 'Address'}
+                  </h3>
                   <a 
                     href="https://www.google.com/maps/search/?api=1&query=Γεωργούλη+8,+Καλαμάτα"
                     target="_blank"
@@ -107,7 +104,9 @@ async function ContactContent() {
 
           {/* Social Media */}
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">{t('follow_us')}</h2>
+            <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">
+              {locale === 'el' ? 'Ακολουθήστε μας' : 'Follow Us'}
+            </h2>
             <div className="flex gap-3 md:gap-4">
               <a 
                 href="https://www.facebook.com/profile.php?id=61567377324597" 
@@ -137,7 +136,9 @@ async function ContactContent() {
 
         {/* Map */}
         <div className="lg:sticky lg:top-24 h-fit">
-          <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">{t('find_us')}</h2>
+          <h2 className="text-xl md:text-2xl font-semibold mb-4 md:mb-6">
+            {locale === 'el' ? 'Βρείτε μας' : 'Find Us'}
+          </h2>
           <div className="rounded-lg overflow-hidden border shadow-sm aspect-[16/12] md:aspect-[4/3]">
             <iframe
               src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3178.3!2d22.1143!3d37.0392!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x1360082dcbf45d87%3A0x8e4c8b8c8b8c8b8c!2sGeorgouli%208%2C%20Kalamata%20241%2000!5e0!3m2!1sen!2sgr!4v1699999999999"
@@ -147,28 +148,29 @@ async function ContactContent() {
               allowFullScreen
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title={t('map_title')}
+              title={locale === 'el' ? 'Χάρτης Tinkerbell' : 'Tinkerbell Map'}
             />
           </div>
           <p className="text-sm md:text-base text-muted-foreground mt-3 md:mt-4 text-center">
-            {t('map_note')}
+            {locale === 'el' ? 'Βρισκόμαστε στο κέντρο της Καλαμάτας' : 'We are located in the center of Kalamata'}
           </p>
         </div>
       </div>
 
       {/* Additional Info */}
       <div className="mt-12 md:mt-16 p-6 md:p-8 rounded-lg bg-muted/50 border">
-        <h2 className="text-xl md:text-2xl font-semibold mb-3 md:mb-4">{t('visit_us_title')}</h2>
+        <h2 className="text-xl md:text-2xl font-semibold mb-3 md:mb-4">
+          {locale === 'el' ? 'Επισκεφτείτε μας' : 'Visit Us'}
+        </h2>
         <p className="text-sm md:text-base text-muted-foreground mb-4">
-          {t('visit_us_text')}
+          {locale === 'el' ? 'Περάστε από το κατάστημά μας και θα χαρούμε να σας βοηθήσουμε με τις επιλογές σας για την ιδιαίτερη σας εκδήλωση.' : 'Visit our store and we will be happy to help you with your choices for your special event.'}
         </p>
         <ul className="list-disc list-inside text-sm md:text-base text-muted-foreground space-y-2">
-          <li>{t('visit_benefit_1')}</li>
-          <li>{t('visit_benefit_2')}</li>
-          <li>{t('visit_benefit_3')}</li>
+          <li>{locale === 'el' ? 'Δοκιμή ρούχων και αξεσουάρ' : 'Try on clothes and accessories'}</li>
+          <li>{locale === 'el' ? 'Προσωποποιημένη εξυπηρέτηση' : 'Personalized service'}</li>
+          <li>{locale === 'el' ? 'Συμβουλές από έμπειρο προσωπικό' : 'Expert advice from our staff'}</li>
         </ul>
       </div>
-    </>
+    </div>
   )
 }
-

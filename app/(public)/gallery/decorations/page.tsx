@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Mail, Phone } from 'lucide-react';
 import { PhotoLightbox } from '@/components/gallery/photo-lightbox';
 
 export default function DecorationsGalleryPage() {
-  const t = useTranslations('gallery');
   const locale = useLocale();
   
   const [items, setItems] = useState<any[]>([]);
@@ -54,7 +53,7 @@ export default function DecorationsGalleryPage() {
     return (
       <div className="container mx-auto px-4 py-6 md:py-8">
         <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground">{t('loading')}</p>
+          <p className="text-muted-foreground">{locale === 'el' ? 'Φόρτωση...' : 'Loading...'}</p>
         </div>
       </div>
     );
@@ -66,10 +65,10 @@ export default function DecorationsGalleryPage() {
         {/* Header */}
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
-            {t('decorations_title')}
+            {locale === 'el' ? 'Στολισμοί' : 'Decorations'}
           </h1>
           <p className="text-base md:text-lg text-muted-foreground max-w-5xl mx-auto mb-6 leading-relaxed">
-            {t('decorations_subtitle')}
+            {locale === 'el' ? 'Για τη μοναδική στιγμή της ζωής σας δημιουργούμε πρωτότυπες ιδέες για την διοργάνωση του γάμου σας ή της βάπτισης με προσκλητήρια, μπομπονιέρες και στολισμούς! Σας περιμένουμε να γνωριστούμε από κοντά με μοναδικές τιμές και διάθεσή για δημιουργία να φτιάξουμε μαζί το ομορφότερο μυστήριο για εσάς!' : 'For the unique moment of your life, we create original ideas for organizing your wedding or baptism with invitations, favors, and decorations! We look forward to meeting you in person with unique prices and a creative spirit to build together the most beautiful celebration for you!'}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="gap-2" asChild>
@@ -98,7 +97,7 @@ export default function DecorationsGalleryPage() {
               >
                 <Image
                   src={photo}
-                  alt={`${t('decorations_title')} ${index + 1}`}
+                  alt={`${locale === 'el' ? 'Στολισμοί' : 'Decorations'} ${index + 1}`}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -110,7 +109,7 @@ export default function DecorationsGalleryPage() {
         ) : (
           <div className="text-center py-16">
             <p className="text-xl text-muted-foreground">
-              {t('coming_soon')}
+              {locale === 'el' ? 'Σύντομα νέα έργα!' : 'New works coming soon!'}
             </p>
           </div>
         )}

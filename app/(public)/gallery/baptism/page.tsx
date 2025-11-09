@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { useTranslations, useLocale } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Mail, Phone } from 'lucide-react';
 import { PhotoLightbox } from '@/components/gallery/photo-lightbox';
 
 export default function BaptismGalleryPage() {
-  const t = useTranslations('gallery');
   const locale = useLocale();
   
   const [items, setItems] = useState<any[]>([]);
@@ -54,7 +53,7 @@ export default function BaptismGalleryPage() {
     return (
       <div className="container mx-auto px-4 py-6 md:py-8">
         <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground">{t('loading')}</p>
+          <p className="text-muted-foreground">{locale === 'el' ? 'Φόρτωση...' : 'Loading...'}</p>
         </div>
       </div>
     );
@@ -66,10 +65,10 @@ export default function BaptismGalleryPage() {
         {/* Header */}
         <div className="text-center mb-8 md:mb-12">
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
-            {t('baptism_title')}
+            {locale === 'el' ? 'Βαπτιστικά' : 'Baptisms'}
           </h1>
           <p className="text-base md:text-lg text-muted-foreground max-w-5xl mx-auto mb-6 leading-relaxed">
-            {t('baptism_subtitle')}
+            {locale === 'el' ? 'Δημιουργούμε ολοκληρωμένα βαπτιστικά πακέτα με αγάπη και φροντίδα για τη μοναδική μέρα του μικρού σας αγγέλου. Από λαμπάδες και λαδόπανα μέχρι ρούχα και μπομπονιέρες - όλα σχεδιασμένα ειδικά για εσάς!' : 'We create complete baptism packages with love and care for your little angel\'s unique day. From candles and oil sets to clothes and favors - everything designed especially for you!'}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" className="gap-2" asChild>
@@ -98,7 +97,7 @@ export default function BaptismGalleryPage() {
               >
                 <Image
                   src={photo}
-                  alt={`${t('baptism_title')} ${index + 1}`}
+                  alt={`${locale === 'el' ? 'Βαπτιστικά' : 'Baptisms'} ${index + 1}`}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
@@ -110,7 +109,7 @@ export default function BaptismGalleryPage() {
         ) : (
           <div className="text-center py-16">
             <p className="text-xl text-muted-foreground">
-              {t('coming_soon')}
+              {locale === 'el' ? 'Σύντομα νέα έργα!' : 'New works coming soon!'}
             </p>
           </div>
         )}

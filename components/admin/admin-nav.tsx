@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { LayoutDashboard, Package, ShoppingCart, Image as ImageIcon, LogOut, Menu, X, BarChart3 } from 'lucide-react';
@@ -13,24 +13,23 @@ import { toast } from 'sonner';
 export function AdminNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const t = useTranslations('admin');
-  const tCommon = useTranslations('common');
+  const locale = useLocale();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
-    toast.success(tCommon('logout'));
+    toast.success(locale === 'el' ? 'Αποσύνδεση' : 'Logout');
     router.push('/admin-login');
     setIsMobileMenuOpen(false);
   };
 
   const navItems = [
-    { href: '/admin', label: t('dashboard'), icon: LayoutDashboard },
-    { href: '/admin/analytics', label: t('analytics'), icon: BarChart3 },
-    { href: '/admin/products', label: t('products'), icon: Package },
-    { href: '/admin/orders', label: t('orders'), icon: ShoppingCart },
-    { href: '/admin/gallery', label: t('gallery'), icon: ImageIcon },
+    { href: '/admin', label: locale === 'el' ? 'Πίνακας Ελέγχου' : 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/analytics', label: locale === 'el' ? 'Πωλήσεις' : 'Sales', icon: BarChart3 },
+    { href: '/admin/products', label: locale === 'el' ? 'Προϊόντα' : 'Products', icon: Package },
+    { href: '/admin/orders', label: locale === 'el' ? 'Παραγγελίες' : 'Orders', icon: ShoppingCart },
+    { href: '/admin/gallery', label: locale === 'el' ? 'Γκαλερί' : 'Gallery', icon: ImageIcon },
   ];
 
   const handleNavClick = () => {
@@ -82,7 +81,9 @@ export function AdminNav() {
           className="hidden md:flex gap-2 flex-shrink-0"
         >
           <LogOut className="h-4 w-4" />
-          <span className="hidden lg:inline">{tCommon('logout')}</span>
+          <span className="hidden lg:inline">
+            {locale === 'el' ? 'Αποσύνδεση' : 'Logout'}
+          </span>
         </Button>
 
         {/* Mobile Menu Button */}
@@ -126,7 +127,9 @@ export function AdminNav() {
               className="w-full justify-start gap-3 px-4 py-3 h-auto text-muted-foreground hover:bg-accent hover:text-accent-foreground"
             >
               <LogOut className="h-5 w-5" />
-              <span className="font-medium">{tCommon('logout')}</span>
+              <span className="font-medium">
+                {locale === 'el' ? 'Αποσύνδεση' : 'Logout'}
+              </span>
             </Button>
           </nav>
         </div>

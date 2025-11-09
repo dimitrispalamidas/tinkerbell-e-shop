@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useTranslations } from 'next-intl'
 import { useLocale } from 'next-intl'
 import Link from 'next/link'
 import Image from 'next/image'
@@ -13,7 +12,6 @@ import { useRouter } from 'next/navigation'
 import { MiniCartSidebar } from '@/components/cart/mini-cart-sidebar'
 
 export function Header() {
-  const t = useTranslations('nav')
   const locale = useLocale()
   const router = useRouter()
   const [itemCount, setItemCount] = useState(0)
@@ -61,33 +59,33 @@ export function Header() {
         <nav className="hidden md:flex flex-1 items-center justify-center space-x-6 text-base font-medium">
           <Link href="/" className="transition-colors hover:text-primary flex items-center gap-2">
             <Home className="h-4 w-4" />
-            {t('home')}
+            {locale === 'el' ? 'Αρχική' : 'Home'}
           </Link>
           <Link href="/shop" className="transition-colors hover:text-primary flex items-center gap-2">
             <Store className="h-4 w-4" />
-            {t('shop')}
+            {locale === 'el' ? 'Κατάστημα' : 'Shop'}
           </Link>
           <div className="relative group">
             <button className="transition-colors hover:text-primary py-2 flex items-center gap-2">
               <ImageIcon className="h-4 w-4" />
-              {t('gallery')}
+              {locale === 'el' ? 'Γκαλερί' : 'Gallery'}
             </button>
             <div className="absolute left-0 top-full w-56 rounded-md shadow-lg bg-background border hidden group-hover:block">
               <div className="py-1">
                 <Link href="/gallery/decorations" className="block px-4 py-2 text-base hover:bg-accent flex items-center gap-2">
                   <BsBalloonHeart className="h-4 w-4" />
-                  {t('decorations')}
+                  {locale === 'el' ? 'Στολισμοί' : 'Decorations'}
                 </Link>
                 <Link href="/gallery/baptism" className="block px-4 py-2 text-base hover:bg-accent flex items-center gap-2">
                   <Baby className="h-4 w-4" />
-                  {t('baptism')}
+                  {locale === 'el' ? 'Βαπτιστικά' : 'Baptism'}
                 </Link>
               </div>
             </div>
           </div>
           <Link href="/contact" className="transition-colors hover:text-primary flex items-center gap-2">
             <Mail className="h-4 w-4" />
-            {t('contact')}
+            {locale === 'el' ? 'Επικοινωνία' : 'Contact'}
           </Link>
         </nav>
 
@@ -162,7 +160,7 @@ export function Header() {
               onClick={closeMobileMenu}
             >
               <Home className="h-5 w-5" />
-              {t('home')}
+              {locale === 'el' ? 'Αρχική' : 'Home'}
             </Link>
             <Link 
               href="/shop" 
@@ -170,12 +168,12 @@ export function Header() {
               onClick={closeMobileMenu}
             >
               <Store className="h-5 w-5" />
-              {t('shop')}
+              {locale === 'el' ? 'Κατάστημα' : 'Shop'}
             </Link>
             <div className="flex flex-col space-y-2">
               <span className="text-base py-2 font-medium flex items-center gap-2">
                 <ImageIcon className="h-5 w-5" />
-                {t('gallery')}
+                {locale === 'el' ? 'Γκαλερί' : 'Gallery'}
               </span>
               <Link 
                 href="/gallery/decorations" 
@@ -183,7 +181,7 @@ export function Header() {
                 onClick={closeMobileMenu}
               >
                 <BsBalloonHeart className="h-4 w-4" />
-                {t('decorations')}
+                {locale === 'el' ? 'Στολισμοί' : 'Decorations'}
               </Link>
               <Link 
                 href="/gallery/baptism" 
@@ -191,7 +189,7 @@ export function Header() {
                 onClick={closeMobileMenu}
               >
                 <Baby className="h-4 w-4" />
-                {t('baptism')}
+                {locale === 'el' ? 'Βαπτιστικά' : 'Baptism'}
               </Link>
             </div>
             <Link 
@@ -200,7 +198,7 @@ export function Header() {
               onClick={closeMobileMenu}
             >
               <Mail className="h-5 w-5" />
-              {t('contact')}
+              {locale === 'el' ? 'Επικοινωνία' : 'Contact'}
             </Link>
             
             <div className="pt-4 border-t flex items-center justify-between">

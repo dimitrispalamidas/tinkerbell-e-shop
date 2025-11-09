@@ -1,4 +1,4 @@
-import { getTranslations, getLocale } from 'next-intl/server';
+import { getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,7 +13,6 @@ export default async function ShopPage({
 }) {
   const locale = await getLocale();
   const { type, category } = await searchParams;
-  const t = await getTranslations('shop');
 
   const supabase = await createClient();
   
@@ -50,10 +49,12 @@ export default async function ShopPage({
   return (
     <div className="container mx-auto px-4 py-6 md:py-8">
       <div className="mb-6 md:mb-8">
-        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">{t('all_products')}</h1>
+        <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
+          {locale === 'el' ? 'Όλα τα Προϊόντα' : 'All Products'}
+        </h1>
         {products && (
           <p className="text-sm md:text-base text-muted-foreground">
-            {t('showing_results', { count: products.length })}
+            {locale === 'el' ? `Εμφάνιση ${products.length} αποτελεσμάτων` : `Showing ${products.length} results`}
           </p>
         )}
       </div>
@@ -147,7 +148,9 @@ export default async function ShopPage({
       ) : (
         <div className="text-center py-16">
           <ShoppingBag className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-          <p className="text-xl text-muted-foreground">{t('no_products')}</p>
+          <p className="text-xl text-muted-foreground">
+            {locale === 'el' ? 'Δεν βρέθηκαν προϊόντα' : 'No products found'}
+          </p>
         </div>
       )}
     </div>

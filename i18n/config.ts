@@ -13,7 +13,8 @@ export default getRequestConfig(async () => {
 
   return {
     locale,
-    messages: (await import(`@/messages/${locale}.json`)).default
+    // No messages - we use inline ternaries for all translations
+    messages: {}
   };
 });
 

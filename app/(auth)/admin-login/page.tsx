@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,8 +11,7 @@ import { toast } from 'sonner';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const t = useTranslations('admin');
-  const tCommon = useTranslations('common');
+  const locale = useLocale();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -61,11 +60,11 @@ export default function AdminLoginPage() {
       if (error) {
         // User-friendly error messages
         if (error.message.includes('Invalid login credentials')) {
-          toast.error(t('wrong_credentials'));
+          toast.error(locale === 'el' ? 'Λάθος email ή password' : 'Wrong email or password');
         } else if (error.message.includes('Email not confirmed')) {
-          toast.error(t('email_not_confirmed'));
+          toast.error(locale === 'el' ? 'Το email δεν έχει επιβεβαιωθεί' : 'Email not confirmed');
         } else {
-          toast.error(error.message || t('login_failed'));
+          toast.error(error.message || (locale === 'el' ? 'Αποτυχία σύνδεσης' : 'Login failed'));
         }
         return;
       }
@@ -79,10 +78,10 @@ export default function AdminLoginPage() {
         localStorage.removeItem('tinkerbell_remember_me');
       }
 
-      toast.success(t('login_success'));
+      toast.success(locale === 'el' ? 'Επιτυχής σύνδεση!' : 'Login successful!');
       router.push('/admin');
-    } catch (error: any) {
-      toast.error(t('something_wrong'));
+    } catch {
+      toast.error(locale === 'el' ? 'Κάτι πήγε στραβά. Δοκιμάστε ξανά.' : 'Something went wrong. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +94,7 @@ export default function AdminLoginPage() {
         <Card className="w-full max-w-md">
           <CardContent className="pt-6">
             <div className="text-center">
-              <p>{t('checking_auth')}</p>
+              <p>{locale === 'el' ? 'Έλεγχος ταυτοποίησης...' : 'Checking authentication...'}</p>
             </div>
           </CardContent>
         </Card>
@@ -108,13 +107,15 @@ export default function AdminLoginPage() {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
-            {t('admin_login')}
+            {locale === 'el' ? 'Σύνδεση Διαχειριστή' : 'Admin Login'}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-2">{tCommon('email')}</label>
+              <label className="block text-sm font-medium mb-2">
+                {locale === 'el' ? 'Email' : 'Email'}
+              </label>
               <Input
                 type="email"
                 value={email}
@@ -124,7 +125,9 @@ export default function AdminLoginPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">{tCommon('password')}</label>
+              <label className="block text-sm font-medium mb-2">
+                {locale === 'el' ? 'Κωδικός' : 'Password'}
+              </label>
               <Input
                 type="password"
                 value={password}
@@ -142,7 +145,7 @@ export default function AdminLoginPage() {
                 className="w-4 h-4 text-pink-600 bg-gray-100 border-gray-300 rounded focus:ring-pink-500"
               />
               <label htmlFor="rememberMe" className="text-sm font-medium cursor-pointer">
-                {t('remember_me')}
+                {locale === 'el' ? 'Να με θυμάσαι' : 'Remember me'}
               </label>
             </div>
             <Button
@@ -150,7 +153,9 @@ export default function AdminLoginPage() {
               className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? t('logging_in') : t('login')}
+              {isLoading 
+                ? (locale === 'el' ? 'Σύνδεση...' : 'Logging in...') 
+                : (locale === 'el' ? 'Σύνδεση' : 'Login')}
             </Button>
           </form>
           <div className="mt-4">
@@ -160,7 +165,7 @@ export default function AdminLoginPage() {
               className="w-full"
               onClick={() => router.push('/')}
             >
-              {t('back_to_home')}
+              {locale === 'el' ? 'Πίσω στην Αρχική' : 'Back to Home'}
             </Button>
           </div>
         </CardContent>

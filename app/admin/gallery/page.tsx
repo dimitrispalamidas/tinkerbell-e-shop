@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { useTranslations } from 'next-intl';
+import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,7 @@ import { GalleryItem } from '@/lib/types/database';
 type TabType = 'baptism' | 'decoration';
 
 export default function AdminGalleryPage() {
-  const t = useTranslations('admin');
-  const tCommon = useTranslations('common');
+  const locale = useLocale();
   
   const [activeTab, setActiveTab] = useState<TabType>('baptism');
   const [items, setItems] = useState<GalleryItem[]>([]);
@@ -61,7 +60,7 @@ export default function AdminGalleryPage() {
       setItems(data || []);
     } catch (error) {
       console.error('Failed to fetch gallery items:', error);
-      toast.error(t('failed_fetch_gallery'));
+      toast.error(locale === 'el' ? 'Αποτυχία φόρτωσης gallery' : 'Failed to fetch gallery');
     } finally {
       setIsLoading(false);
     }
@@ -145,11 +144,11 @@ export default function AdminGalleryPage() {
       await Promise.all(updates);
       setHasUnsavedOrder(false);
       setStatusChanges(new Map()); // Clear status changes
-      toast.success(t('changes_saved'));
+      toast.success(locale === 'el' ? 'Οι αλλαγές αποθηκεύτηκαν' : 'Changes saved');
       await fetchGalleryItems();
     } catch (error) {
       console.error('Failed to save changes:', error);
-      toast.error(t('failed_save_changes'));
+      toast.error(locale === 'el' ? 'Αποτυχία αποθήκευσης' : 'Failed to save changes');
     } finally {
       setIsSavingOrder(false);
     }
@@ -199,7 +198,7 @@ export default function AdminGalleryPage() {
   };
 
   const handleDelete = async (itemId: string) => {
-    if (!confirm(t('confirm_delete_photo'))) return;
+    if (!confirm(locale === 'el' ? 'Είστε σίγουροι ότι θέλετε να διαγράψετε αυτή τη φωτογραφία;' : 'Are you sure you want to delete this photo?')) return;
 
     try {
       const supabase = createClient();
@@ -235,19 +234,19 @@ export default function AdminGalleryPage() {
       // Wait a bit for DB to update, then fetch
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      toast.success(t('photo_deleted'));
+      toast.success(locale === 'el' ? 'Η φωτογραφία διαγράφηκε' : 'Photo deleted');
       await fetchGalleryItems();
       await fetchCounts();
     } catch (error) {
       console.error('Failed to delete item:', error);
-      toast.error(t('failed_delete'));
+      toast.error(locale === 'el' ? 'Αποτυχία διαγραφής' : 'Failed to delete');
     }
   };
 
   const handleBulkDelete = async () => {
     if (selectedItems.size === 0) return;
     
-    if (!confirm(t('confirm_delete_photos', { count: selectedItems.size }))) return;
+    if (!confirm(locale === 'el' ? `Είστε σίγουροι ότι θέλετε να διαγράψετε ${selectedItems.size} φωτογραφίες;` : `Are you sure you want to delete ${selectedItems.size} photos?`)) return;
 
     setIsDeleting(true);
     try {
@@ -284,13 +283,13 @@ export default function AdminGalleryPage() {
       // Wait a bit for DB to update, then fetch
       await new Promise(resolve => setTimeout(resolve, 100));
       
-      toast.success(t('photos_deleted', { count: selectedItems.size }));
+      toast.success(locale === 'el' ? `${selectedItems.size} φωτογραφίες διαγράφηκαν` : `${selectedItems.size} photos deleted`);
       setSelectedItems(new Set());
       await fetchGalleryItems();
       await fetchCounts();
     } catch (error) {
       console.error('Failed to bulk delete:', error);
-      toast.error(t('failed_bulk_delete'));
+      toast.error(locale === 'el' ? 'Αποτυχία μαζικής διαγραφής' : 'Failed to bulk delete');
     } finally {
       setIsDeleting(false);
     }
@@ -338,7 +337,7 @@ export default function AdminGalleryPage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <p className="text-muted-foreground">{tCommon('loading')}</p>
+        <p className="text-muted-foreground">{locale === 'el' ? 'Φόρτωση...' : 'Loading...'}</p>
       </div>
     );
   }
@@ -347,8 +346,8 @@ export default function AdminGalleryPage() {
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col gap-3">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold">{t('gallery_title')}</h1>
-          <p className="text-sm md:text-base text-muted-foreground">{t('gallery_subtitle')}</p>
+          <h1 className="text-2xl md:text-3xl font-bold">{locale === 'el' ? 'Γκαλερί' : 'Gallery'}</h1>
+          <p className="text-sm md:text-base text-muted-foreground">{locale === 'el' ? 'Διαχείριση φωτογραφιών βαπτιστικών και στολισμών' : 'Manage baptism and decoration photos'}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {hasUnsavedOrder && (
@@ -360,7 +359,7 @@ export default function AdminGalleryPage() {
                 size="sm"
                 className="flex-1 sm:flex-none"
               >
-                {t('cancel_changes')}
+                {locale === 'el' ? 'Ακύρωση' : 'Cancel'}
               </Button>
               <Button 
                 onClick={handleSaveOrder}
@@ -368,7 +367,7 @@ export default function AdminGalleryPage() {
                 size="sm"
                 className="flex-1 sm:flex-none"
               >
-                {isSavingOrder ? t('saving') : t('save_changes_btn')}
+                {isSavingOrder ? (locale === 'el' ? 'Αποθήκευση...' : 'Saving...') : (locale === 'el' ? 'Αποθήκευση Αλλαγών' : 'Save Changes')}
               </Button>
             </>
           )}
@@ -381,13 +380,13 @@ export default function AdminGalleryPage() {
               className="border-red-600 text-red-600 hover:bg-red-50 flex-1 sm:flex-none"
             >
               <Trash2 className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
-              <span className="text-xs md:text-sm">{t('delete_selected', { count: selectedItems.size })}</span>
+              <span className="text-xs md:text-sm">{locale === 'el' ? `Διαγραφή ${selectedItems.size} επιλεγμένων` : `Delete ${selectedItems.size} selected`}</span>
             </Button>
           )}
           <Link href={`/admin/gallery/new?category=${activeTab}`} className="flex-1 sm:flex-none">
             <Button disabled={hasUnsavedOrder} size="sm" className="w-full">
               <Plus className="mr-2 h-3.5 w-3.5 md:h-4 md:w-4" />
-              <span className="text-xs md:text-sm">{t('add_gallery_item')}</span>
+              <span className="text-xs md:text-sm">{locale === 'el' ? 'Προσθήκη Φωτογραφίας' : 'Add Photo'}</span>
             </Button>
           </Link>
         </div>
@@ -404,7 +403,7 @@ export default function AdminGalleryPage() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            {t('baptism')} ({baptismCount})
+            {locale === 'el' ? 'Βαπτιστικά' : 'Baptism'} ({baptismCount})
           </button>
           <button
             onClick={() => setActiveTab('decoration')}
@@ -414,7 +413,7 @@ export default function AdminGalleryPage() {
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            {t('decoration')} ({decorationCount})
+            {locale === 'el' ? 'Στολισμός' : 'Decoration'} ({decorationCount})
           </button>
         </nav>
       </div>
@@ -432,7 +431,7 @@ export default function AdminGalleryPage() {
               className="w-4 h-4 cursor-pointer"
             />
             <label htmlFor="select-all" className="text-xs md:text-sm font-medium cursor-pointer">
-              {t('select_all')} ({items.length})
+              {locale === 'el' ? 'Επιλογή όλων' : 'Select all'} ({items.length})
             </label>
           </div>
 
@@ -458,7 +457,7 @@ export default function AdminGalleryPage() {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
-                      {t('no_image')}
+                      {locale === 'el' ? 'Χωρίς εικόνα' : 'No image'}
                     </div>
                   )}
                   
@@ -480,7 +479,7 @@ export default function AdminGalleryPage() {
                   <div className={`absolute bottom-1 md:bottom-1.5 left-1 md:left-1.5 text-[9px] md:text-[10px] px-1 md:px-1.5 py-0.5 rounded ${
                     item.is_active ? 'bg-green-500/90 text-white' : 'bg-gray-500/90 text-white'
                   }`}>
-                    {item.is_active ? t('active') : t('inactive')}
+                    {item.is_active ? (locale === 'el' ? 'Ενεργό' : 'Active') : (locale === 'el' ? 'Ανενεργό' : 'Inactive')}
                   </div>
                 </div>
 
@@ -491,12 +490,12 @@ export default function AdminGalleryPage() {
                     size="sm"
                     className="flex-1 h-6 md:h-7 p-0 text-sm md:text-base"
                     onClick={() => handleToggleActive(item.id, item.is_active)}
-                    title={item.is_active ? t('deactivate') : t('activate')}
+                    title={item.is_active ? (locale === 'el' ? 'Απενεργοποίηση' : 'Deactivate') : (locale === 'el' ? 'Ενεργοποίηση' : 'Activate')}
                   >
                     {item.is_active ? '👁️' : '👁️‍🗨️'}
                   </Button>
                   <Link href={`/admin/gallery/${item.id}?category=${activeTab}`}>
-                    <Button variant="outline" size="sm" title={tCommon('edit')} className="h-6 md:h-7 w-6 md:w-7 p-0">
+                    <Button variant="outline" size="sm" title={locale === 'el' ? 'Επεξεργασία' : 'Edit'} className="h-6 md:h-7 w-6 md:w-7 p-0">
                       <Pencil className="h-2.5 w-2.5 md:h-3 md:w-3" />
                     </Button>
                   </Link>
@@ -504,7 +503,7 @@ export default function AdminGalleryPage() {
                     variant="outline"
                     size="sm"
                     onClick={() => handleDelete(item.id)}
-                    title={tCommon('delete')}
+                    title={locale === 'el' ? 'Διαγραφή' : 'Delete'}
                     className="h-6 md:h-7 w-6 md:w-7 p-0"
                   >
                     <Trash2 className="h-2.5 w-2.5 md:h-3 md:w-3 text-red-600" />
@@ -519,12 +518,12 @@ export default function AdminGalleryPage() {
         <Card>
           <CardContent className="p-8 md:p-12 text-center">
             <p className="text-sm md:text-base text-muted-foreground mb-4">
-              {activeTab === 'baptism' ? t('no_baptism_items') : t('no_decoration_items')}
+              {activeTab === 'baptism' ? (locale === 'el' ? 'Δεν υπάρχουν στοιχεία βάπτισης' : 'No baptism items') : (locale === 'el' ? 'Δεν υπάρχουν στοιχεία διακόσμησης' : 'No decoration items')}
             </p>
             <Link href="/admin/gallery/new" className="inline-block w-full sm:w-auto">
               <Button className="w-full sm:w-auto">
                 <Plus className="mr-2 h-4 w-4" />
-                {t('add_gallery_item')}
+                {locale === 'el' ? 'Προσθήκη Φωτογραφίας' : 'Add Photo'}
               </Button>
             </Link>
           </CardContent>
