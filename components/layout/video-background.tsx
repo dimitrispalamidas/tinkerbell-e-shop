@@ -79,7 +79,7 @@ export function VideoBackground() {
         ref={video1Ref}
         src={videos[0]}
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-          activeVideo === 1 ? 'opacity-100 z-10' : 'opacity-0 z-0'
+          activeVideo === 1 ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
         }`}
         autoPlay
         muted
@@ -92,7 +92,7 @@ export function VideoBackground() {
       <video
         ref={video2Ref}
         className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-          activeVideo === 2 ? 'opacity-100 z-10' : 'opacity-0 z-0'
+          activeVideo === 2 ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
         }`}
         muted
         playsInline
@@ -101,11 +101,11 @@ export function VideoBackground() {
       />
 
       {/* Overlay για καλύτερη αναγνωσιμότητα του text */}
-      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/35 z-20" />
+      <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/35 z-[2] pointer-events-none" />
 
       {/* Loading state */}
       {isLoading && (
-        <div className="absolute inset-0 bg-gradient-to-br from-pink/20 via-baby-blue/20 to-lavender/20 animate-pulse z-30" />
+        <div className="absolute inset-0 bg-gradient-to-br from-pink/20 via-baby-blue/20 to-lavender/20 animate-pulse z-[3] pointer-events-none" />
       )}
     </div>
   );
