@@ -6,12 +6,14 @@ import { useTranslations, useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { ArrowLeft, Upload, X } from 'lucide-react';
+import { ArrowLeft, Upload, X, Languages } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { VariantManager, type Variant } from '@/components/admin/variant-manager';
+import { translateText } from '@/lib/utils/translate';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -27,6 +29,7 @@ export default function EditProductPage() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [translating, setTranslating] = useState({ name: false, description: false });
   const [formData, setFormData] = useState({
     sku: '',
     name_el: '',
@@ -87,6 +90,42 @@ export default function EditProductPage() {
       if (data) setCategories(data);
     } catch (error) {
       console.error('Failed to fetch categories');
+    }
+  };
+
+  const handleTranslateName = async () => {
+    if (!formData.name_el) {
+      toast.error(locale === 'el' ? 'Παρακαλώ συμπληρώστε πρώτα το ελληνικό όνομα' : 'Please fill in the Greek name first');
+      return;
+    }
+
+    setTranslating({ ...translating, name: true });
+    try {
+      const translated = await translateText(formData.name_el, 'el', 'en');
+      setFormData({ ...formData, name_en: translated });
+      toast.success(locale === 'el' ? 'Μεταφράστηκε επιτυχώς!' : 'Translated successfully!');
+    } catch (error) {
+      toast.error(locale === 'el' ? 'Αποτυχία μετάφρασης' : 'Translation failed');
+    } finally {
+      setTranslating({ ...translating, name: false });
+    }
+  };
+
+  const handleTranslateDescription = async () => {
+    if (!formData.description_el) {
+      toast.error(locale === 'el' ? 'Παρακαλώ συμπληρώστε πρώτα την ελληνική περιγραφή' : 'Please fill in the Greek description first');
+      return;
+    }
+
+    setTranslating({ ...translating, description: true });
+    try {
+      const translated = await translateText(formData.description_el, 'el', 'en');
+      setFormData({ ...formData, description_en: translated });
+      toast.success(locale === 'el' ? 'Μεταφράστηκε επιτυχώς!' : 'Translated successfully!');
+    } catch (error) {
+      toast.error(locale === 'el' ? 'Αποτυχία μετάφρασης' : 'Translation failed');
+    } finally {
+      setTranslating({ ...translating, description: false });
     }
   };
 
@@ -415,8 +454,7 @@ export default function EditProductPage() {
 
               <div>
                 <label className="block text-sm font-medium mb-2">{t('description_el')}</label>
-                <textarea
-                  className="w-full px-3 py-2 border rounded-md min-h-[100px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                <Textarea
                   value={formData.description_el}
                   onChange={(e) => setFormData({ ...formData, description_el: e.target.value })}
                   placeholder="Περιγραφή προϊόντος"
@@ -432,22 +470,46 @@ export default function EditProductPage() {
             <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2">{t('name_en_required')}</label>
-                <Input
-                  value={formData.name_en}
-                  onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
-                  required
-                  placeholder="Product name"
-                />
+                <div className="flex gap-2">
+                  <Input
+                    value={formData.name_en}
+                    onChange={(e) => setFormData({ ...formData, name_en: e.target.value })}
+                    required
+                    placeholder="Product name"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleTranslateName}
+                    disabled={translating.name || !formData.name_el}
+                    title={locale === 'el' ? 'Αυτόματη μετάφραση' : 'Auto translate'}
+                  >
+                    <Languages className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2">{t('description_en')}</label>
-                <textarea
-                  className="w-full px-3 py-2 border rounded-md min-h-[100px] focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  value={formData.description_en}
-                  onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
-                  placeholder="Product description"
-                />
+                <div className="flex gap-2 items-start">
+                  <Textarea
+                    className="flex-1"
+                    value={formData.description_en}
+                    onChange={(e) => setFormData({ ...formData, description_en: e.target.value })}
+                    placeholder="Product description"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={handleTranslateDescription}
+                    disabled={translating.description || !formData.description_el}
+                    title={locale === 'el' ? 'Αυτόματη μετάφραση' : 'Auto translate'}
+                  >
+                    <Languages className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>

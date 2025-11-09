@@ -231,9 +231,12 @@ export function ProductClient({ product, variants, locale, translations }: Produ
             <div className="flex flex-col gap-1">
               <span className={`text-sm font-medium ${availableStock > 0 ? 'text-green-600' : 'text-red-600'}`}>
                 {availableStock > 0
-                  ? `${availableStock} ${locale === 'el' ? 'διαθέσιμα' : 'in stock'}`
+                  ? `${availableStock} ${locale === 'el' ? (availableStock === 1 ? 'διαθέσιμο' : 'διαθέσιμα') : 'in stock'}`
                   : translations.outOfStock}
-                {availableStock > 0 && availableStock <= 5 && (
+                {availableStock === 1 && (
+                  <span className="ml-2 text-orange-600">({locale === 'el' ? 'Τελευταίο' : 'Last one'}!)</span>
+                )}
+                {availableStock === 2 && (
                   <span className="ml-2 text-orange-600">({locale === 'el' ? 'Τελευταία' : 'Last few'}!)</span>
                 )}
               </span>

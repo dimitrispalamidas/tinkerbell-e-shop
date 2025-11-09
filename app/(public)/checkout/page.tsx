@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, CheckCircle, ShoppingBag, Package, Home } from 'lucide-react';
 import { BoxnowLockerList } from '@/components/checkout/boxnow-locker-list';
 import Image from 'next/image';
+import { z } from 'zod';
 
 const CHECKOUT_STORAGE_KEY = 'tinkerbell_checkout_data';
 const HOME_DELIVERY_COST = 3.50; // €3.50 for home delivery
@@ -84,8 +85,8 @@ export default function CheckoutPage() {
   }, [locale]);
 
   const validateEmail = (email: string): boolean => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+    // Using Zod for more robust email validation
+    return z.email().safeParse(email).success;
   };
 
   const validatePhone = (phone: string): boolean => {
@@ -98,6 +99,26 @@ export default function CheckoutPage() {
     // Greek postal code: 5 digits
     const postalRegex = /^\d{5}$/;
     return postalRegex.test(postalCode.replace(/\s/g, ''));
+  };
+
+  const validateAddress = (address: string): boolean => {
+    // Address must contain at least one number (street number)
+    const hasNumber = /\d/.test(address);
+    return hasNumber && address.trim().length > 0;
+  };
+
+  const validateCity = (city: string): boolean => {
+    // City must be at least 2 characters and contain letters (not just numbers/symbols)
+    const trimmed = city.trim();
+    const hasLetters = /[a-zA-Zα-ωΑ-Ωά-ώΆ-Ώ]/.test(trimmed);
+    return trimmed.length >= 2 && hasLetters;
+  };
+
+  const validateRegion = (region: string): boolean => {
+    // Region must be at least 2 characters and contain letters (not just numbers/symbols)
+    const trimmed = region.trim();
+    const hasLetters = /[a-zA-Zα-ωΑ-Ωά-ώΆ-Ώ]/.test(trimmed);
+    return trimmed.length >= 2 && hasLetters;
   };
 
   const handleContinue = async () => {
@@ -116,18 +137,21 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Validate email format
+      // Validate email and phone formats
+      const formatErrors: Record<string, boolean> = {};
+      
       if (!validateEmail(formData.email)) {
-        setErrors({ ...errors, email: true });
-        toast.error(locale === 'el' ? 'Παρακαλώ εισάγετε σωστή διεύθυνση email' : 'Please enter a valid email address');
-        return;
+        formatErrors.email = true;
       }
 
-      // Validate phone format
       const cleanPhone = formData.phone.replace(/\s/g, '');
       if (!validatePhone(cleanPhone)) {
-        setErrors({ ...errors, phone: true });
-        toast.error(locale === 'el' ? 'Το τηλέφωνο πρέπει να είναι 10 ψηφία και να ξεκινά με 2 ή 6' : 'Phone must be 10 digits starting with 2 or 6');
+        formatErrors.phone = true;
+      }
+      
+      if (Object.keys(formatErrors).length > 0) {
+        setErrors({ ...errors, ...formatErrors });
+        toast.error(locale === 'el' ? 'Παρακαλώ διορθώστε τα σφάλματα στη φόρμα' : 'Please correct the errors in the form');
         return;
       }
 
@@ -160,10 +184,28 @@ export default function CheckoutPage() {
           return;
         }
         
-        // Validate postal code
+        // Validate all fields
+        const fieldErrors: Record<string, boolean> = {};
+        
+        if (!validateAddress(formData.address)) {
+          fieldErrors.address = true;
+        }
+        
+        if (!validateCity(formData.city)) {
+          fieldErrors.city = true;
+        }
+        
+        if (!validateRegion(formData.region)) {
+          fieldErrors.region = true;
+        }
+        
         if (!validatePostalCode(formData.postalCode)) {
-          setErrors({ ...errors, postalCode: true });
-          toast.error(locale === 'el' ? 'Ο Τ.Κ. πρέπει να είναι 5 ψηφία' : 'Postal code must be 5 digits');
+          fieldErrors.postalCode = true;
+        }
+        
+        if (Object.keys(fieldErrors).length > 0) {
+          setErrors({ ...errors, ...fieldErrors });
+          toast.error(locale === 'el' ? 'Παρακαλώ διορθώστε τα σφάλματα στη φόρμα' : 'Please correct the errors in the form');
           return;
         }
       }
@@ -381,7 +423,6 @@ export default function CheckoutPage() {
                     onBlur={(e) => {
                       if (e.target.value && !validateEmail(e.target.value)) {
                         setErrors({ ...errors, email: true });
-                        toast.error(locale === 'el' ? 'Μη έγκυρη διεύθυνση email' : 'Invalid email address');
                       }
                     }}
                     required
@@ -390,7 +431,7 @@ export default function CheckoutPage() {
                   />
                   {errors.email && (
                     <p className="text-xs text-red-500 mt-1">
-                      {locale === 'el' ? 'Παράδειγμα: name@example.com' : 'Example: name@example.com'}
+                      {locale === 'el' ? 'Μη έγκυρη διεύθυνση email (π.χ. name@example.com)' : 'Invalid email address (e.g. name@example.com)'}
                     </p>
                   )}
                 </div>
@@ -412,7 +453,6 @@ export default function CheckoutPage() {
                       const cleanPhone = e.target.value.replace(/\s/g, '');
                       if (cleanPhone && !validatePhone(cleanPhone)) {
                         setErrors({ ...errors, phone: true });
-                        toast.error(locale === 'el' ? 'Το τηλέφωνο πρέπει να είναι 10 ψηφία (π.χ. 6912345678 ή 2101234567)' : 'Phone must be 10 digits (e.g. 6912345678 or 2101234567)');
                       }
                     }}
                     required
@@ -530,10 +570,20 @@ export default function CheckoutPage() {
                             setFormData({ ...formData, address: e.target.value });
                             if (errors.address) setErrors({ ...errors, address: false });
                           }}
+                          onBlur={(e) => {
+                            if (e.target.value && !validateAddress(e.target.value)) {
+                              setErrors({ ...errors, address: true });
+                            }
+                          }}
                           required
-                          className={`text-base ${errors.address ? 'border-red-500' : ''}`}
-                          placeholder={locale === 'el' ? 'π.χ. Αθηνάς 123' : 'e.g. Athinas 123'}
+                          className={`text-base ${errors.address ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          placeholder={locale === 'el' ? 'π.χ. Αθηνών 15' : 'e.g. Athinas 15'}
                         />
+                        {errors.address && (
+                          <p className="text-xs text-red-500 mt-1">
+                            {locale === 'el' ? 'Η διεύθυνση πρέπει να περιλαμβάνει αριθμό' : 'Address must include a street number'}
+                          </p>
+                        )}
                       </div>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
@@ -544,10 +594,20 @@ export default function CheckoutPage() {
                               setFormData({ ...formData, city: e.target.value });
                               if (errors.city) setErrors({ ...errors, city: false });
                             }}
+                            onBlur={(e) => {
+                              if (e.target.value && !validateCity(e.target.value)) {
+                                setErrors({ ...errors, city: true });
+                              }
+                            }}
                             required
-                            className={`text-base ${errors.city ? 'border-red-500' : ''}`}
+                            className={`text-base ${errors.city ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                             placeholder={locale === 'el' ? 'π.χ. Αθήνα' : 'e.g. Athens'}
                           />
+                          {errors.city && (
+                            <p className="text-xs text-red-500 mt-1">
+                              {locale === 'el' ? 'Η πόλη πρέπει να περιέχει τουλάχιστον 2 γράμματα' : 'City must contain at least 2 letters'}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <label className="block text-sm font-medium mb-2">{tCommon('postal_code')}</label>
@@ -563,7 +623,6 @@ export default function CheckoutPage() {
                             onBlur={(e) => {
                               if (e.target.value && !validatePostalCode(e.target.value)) {
                                 setErrors({ ...errors, postalCode: true });
-                                toast.error(locale === 'el' ? 'Ο Τ.Κ. πρέπει να είναι 5 ψηφία' : 'Postal code must be 5 digits');
                               }
                             }}
                             required
@@ -586,10 +645,20 @@ export default function CheckoutPage() {
                             setFormData({ ...formData, region: e.target.value });
                             if (errors.region) setErrors({ ...errors, region: false });
                           }}
+                          onBlur={(e) => {
+                            if (e.target.value && !validateRegion(e.target.value)) {
+                              setErrors({ ...errors, region: true });
+                            }
+                          }}
                           required
-                          className={`text-base ${errors.region ? 'border-red-500' : ''}`}
+                          className={`text-base ${errors.region ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
                           placeholder={locale === 'el' ? 'π.χ. Αττική' : 'e.g. Attica'}
                         />
+                        {errors.region && (
+                          <p className="text-xs text-red-500 mt-1">
+                            {locale === 'el' ? 'Η περιοχή πρέπει να περιέχει τουλάχιστον 2 γράμματα' : 'Region must contain at least 2 letters'}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )}

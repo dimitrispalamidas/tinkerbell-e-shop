@@ -67,9 +67,9 @@ export default async function HomePage() {
             {t('categories')}
           </h2>
           <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-4xl mx-auto">
-            <Link href="/shop?type=clothing">
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-2 border-pink/30 hover:border-pink">
-                <CardContent className="p-0">
+            <Link href="/shop?type=clothing" className="h-full">
+              <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-2 border-pink/30 hover:border-pink">
+                <CardContent className="p-0 h-full flex flex-col">
                   <div className="aspect-video relative overflow-hidden">
                     <Image
                       src="/clothes.jpg"
@@ -88,9 +88,9 @@ export default async function HomePage() {
               </Card>
             </Link>
 
-            <Link href="/shop?type=shoes">
-              <Card className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-2 border-baby-blue/30 hover:border-baby-blue">
-                <CardContent className="p-0">
+            <Link href="/shop?type=shoes" className="h-full">
+              <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow cursor-pointer border-2 border-baby-blue/30 hover:border-baby-blue">
+                <CardContent className="p-0 h-full flex flex-col">
                   <div className="aspect-video relative overflow-hidden">
                     <Image
                       src="/shoes.jpg"

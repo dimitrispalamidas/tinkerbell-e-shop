@@ -136,10 +136,10 @@ export function FeaturedProductsCarousel({ products }: Props) {
                   )}
                 </div>
                 <div className="p-1.5 md:p-4">
-                  <h3 className="text-[10px] md:text-sm font-semibold mb-0.5 md:mb-2 line-clamp-2 leading-tight">
+                  <h3 className="text-xs md:text-base font-semibold mb-0.5 md:mb-2 line-clamp-2 leading-tight">
                     {locale === 'el' ? product.name_el : product.name_en}
                   </h3>
-                  <p className="text-xs md:text-lg font-bold text-primary">
+                  <p className="text-[10px] md:text-sm font-bold text-primary">
                     {formatPrice(product.price, locale)}
                   </p>
                 </div>

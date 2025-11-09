@@ -130,32 +130,15 @@ export default async function ShopPage({
                     )}
                   </div>
                   <div className="p-2 md:p-3">
-                    <h3 className="text-xs md:text-sm font-semibold mb-1 line-clamp-2">
+                    <h3 className="text-sm md:text-base font-semibold mb-1 line-clamp-2">
                       {locale === 'el' ? product.name_el : product.name_en}
                     </h3>
                     <p className="text-[10px] md:text-xs text-muted-foreground mb-1 md:mb-2 line-clamp-1 md:line-clamp-2">
                       {locale === 'el' ? product.description_el : product.description_en}
                     </p>
-                    <div className="flex justify-between items-center gap-1">
-                      <p className="text-sm md:text-base font-bold text-primary">
-                        {formatPrice(product.price, locale)}
-                      </p>
-                      {(() => {
-                        // Check if product has stock in any variant
-                        const hasStock = product.product_variants && 
-                          product.product_variants.some((v: any) => v.stock > 0);
-                        
-                        return hasStock ? (
-                          <span className="text-[10px] md:text-xs bg-mint/30 text-green-700 px-1.5 md:px-2 py-0.5 md:py-1 rounded whitespace-nowrap">
-                            {t('in_stock')}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] md:text-xs bg-muted text-muted-foreground px-1.5 md:px-2 py-0.5 md:py-1 rounded whitespace-nowrap">
-                            {t('out_of_stock')}
-                          </span>
-                        );
-                      })()}
-                    </div>
+                    <p className="text-sm md:text-base font-bold text-primary">
+                      {formatPrice(product.price, locale)}
+                    </p>
                   </div>
                 </CardContent>
               </Card>

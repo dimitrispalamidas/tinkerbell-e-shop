@@ -83,3 +83,21 @@ body {
     display: none;  /* Chrome, Safari and Opera */
   }
 }
+
+/* Softer focus state for inputs and textareas */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}
+
+/* For inputs that already have focus-visible ring */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 1px var(--primary) !important;
+}

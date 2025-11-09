@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from '@/components/ui/toaster';
+import { PlaceholderManager } from '@/components/placeholder-manager';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -175,6 +176,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         suppressHydrationWarning
       >
+        <PlaceholderManager />
         {children}
         <Toaster />
       </body>
