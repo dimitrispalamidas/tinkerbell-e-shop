@@ -58,22 +58,13 @@ export const metadata: Metadata = {
     siteName: 'Τινκερμπελ',
     title: 'Τινκερμπελ - Παιδικά & Εφηβικά Ρούχα και Παπούτσια',
     description: 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά ρούχα, παπούτσια, και βαπτιστικά πακέτα. Βαπτιστικά, στολισμοί εκδηλώσεων με αγάπη και φροντίδα.',
-    images: [
-      {
-        url: `${siteUrl}/share_soscial_screen.png`,
-        secureUrl: `${siteUrl}/share_soscial_screen.png`,
-        width: 1200,
-        height: 630,
-        alt: 'Τινκερμπελ - Παιδικά & Εφηβικά Ρούχα και Παπούτσια',
-        type: 'image/png',
-      }
-    ],
+    // Image handled by opengraph-image.tsx
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Τινκερμπελ - Παιδικά & Εφηβικά Ρούχα και Παπούτσια',
     description: 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά ρούχα, παπούτσια, και βαπτιστικά πακέτα.',
-    images: ['/share_soscial_screen.png'],
+    // Image handled by twitter-image.tsx
   },
   robots: {
     index: true,
@@ -128,19 +119,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Τινκερμπελ" />
         
         {/* Additional Facebook/Messenger specific meta tags */}
-        <meta property="og:title" content="Τινκερμπελ - Παιδικά & Εφηβικά Ρούχα και Παπούτσια" />
-        <meta property="og:description" content="Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά ρούχα, παπούτσια, και βαπτιστικά πακέτα. Βαπτιστικά, στολισμοί εκδηλώσεων με αγάπη και φροντίδα." />
-        <meta property="og:image" content={`${siteUrl}/share_soscial_screen.png`} />
-        <meta property="og:image:secure_url" content={`${siteUrl}/share_soscial_screen.png`} />
-        <meta property="og:image:type" content="image/png" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="Τινκερμπελ - Παιδικά & Εφηβικά Ρούχα και Παπούτσια" />
         <meta property="og:type" content="website" />
-        <meta property="og:url" content={siteUrl} />
-        <meta property="og:site_name" content="Τινκερμπελ" />
-        <meta property="og:locale" content="el_GR" />
-        <meta property="og:locale:alternate" content="en_US" />
         
         {/* Structured Data for Google */}
         <script

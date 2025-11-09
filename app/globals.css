@@ -165,3 +165,37 @@ select:focus-visible {
   border-color: var(--primary) !important;
   box-shadow: 0 0 0 1px var(--primary) !important;
 }
+
+/* Hide all video controls and play buttons */
+video::-webkit-media-controls {
+  display: none !important;
+}
+
+video::-webkit-media-controls-enclosure {
+  display: none !important;
+}
+
+video::-webkit-media-controls-panel {
+  display: none !important;
+}
+
+video::-webkit-media-controls-play-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-start-playback-button {
+  display: none !important;
+}
+
+video::-internal-media-controls-overlay-cast-button {
+  display: none !important;
+}
+
+/* Remove the big play button on mobile */
+video::-webkit-media-controls-overlay-play-button {
+  display: none !important;
+}
+
+video::--webkit-media-controls-overlay-enclosure {
+  display: none !important;
+}

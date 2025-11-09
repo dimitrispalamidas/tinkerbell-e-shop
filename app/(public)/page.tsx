@@ -22,7 +22,7 @@ export default async function HomePage() {
     <div className="flex flex-col">
       {/* Hero Section με Video Background */}
       <section className="relative flex items-center min-h-[calc(100vh-4rem)]">
-        {/* Video Background */}
+        {/* Video Background - NO PLAY BUTTON */}
         <HeroVideoBackground />
         
         {/* Premium Hero Content */}
