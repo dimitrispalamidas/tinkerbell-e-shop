@@ -24,9 +24,19 @@ export function VideoBackground() {
 
     const handleCanPlay = () => {
       setIsLoading(false);
+      // Force play on mobile
+      video.play().catch(() => {
+        // If autoplay fails, that's ok
+      });
     };
 
     video.addEventListener('canplay', handleCanPlay);
+    
+    // Force play on load for mobile
+    setTimeout(() => {
+      video.play().catch(() => {});
+    }, 100);
+
     return () => video.removeEventListener('canplay', handleCanPlay);
   }, []);
 
@@ -78,26 +88,42 @@ export function VideoBackground() {
       <video
         ref={video1Ref}
         src={videos[0]}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-play-button]:hidden ${
           activeVideo === 1 ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
         }`}
         autoPlay
         muted
         playsInline
         preload="auto"
+        disablePictureInPicture
+        disableRemotePlayback
+        webkit-playsinline="true"
+        x5-playsinline="true"
         onEnded={handleVideoEnd}
+        style={{ 
+          pointerEvents: 'none',
+          objectFit: 'cover'
+        }}
       />
 
       {/* Video 2 */}
       <video
         ref={video2Ref}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-play-button]:hidden ${
           activeVideo === 2 ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
         }`}
         muted
         playsInline
         preload="auto"
+        disablePictureInPicture
+        disableRemotePlayback
+        webkit-playsinline="true"
+        x5-playsinline="true"
         onEnded={handleVideoEnd}
+        style={{ 
+          pointerEvents: 'none',
+          objectFit: 'cover'
+        }}
       />
 
       {/* Overlay για καλύτερη αναγνωσιμότητα του text */}
