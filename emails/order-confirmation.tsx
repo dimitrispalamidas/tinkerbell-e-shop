@@ -82,10 +82,13 @@ export const OrderConfirmationEmail = ({
 
         {/* Success Message */}
         <Section style={successSection}>
-          <Text style={successIcon}>✓</Text>
+          <Text style={successIcon}>✅</Text>
           <Heading style={h2}>Επιτυχής Παραγγελία!</Heading>
           <Text style={paragraph}>
-            Ευχαριστούμε <strong>{customerName}</strong> για την παραγγελία σας!
+            Ευχαριστούμε <strong style={{color: '#ffb3d9'}}>{customerName}</strong> για την παραγγελία σας!
+          </Text>
+          <Text style={{...smallText, textAlign: 'center' as const}}>
+            Η παραγγελία σας καταχωρήθηκε και επεξεργάζεται από την ομάδα μας
           </Text>
         </Section>
 
@@ -222,21 +225,24 @@ export const OrderConfirmationEmail = ({
         {/* What's Next */}
         <Section style={nextStepsSection}>
           <Heading as="h3" style={h3}>
-            Τι ακολουθεί;
+            💙 Τι ακολουθεί;
           </Heading>
           <Text style={paragraph}>
-            ✅ Επεξεργαζόμαστε την παραγγελία σας
+            <strong>1.</strong> ✅ Επεξεργαζόμαστε την παραγγελία σας
           </Text>
           <Text style={paragraph}>
-            📦 Θα προετοιμάσουμε τα προϊόντα σας
+            <strong>2.</strong> 📦 Προετοιμάζουμε τα προϊόντα σας με προσοχή
           </Text>
           <Text style={paragraph}>
-            📧 Θα σας στείλουμε ενημερώσεις μέσω email
+            <strong>3.</strong> 📧 Θα λάβετε ενημερώσεις αποστολής μέσω email
+          </Text>
+          <Text style={paragraph}>
+            <strong>4.</strong> 🎉 Απολαύστε τα νέα σας προϊόντα!
           </Text>
           
           <div style={buttonContainer}>
             <Button href={`${baseUrl}/shop`} style={button}>
-              Συνέχεια Αγορών
+              🛍️ Συνέχεια Αγορών
             </Button>
           </div>
         </Section>
@@ -273,119 +279,139 @@ export default OrderConfirmationEmail;
 
 // Styles
 const main = {
-  backgroundColor: '#f6f6f6',
+  backgroundColor: '#fafafa',
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Ubuntu,sans-serif',
+  padding: '20px 0',
 };
 
 const container = {
   backgroundColor: '#ffffff',
   margin: '0 auto',
-  padding: '20px 10px 48px',
-  marginBottom: '64px',
+  padding: '0',
+  marginBottom: '32px',
   maxWidth: '600px',
   width: '100%',
+  borderRadius: '12px',
+  overflow: 'hidden',
+  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.05)',
 };
 
 const header = {
   textAlign: 'center' as const,
-  padding: '24px 8px',
+  padding: '32px 24px',
+  background: 'linear-gradient(135deg, #fff5fb 0%, #ffffff 100%)',
+  borderBottom: '2px solid #ffe0f0',
   maxWidth: '100%',
   boxSizing: 'border-box' as const,
 };
 
 const logo = {
-  margin: '0 auto',
+  margin: '0 auto 16px',
+  borderRadius: '12px',
 };
 
 const h1 = {
   color: '#ffb3d9',
-  fontSize: '28px',
-  fontWeight: 'bold',
-  margin: '8px 0',
+  fontSize: '32px',
+  fontWeight: '700',
+  margin: '0 0 8px 0',
   padding: '0',
   textAlign: 'center' as const,
+  letterSpacing: '-0.5px',
 };
 
 const tagline = {
-  color: '#666666',
+  color: '#6b6b6b',
   fontSize: '14px',
   margin: '0',
   textAlign: 'center' as const,
+  fontWeight: '500',
 };
 
 const successSection = {
   textAlign: 'center' as const,
-  padding: '20px 8px',
+  padding: '40px 24px',
+  background: 'linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%)',
+  borderBottom: '1px solid #e5e5e5',
   maxWidth: '100%',
   boxSizing: 'border-box' as const,
 };
 
 const successIcon = {
-  fontSize: '40px',
+  fontSize: '56px',
   color: '#22c55e',
-  margin: '0 0 12px 0',
+  margin: '0 0 16px 0',
+  lineHeight: '1',
 };
 
 const h2 = {
-  color: '#22c55e',
-  fontSize: '22px',
-  fontWeight: 'bold',
-  margin: '0 0 12px 0',
+  color: '#15803d',
+  fontSize: '28px',
+  fontWeight: '700',
+  margin: '0 0 16px 0',
+  letterSpacing: '-0.5px',
 };
 
 const h3 = {
-  color: '#333333',
-  fontSize: '17px',
-  fontWeight: 'bold',
-  margin: '20px 0 12px 0',
+  color: '#2d2d2d',
+  fontSize: '20px',
+  fontWeight: '700',
+  margin: '24px 0 16px 0',
+  letterSpacing: '-0.3px',
 };
 
 const paragraph = {
-  color: '#333333',
-  fontSize: '15px',
-  lineHeight: '22px',
+  color: '#2d2d2d',
+  fontSize: '16px',
+  lineHeight: '24px',
   margin: '0 0 12px 0',
   wordBreak: 'break-word' as const,
   overflowWrap: 'break-word' as const,
 };
 
 const orderDetails = {
-  padding: '16px',
-  backgroundColor: '#f9f9f9',
-  borderRadius: '8px',
-  margin: '20px 8px',
-  maxWidth: '100%',
+  padding: '24px',
+  backgroundColor: '#f5f5f5',
+  borderRadius: '12px',
+  margin: '24px 24px',
+  border: '2px solid #e5e5e5',
+  maxWidth: 'calc(100% - 48px)',
   boxSizing: 'border-box' as const,
 };
 
 const detailTitle = {
-  color: '#666666',
-  fontSize: '12px',
-  fontWeight: 'bold',
+  color: '#6b6b6b',
+  fontSize: '11px',
+  fontWeight: '700',
   textTransform: 'uppercase' as const,
-  margin: '0 0 4px 0',
-  letterSpacing: '0.5px',
+  margin: '0 0 6px 0',
+  letterSpacing: '0.8px',
 };
 
 const detailValue = {
-  color: '#333333',
-  fontSize: '14px',
-  margin: '0 0 16px 0',
-  fontFamily: 'monospace',
+  color: '#2d2d2d',
+  fontSize: '15px',
+  margin: '0 0 20px 0',
+  fontWeight: '600',
   wordBreak: 'break-word' as const,
   overflowWrap: 'break-word' as const,
   maxWidth: '100%',
+  lineHeight: '22px',
 };
 
 const itemsSection = {
-  padding: '0 8px',
+  padding: '24px',
   maxWidth: '100%',
   boxSizing: 'border-box' as const,
 };
 
 const itemRow = {
-  marginBottom: '16px',
+  marginBottom: '12px',
+  padding: '16px',
+  backgroundColor: '#fafafa',
+  borderRadius: '8px',
+  border: '1px solid #e5e5e5',
 };
 
 const itemDetails = {
@@ -394,24 +420,27 @@ const itemDetails = {
 };
 
 const itemName = {
-  color: '#333333',
-  fontSize: '15px',
-  fontWeight: 'bold',
-  margin: '0 0 4px 0',
+  color: '#2d2d2d',
+  fontSize: '16px',
+  fontWeight: '700',
+  margin: '0 0 8px 0',
   wordBreak: 'break-word' as const,
   overflowWrap: 'break-word' as const,
+  lineHeight: '22px',
 };
 
 const itemVariant = {
-  color: '#666666',
-  fontSize: '14px',
-  margin: '0 0 4px 0',
+  color: '#6b6b6b',
+  fontSize: '13px',
+  margin: '0 0 6px 0',
+  fontWeight: '500',
 };
 
 const itemQuantity = {
-  color: '#666666',
-  fontSize: '14px',
+  color: '#6b6b6b',
+  fontSize: '13px',
   margin: '0',
+  fontWeight: '500',
 };
 
 const itemPrice = {
@@ -420,151 +449,170 @@ const itemPrice = {
 };
 
 const priceText = {
-  color: '#333333',
-  fontSize: '16px',
-  fontWeight: 'bold',
+  color: '#2d2d2d',
+  fontSize: '17px',
+  fontWeight: '700',
   margin: '0',
 };
 
 const subtotalRow = {
-  marginBottom: '8px',
+  marginBottom: '12px',
 };
 
 const subtotalLabel = {
-  color: '#666666',
+  color: '#6b6b6b',
   fontSize: '15px',
   margin: '0',
+  fontWeight: '500',
 };
 
 const subtotalAmount = {
-  color: '#333333',
+  color: '#2d2d2d',
   fontSize: '15px',
   margin: '0',
   textAlign: 'right' as const,
+  fontWeight: '600',
   wordBreak: 'break-word' as const,
 };
 
 const shippingRow = {
-  marginBottom: '16px',
+  marginBottom: '20px',
 };
 
 const shippingLabel = {
-  color: '#666666',
+  color: '#6b6b6b',
   fontSize: '15px',
   margin: '0',
+  fontWeight: '500',
 };
 
 const shippingAmount = {
-  color: '#333333',
+  color: '#2d2d2d',
   fontSize: '15px',
   margin: '0',
   textAlign: 'right' as const,
+  fontWeight: '600',
   wordBreak: 'break-word' as const,
 };
 
 const totalRow = {
-  marginTop: '16px',
+  marginTop: '20px',
+  padding: '16px',
+  backgroundColor: '#fff5fb',
+  borderRadius: '8px',
+  border: '2px solid #ffb3d9',
 };
 
 const totalLabel = {
-  color: '#333333',
-  fontSize: '18px',
-  fontWeight: 'bold',
+  color: '#2d2d2d',
+  fontSize: '20px',
+  fontWeight: '700',
   margin: '0',
 };
 
 const totalAmount = {
   color: '#ffb3d9',
-  fontSize: '20px',
-  fontWeight: 'bold',
+  fontSize: '24px',
+  fontWeight: '700',
   margin: '0',
   textAlign: 'right' as const,
   wordBreak: 'break-word' as const,
 };
 
 const hr = {
-  borderColor: '#e6e6e6',
-  margin: '16px 0',
+  borderColor: '#e5e5e5',
+  borderWidth: '1px',
+  margin: '20px 0',
 };
 
 const trackingSection = {
-  padding: '16px',
-  backgroundColor: '#f0f9ff',
-  borderRadius: '8px',
-  margin: '20px 8px',
-  maxWidth: '100%',
+  padding: '24px',
+  background: 'linear-gradient(135deg, #f0f9ff 0%, #ffffff 100%)',
+  borderRadius: '12px',
+  border: '2px solid #bae6fd',
+  margin: '24px 24px',
+  maxWidth: 'calc(100% - 48px)',
   boxSizing: 'border-box' as const,
 };
 
 const nextStepsSection = {
-  padding: '16px',
-  backgroundColor: '#eff6ff',
-  borderRadius: '8px',
-  margin: '20px 8px',
-  maxWidth: '100%',
+  padding: '24px',
+  background: 'linear-gradient(135deg, #eff6ff 0%, #ffffff 100%)',
+  borderRadius: '12px',
+  border: '2px solid #dbeafe',
+  margin: '24px 24px',
+  maxWidth: 'calc(100% - 48px)',
   boxSizing: 'border-box' as const,
 };
 
 const smallText = {
-  color: '#666666',
+  color: '#6b6b6b',
   fontSize: '14px',
-  lineHeight: '20px',
-  margin: '8px 0 0 0',
+  lineHeight: '22px',
+  margin: '12px 0 0 0',
+  fontWeight: '500',
 };
 
 const footer = {
-  padding: '20px 8px',
+  padding: '32px 24px',
   textAlign: 'center' as const,
+  backgroundColor: '#fafafa',
+  borderTop: '2px solid #e5e5e5',
   maxWidth: '100%',
   boxSizing: 'border-box' as const,
 };
 
 const h3Footer = {
-  color: '#333333',
-  fontSize: '18px',
-  fontWeight: 'bold',
-  margin: '0 0 16px 0',
+  color: '#2d2d2d',
+  fontSize: '20px',
+  fontWeight: '700',
+  margin: '0 0 20px 0',
   textAlign: 'center' as const,
 };
 
 const footerText = {
-  color: '#666666',
-  fontSize: '14px',
-  margin: '8px 0',
-  lineHeight: '20px',
+  color: '#6b6b6b',
+  fontSize: '15px',
+  margin: '12px 0',
+  lineHeight: '24px',
+  fontWeight: '500',
   wordBreak: 'break-word' as const,
   overflowWrap: 'break-word' as const,
 };
 
 const link = {
   color: '#ffb3d9',
-  textDecoration: 'underline',
-  fontWeight: '600',
+  textDecoration: 'none',
+  fontWeight: '700',
+  borderBottom: '2px solid #ffb3d9',
+  paddingBottom: '1px',
 };
 
 const copyright = {
   color: '#999999',
   fontSize: '12px',
-  margin: '16px 0 0 0',
+  margin: '20px 0 0 0',
+  fontWeight: '500',
 };
 
 const buttonContainer = {
   textAlign: 'center' as const,
-  margin: '24px 0 0 0',
+  margin: '28px 0 0 0',
 };
 
 const button = {
   backgroundColor: '#ffb3d9',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '15px',
-  fontWeight: 'bold',
+  borderRadius: '10px',
+  color: '#2d2d2d',
+  fontSize: '16px',
+  fontWeight: '700',
   textDecoration: 'none',
   textAlign: 'center' as const,
   display: 'inline-block',
-  padding: '12px 24px',
+  padding: '14px 32px',
   margin: '0 auto',
   maxWidth: '90%',
   boxSizing: 'border-box' as const,
+  boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
 };
 

@@ -9,7 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { formatPrice } from '@/lib/utils';
 import { toast } from 'sonner';
-import { ArrowLeft, CheckCircle, ShoppingBag, Package, Home } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle, ShoppingBag, Package, Home } from 'lucide-react';
 import { BoxnowLockerList } from '@/components/checkout/boxnow-locker-list';
 import Image from 'next/image';
 import { z } from 'zod';
@@ -350,23 +350,44 @@ export default function CheckoutPage() {
   const total = subtotal + shippingCost;
 
   return (
-    <div className="container mx-auto px-4 py-4 md:py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold mb-4 md:mb-8">{locale === 'el' ? 'Ολοκλήρωση Παραγγελίας' : 'Checkout'}</h1>
+    <div className="container mx-auto px-4 py-6 md:py-10">
+      <div className="max-w-5xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-8 md:mb-12">
+          <h1 className="text-3xl md:text-4xl font-bold mb-3">
+            {locale === 'el' ? 'Ολοκλήρωση Παραγγελίας' : 'Checkout'}
+          </h1>
+          <p className="text-muted-foreground">
+            {locale === 'el' ? 'Μερικά ακόμα βήματα για να ολοκληρώσετε την παραγγελία σας' : 'Just a few more steps to complete your order'}
+          </p>
+        </div>
 
         {/* Progress Steps */}
-        <div className="flex items-center justify-center mb-6 md:mb-8">
+        <div className="flex items-center justify-center mb-8 md:mb-12 max-w-md mx-auto">
           {[1, 2, 3].map((s) => (
-            <div key={s} className="flex items-center">
-              <div
-                className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-sm md:text-base ${
-                  step >= s ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                }`}
-              >
-                {s}
+            <div key={s} className="flex items-center flex-1">
+              <div className="flex flex-col items-center flex-1">
+                <div
+                  className={`w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center font-bold text-sm md:text-base transition-all duration-300 ${
+                    step >= s 
+                      ? 'bg-primary text-primary-foreground shadow-lg scale-110' 
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {s}
+                </div>
+                <span className={`text-xs mt-2 font-medium transition-colors ${
+                  step >= s ? 'text-primary' : 'text-muted-foreground'
+                }`}>
+                  {s === 1 ? (locale === 'el' ? 'Στοιχεία' : 'Details') : 
+                   s === 2 ? (locale === 'el' ? 'Παράδοση' : 'Delivery') : 
+                   (locale === 'el' ? 'Πληρωμή' : 'Payment')}
+                </span>
               </div>
               {s < 3 && (
-                <div className={`w-8 md:w-16 h-1 ${step > s ? 'bg-primary' : 'bg-muted'}`} />
+                <div className={`h-0.5 flex-1 mx-2 transition-colors duration-300 ${
+                  step > s ? 'bg-primary' : 'bg-muted'
+                }`} />
               )}
             </div>
           ))}
@@ -376,14 +397,22 @@ export default function CheckoutPage() {
         <div className="space-y-4 md:space-y-6">
           {/* STEP 1: Customer Information */}
           {step === 1 && (
-            <Card>
-              <CardHeader className="p-4 md:p-6">
-                <CardTitle className="text-lg md:text-xl">{locale === 'el' ? 'Στοιχεία Πελάτη' : 'Customer Information'}</CardTitle>
+            <Card className="border-2 shadow-sm">
+              <CardHeader className="p-5 md:p-7 bg-muted/30 border-b">
+                <CardTitle className="text-xl md:text-2xl flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                    <span className="text-primary font-bold">1</span>
+                  </div>
+                  {locale === 'el' ? 'Στοιχεία Πελάτη' : 'Customer Information'}
+                </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4 p-4 md:p-6">
-                <div className="grid md:grid-cols-2 gap-4">
+              <CardContent className="space-y-5 p-5 md:p-7">
+                <div className="grid md:grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Όνομα' : 'First Name'}</label>
+                    <label className="block text-sm font-semibold mb-2.5">
+                      {locale === 'el' ? 'Όνομα' : 'First Name'}
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
                     <Input
                       value={formData.firstName}
                       onChange={(e) => {
@@ -391,12 +420,15 @@ export default function CheckoutPage() {
                         if (errors.firstName) setErrors({ ...errors, firstName: false });
                       }}
                       required
-                      className={`text-base ${errors.firstName ? 'border-red-500' : ''}`}
+                      className={`text-base h-11 ${errors.firstName ? 'border-red-500 border-2' : 'border-2'}`}
                       placeholder={locale === 'el' ? 'π.χ. Γιάννης' : 'e.g. John'}
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Επώνυμο' : 'Last Name'}</label>
+                    <label className="block text-sm font-semibold mb-2.5">
+                      {locale === 'el' ? 'Επώνυμο' : 'Last Name'}
+                      <span className="text-red-500 ml-1">*</span>
+                    </label>
                     <Input
                       value={formData.lastName}
                       onChange={(e) => {
@@ -404,13 +436,16 @@ export default function CheckoutPage() {
                         if (errors.lastName) setErrors({ ...errors, lastName: false });
                       }}
                       required
-                      className={`text-base ${errors.lastName ? 'border-red-500' : ''}`}
+                      className={`text-base h-11 ${errors.lastName ? 'border-red-500 border-2' : 'border-2'}`}
                       placeholder={locale === 'el' ? 'π.χ. Παπαδόπουλος' : 'e.g. Smith'}
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Email' : 'Email'}</label>
+                  <label className="block text-sm font-semibold mb-2.5">
+                    {locale === 'el' ? 'Email' : 'Email'}
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
                   <Input
                     type="email"
                     value={formData.email}
@@ -424,18 +459,22 @@ export default function CheckoutPage() {
                       }
                     }}
                     required
-                    className={`text-base ${errors.email ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                    className={`text-base h-11 ${errors.email ? 'border-red-500 border-2 focus-visible:ring-red-500' : 'border-2'}`}
                     placeholder="email@example.com"
                   />
                   {errors.email && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {locale === 'el' ? 'Μη έγκυρη διεύθυνση email (π.χ. name@example.com)' : 'Invalid email address (e.g. name@example.com)'}
+                    <p className="text-xs text-red-500 mt-2 flex items-start gap-1">
+                      <span className="font-medium">⚠</span>
+                      <span>{locale === 'el' ? 'Μη έγκυρη διεύθυνση email (π.χ. name@example.com)' : 'Invalid email address (e.g. name@example.com)'}</span>
                     </p>
                   )}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Τηλέφωνο' : 'Phone'}</label>
-                  <p className="text-xs text-muted-foreground mb-2">
+                  <label className="block text-sm font-semibold mb-2.5">
+                    {locale === 'el' ? 'Τηλέφωνο' : 'Phone'}
+                    <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <p className="text-xs text-muted-foreground mb-2.5">
                     {locale === 'el' ? 'Κινητό (69...) ή σταθερό (2...)' : 'Mobile (69...) or landline (2...)'}
                   </p>
                   <Input
@@ -455,12 +494,13 @@ export default function CheckoutPage() {
                     }}
                     required
                     maxLength={10}
-                    className={`text-base ${errors.phone ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                    className={`text-base h-11 ${errors.phone ? 'border-red-500 border-2 focus-visible:ring-red-500' : 'border-2'}`}
                     placeholder={locale === 'el' ? 'π.χ. 6912345678' : 'e.g. 6912345678'}
                   />
                   {errors.phone && (
-                    <p className="text-xs text-red-500 mt-1">
-                      {locale === 'el' ? 'Μόνο 10 ψηφία, π.χ. 6912345678 ή 2101234567' : 'Only 10 digits, e.g. 6912345678 or 2101234567'}
+                    <p className="text-xs text-red-500 mt-2 flex items-start gap-1">
+                      <span className="font-medium">⚠</span>
+                      <span>{locale === 'el' ? 'Μόνο 10 ψηφία, π.χ. 6912345678 ή 2101234567' : 'Only 10 digits, e.g. 6912345678 or 2101234567'}</span>
                     </p>
                   )}
                 </div>
@@ -471,34 +511,47 @@ export default function CheckoutPage() {
           {/* STEP 2: Delivery Method */}
           {step === 2 && (
             <>
-              <Card>
-                <CardHeader className="p-4 md:p-6">
-                  <CardTitle className="text-lg md:text-xl">{locale === 'el' ? 'Επιλέξτε Τρόπο Παράδοσης' : 'Choose Delivery Method'}</CardTitle>
+              <Card className="border-2 shadow-sm">
+                <CardHeader className="p-5 md:p-7 bg-muted/30 border-b">
+                  <CardTitle className="text-xl md:text-2xl flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                      <span className="text-primary font-bold">2</span>
+                    </div>
+                    {locale === 'el' ? 'Επιλέξτε Τρόπο Παράδοσης' : 'Choose Delivery Method'}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 md:p-6 space-y-4">
+                <CardContent className="p-5 md:p-7 space-y-6">
                   {/* Delivery Method Selection */}
                   <div className="grid md:grid-cols-2 gap-4">
                     {/* BOXNOW Option */}
                     <button
                       onClick={() => setFormData({ ...formData, deliveryMethod: 'boxnow' })}
-                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                      className={`group p-5 border-2 rounded-xl text-left transition-all duration-200 ${
                         formData.deliveryMethod === 'boxnow'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-muted hover:border-primary/50'
+                          ? 'border-primary bg-primary/10 shadow-md'
+                          : 'border-border hover:border-primary/50 hover:shadow-sm'
                       }`}
                     >
-                      <div className="flex items-start gap-3">
-                        <Package className={`h-6 w-6 mt-1 ${formData.deliveryMethod === 'boxnow' ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <div className="flex-1">
-                          <h3 className="font-semibold mb-1">{locale === 'el' ? 'BOXNOW Locker' : 'BOXNOW Locker'}</h3>
-                          <p className="text-sm text-muted-foreground mb-2">{locale === 'el' ? 'Παραλάβετε από locker στο σημείο της επιλογής σας' : 'Pick up from locker at your preferred location'}</p>
-                          <span className="text-sm font-medium text-green-600">{locale === 'el' ? 'Δωρεάν' : 'Free'}</span>
+                      <div className="flex items-start gap-4">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${
+                          formData.deliveryMethod === 'boxnow' ? 'bg-primary/20' : 'bg-muted'
+                        }`}>
+                          <Package className={`h-6 w-6 ${formData.deliveryMethod === 'boxnow' ? 'text-primary' : 'text-muted-foreground'}`} />
                         </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          formData.deliveryMethod === 'boxnow' ? 'border-primary' : 'border-muted'
+                        <div className="flex-1">
+                          <h3 className="font-bold mb-2 text-base">{locale === 'el' ? 'BOXNOW Locker' : 'BOXNOW Locker'}</h3>
+                          <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{locale === 'el' ? 'Παραλάβετε από locker στο σημείο της επιλογής σας' : 'Pick up from locker at your preferred location'}</p>
+                          <div className="flex items-center gap-2">
+                            <span className="inline-flex items-center px-2.5 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+                              {locale === 'el' ? 'Δωρεάν' : 'Free'}
+                            </span>
+                          </div>
+                        </div>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                          formData.deliveryMethod === 'boxnow' ? 'border-primary scale-110' : 'border-muted'
                         }`}>
                           {formData.deliveryMethod === 'boxnow' && (
-                            <div className="w-3 h-3 rounded-full bg-primary" />
+                            <div className="w-3.5 h-3.5 rounded-full bg-primary" />
                           )}
                         </div>
                       </div>
@@ -507,24 +560,30 @@ export default function CheckoutPage() {
                     {/* Home Delivery Option */}
                     <button
                       onClick={() => setFormData({ ...formData, deliveryMethod: 'home' })}
-                      className={`p-4 border-2 rounded-lg text-left transition-all ${
+                      className={`group p-5 border-2 rounded-xl text-left transition-all duration-200 ${
                         formData.deliveryMethod === 'home'
-                          ? 'border-primary bg-primary/5'
-                          : 'border-muted hover:border-primary/50'
+                          ? 'border-primary bg-primary/10 shadow-md'
+                          : 'border-border hover:border-primary/50 hover:shadow-sm'
                       }`}
                     >
-                      <div className="flex items-start gap-3">
-                        <Home className={`h-6 w-6 mt-1 ${formData.deliveryMethod === 'home' ? 'text-primary' : 'text-muted-foreground'}`} />
-                        <div className="flex-1">
-                          <h3 className="font-semibold mb-1">{locale === 'el' ? 'Παράδοση στο Σπίτι' : 'Home Delivery'}</h3>
-                          <p className="text-sm text-muted-foreground mb-2">{locale === 'el' ? 'Παραλάβετε στην πόρτα σας' : 'Delivered to your doorstep'}</p>
-                          <span className="text-sm font-medium">+{formatPrice(HOME_DELIVERY_COST, locale)}</span>
+                      <div className="flex items-start gap-4">
+                        <div className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${
+                          formData.deliveryMethod === 'home' ? 'bg-primary/20' : 'bg-muted'
+                        }`}>
+                          <Home className={`h-6 w-6 ${formData.deliveryMethod === 'home' ? 'text-primary' : 'text-muted-foreground'}`} />
                         </div>
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          formData.deliveryMethod === 'home' ? 'border-primary' : 'border-muted'
+                        <div className="flex-1">
+                          <h3 className="font-bold mb-2 text-base">{locale === 'el' ? 'Παράδοση στο Σπίτι' : 'Home Delivery'}</h3>
+                          <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{locale === 'el' ? 'Παραλάβετε στην πόρτα σας' : 'Delivered to your doorstep'}</p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-foreground">+{formatPrice(HOME_DELIVERY_COST, locale)}</span>
+                          </div>
+                        </div>
+                        <div className={`w-6 h-6 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                          formData.deliveryMethod === 'home' ? 'border-primary scale-110' : 'border-muted'
                         }`}>
                           {formData.deliveryMethod === 'home' && (
-                            <div className="w-3 h-3 rounded-full bg-primary" />
+                            <div className="w-3.5 h-3.5 rounded-full bg-primary" />
                           )}
                         </div>
                       </div>
@@ -533,8 +592,8 @@ export default function CheckoutPage() {
 
                   {/* BOXNOW Locker Selection */}
                   {formData.deliveryMethod === 'boxnow' && (
-                    <div className="pt-4 border-t">
-                      <h3 className="font-medium mb-4">{locale === 'el' ? 'Επιλέξτε Locker' : 'Select Locker'}</h3>
+                    <div className="pt-2 border-t">
+                      <h3 className="font-semibold mb-4 text-base">{locale === 'el' ? 'Επιλέξτε Locker' : 'Select Locker'}</h3>
                       <BoxnowLockerList
                         selectedLockerId={formData.boxnowLockerId}
                         onSelectLocker={(locker) => {
@@ -558,10 +617,13 @@ export default function CheckoutPage() {
 
                   {/* Home Delivery Address Fields */}
                   {formData.deliveryMethod === 'home' && (
-                    <div className="pt-4 border-t space-y-4">
-                      <h3 className="font-medium mb-4">{locale === 'el' ? 'Στοιχεία Αποστολής' : 'Shipping Information'}</h3>
+                    <div className="pt-2 border-t space-y-5">
+                      <h3 className="font-semibold mb-1 text-base">{locale === 'el' ? 'Στοιχεία Αποστολής' : 'Shipping Information'}</h3>
                       <div>
-                        <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Διεύθυνση' : 'Address'}</label>
+                        <label className="block text-sm font-semibold mb-2.5">
+                          {locale === 'el' ? 'Διεύθυνση' : 'Address'}
+                          <span className="text-red-500 ml-1">*</span>
+                        </label>
                         <Input
                           value={formData.address}
                           onChange={(e) => {
@@ -574,18 +636,22 @@ export default function CheckoutPage() {
                             }
                           }}
                           required
-                          className={`text-base ${errors.address ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          className={`text-base h-11 ${errors.address ? 'border-red-500 border-2 focus-visible:ring-red-500' : 'border-2'}`}
                           placeholder={locale === 'el' ? 'π.χ. Αθηνών 15' : 'e.g. Athinas 15'}
                         />
                         {errors.address && (
-                          <p className="text-xs text-red-500 mt-1">
-                            {locale === 'el' ? 'Η διεύθυνση πρέπει να περιλαμβάνει αριθμό' : 'Address must include a street number'}
+                          <p className="text-xs text-red-500 mt-2 flex items-start gap-1">
+                            <span className="font-medium">⚠</span>
+                            <span>{locale === 'el' ? 'Η διεύθυνση πρέπει να περιλαμβάνει αριθμό' : 'Address must include a street number'}</span>
                           </p>
                         )}
                       </div>
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="grid md:grid-cols-2 gap-5">
                         <div>
-                          <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Πόλη' : 'City'}</label>
+                          <label className="block text-sm font-semibold mb-2.5">
+                            {locale === 'el' ? 'Πόλη' : 'City'}
+                            <span className="text-red-500 ml-1">*</span>
+                          </label>
                           <Input
                             value={formData.city}
                             onChange={(e) => {
@@ -598,17 +664,21 @@ export default function CheckoutPage() {
                               }
                             }}
                             required
-                            className={`text-base ${errors.city ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                            className={`text-base h-11 ${errors.city ? 'border-red-500 border-2 focus-visible:ring-red-500' : 'border-2'}`}
                             placeholder={locale === 'el' ? 'π.χ. Αθήνα' : 'e.g. Athens'}
                           />
                           {errors.city && (
-                            <p className="text-xs text-red-500 mt-1">
-                              {locale === 'el' ? 'Η πόλη πρέπει να περιέχει τουλάχιστον 2 γράμματα' : 'City must contain at least 2 letters'}
+                            <p className="text-xs text-red-500 mt-2 flex items-start gap-1">
+                              <span className="font-medium">⚠</span>
+                              <span>{locale === 'el' ? 'Η πόλη πρέπει να περιέχει τουλάχιστον 2 γράμματα' : 'City must contain at least 2 letters'}</span>
                             </p>
                           )}
                         </div>
                         <div>
-                          <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Τ.Κ.' : 'Postal Code'}</label>
+                          <label className="block text-sm font-semibold mb-2.5">
+                            {locale === 'el' ? 'Τ.Κ.' : 'Postal Code'}
+                            <span className="text-red-500 ml-1">*</span>
+                          </label>
                           <Input
                             type="text"
                             value={formData.postalCode}
@@ -625,18 +695,22 @@ export default function CheckoutPage() {
                             }}
                             required
                             maxLength={5}
-                            className={`text-base ${errors.postalCode ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                            className={`text-base h-11 ${errors.postalCode ? 'border-red-500 border-2 focus-visible:ring-red-500' : 'border-2'}`}
                             placeholder="12345"
                           />
                           {errors.postalCode && (
-                            <p className="text-xs text-red-500 mt-1">
-                              {locale === 'el' ? 'Μόνο 5 ψηφία, π.χ. 12345' : 'Only 5 digits, e.g. 12345'}
+                            <p className="text-xs text-red-500 mt-2 flex items-start gap-1">
+                              <span className="font-medium">⚠</span>
+                              <span>{locale === 'el' ? 'Μόνο 5 ψηφία, π.χ. 12345' : 'Only 5 digits, e.g. 12345'}</span>
                             </p>
                           )}
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">{locale === 'el' ? 'Περιοχή / Νομός' : 'Region / State'}</label>
+                        <label className="block text-sm font-semibold mb-2.5">
+                          {locale === 'el' ? 'Περιοχή / Νομός' : 'Region / State'}
+                          <span className="text-red-500 ml-1">*</span>
+                        </label>
                         <Input
                           value={formData.region}
                           onChange={(e) => {
@@ -649,12 +723,13 @@ export default function CheckoutPage() {
                             }
                           }}
                           required
-                          className={`text-base ${errors.region ? 'border-red-500 focus-visible:ring-red-500' : ''}`}
+                          className={`text-base h-11 ${errors.region ? 'border-red-500 border-2 focus-visible:ring-red-500' : 'border-2'}`}
                           placeholder={locale === 'el' ? 'π.χ. Αττική' : 'e.g. Attica'}
                         />
                         {errors.region && (
-                          <p className="text-xs text-red-500 mt-1">
-                            {locale === 'el' ? 'Η περιοχή πρέπει να περιέχει τουλάχιστον 2 γράμματα' : 'Region must contain at least 2 letters'}
+                          <p className="text-xs text-red-500 mt-2 flex items-start gap-1">
+                            <span className="font-medium">⚠</span>
+                            <span>{locale === 'el' ? 'Η περιοχή πρέπει να περιέχει τουλάχιστον 2 γράμματα' : 'Region must contain at least 2 letters'}</span>
                           </p>
                         )}
                       </div>
@@ -668,30 +743,48 @@ export default function CheckoutPage() {
           {/* STEP 3: Payment */}
           {step === 3 && (
             <>
-              <Card>
-                <CardHeader className="p-4 md:p-6">
-                  <CardTitle className="text-lg md:text-xl">{locale === 'el' ? 'Πληρωμή' : 'Payment'}</CardTitle>
+              <Card className="border-2 shadow-sm">
+                <CardHeader className="p-5 md:p-7 bg-muted/30 border-b">
+                  <CardTitle className="text-xl md:text-2xl flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
+                      <span className="text-primary font-bold">3</span>
+                    </div>
+                    {locale === 'el' ? 'Πληρωμή' : 'Payment'}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 md:space-y-6 p-4 md:p-6">
-                  <div className="bg-muted p-3 md:p-4 rounded-lg">
-                    <h3 className="font-semibold mb-2 text-sm md:text-base">
+                <CardContent className="space-y-6 p-5 md:p-7">
+                  <div className="bg-gradient-to-r from-primary/5 to-primary/10 p-5 rounded-xl border border-primary/20">
+                    <h3 className="font-bold mb-2.5 text-base flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                        <CheckCircle className="h-4 w-4 text-primary" />
+                      </div>
                       {locale === 'el' ? 'Ασφαλής Πληρωμή με Viva Wallet' : 'Secure Payment with Viva Wallet'}
                     </h3>
-                    <p className="text-xs md:text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground leading-relaxed ml-10">
                       {locale === 'el' 
                         ? 'Θα ανακατευθυνθείτε στη σελίδα πληρωμής της Viva Wallet για να ολοκληρώσετε την παραγγελία σας με ασφάλεια.' 
                         : 'You will be redirected to Viva Wallet secure payment page to complete your order.'}
                     </p>
                   </div>
 
-                  <div className="space-y-2 text-xs md:text-sm">
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span>{locale === 'el' ? 'Ασφαλής κρυπτογράφηση' : 'Secure encryption'}</span>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">{locale === 'el' ? 'Ασφαλής κρυπτογράφηση' : 'Secure encryption'}</p>
+                        <p className="text-xs text-muted-foreground">{locale === 'el' ? 'SSL 256-bit' : 'SSL 256-bit'}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      <span>{locale === 'el' ? 'Υποστήριξη όλων των καρτών' : 'All cards supported'}</span>
+                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
+                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">{locale === 'el' ? 'Υποστήριξη όλων των καρτών' : 'All cards supported'}</p>
+                        <p className="text-xs text-muted-foreground">Visa, Mastercard, etc.</p>
+                      </div>
                     </div>
                   </div>
 
@@ -703,95 +796,107 @@ export default function CheckoutPage() {
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       size="lg"
-                      className="w-full"
+                      className="w-full border-2 group"
                       disabled={isProcessing}
                     >
-                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      <ArrowLeft className="mr-2 h-5 w-5 group-hover:-translate-x-1 transition-transform" />
                       {locale === 'el' ? 'Πίσω' : 'Back'}
                     </Button>
                     <Button
                       onClick={handlePayment}
                       size="lg"
-                      className="w-full text-base"
+                      className="w-full text-base shadow-sm hover:shadow-md transition-all group"
                       disabled={isProcessing}
                     >
                       {isProcessing 
-                        ? (locale === 'el' ? 'Επεξεργασία...' : 'Processing...') 
-                        : (locale === 'el' ? 'Συνέχεια στην Πληρωμή' : 'Continue to Payment')}
+                        ? (
+                          <>
+                            <span className="inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                            {locale === 'el' ? 'Επεξεργασία...' : 'Processing...'}
+                          </>
+                        )
+                        : (
+                          <>
+                            {locale === 'el' ? 'Συνέχεια στην Πληρωμή' : 'Continue to Payment'}
+                            <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                          </>
+                        )}
                     </Button>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Order Summary - Only shown in step 3 */}
-              <Card>
-                <CardHeader className="p-4 md:p-6">
-                  <CardTitle className="text-lg md:text-xl">{locale === 'el' ? 'Σύνοψη Παραγγελίας' : 'Order Summary'}</CardTitle>
+              <Card className="border-2 shadow-sm">
+                <CardHeader className="p-5 md:p-7 bg-muted/30 border-b">
+                  <CardTitle className="text-xl md:text-2xl flex items-center gap-3">
+                    <ShoppingBag className="h-6 w-6 text-primary" />
+                    {locale === 'el' ? 'Σύνοψη Παραγγελίας' : 'Order Summary'}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4 p-4 md:p-6">
-                  <div className="space-y-3 text-xs md:text-sm max-h-[300px] md:max-h-[400px] overflow-y-auto">
+                <CardContent className="space-y-5 p-5 md:p-7">
+                  <div className="space-y-3 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-2">
                     {items.map((item) => (
-                      <div key={`${item.id}-${item.size}-${item.color}`} className="flex gap-2 items-start">
+                      <div key={`${item.id}-${item.size}-${item.color}`} className="flex gap-3 items-start p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
                         {/* Product Image */}
-                        <div className="w-12 h-12 md:w-14 md:h-14 bg-muted rounded-md overflow-hidden flex-shrink-0">
+                        <div className="w-16 h-16 bg-background rounded-lg overflow-hidden flex-shrink-0 border border-border">
                           {item.image ? (
                             <Image
                               src={item.image}
                               alt={item.name}
-                              width={56}
-                              height={56}
+                              width={64}
+                              height={64}
                               className="object-cover w-full h-full"
                             />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <ShoppingBag className="h-5 w-5 text-muted-foreground" />
+                            <div className="w-full h-full flex items-center justify-center bg-muted">
+                              <ShoppingBag className="h-6 w-6 text-muted-foreground" />
                             </div>
                           )}
                         </div>
                         
                         {/* Product Details */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs md:text-sm font-medium truncate">
+                          <p className="text-sm font-semibold line-clamp-2 mb-1">
                             {item.name}
                           </p>
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground mb-1">
                             {item.quantity} × {formatPrice(item.price, locale)}
                           </p>
                           {(item.size || item.color) && (
-                            <p className="text-xs text-muted-foreground">
-                              {item.size && item.size}
-                              {item.size && item.color && ' • '}
-                              {item.color && item.color}
+                            <p className="text-xs text-muted-foreground flex flex-wrap gap-1">
+                              {item.size && <span className="px-2 py-0.5 bg-background rounded">{item.size}</span>}
+                              {item.color && <span className="px-2 py-0.5 bg-background rounded">{item.color}</span>}
                             </p>
                           )}
                         </div>
                         
                         {/* Price */}
-                        <div className="font-medium whitespace-nowrap text-xs md:text-sm">
+                        <div className="font-bold whitespace-nowrap text-sm">
                           {formatPrice(item.price * item.quantity, locale)}
                         </div>
                       </div>
                     ))}
                   </div>
 
-                  <div className="border-t pt-4 space-y-2">
+                  <div className="border-t-2 pt-4 space-y-3">
                     <div className="flex justify-between text-sm">
-                      <span>{locale === 'el' ? 'Υποσύνολο' : 'Subtotal'}</span>
-                      <span>{formatPrice(subtotal, locale)}</span>
+                      <span className="text-muted-foreground">{locale === 'el' ? 'Υποσύνολο' : 'Subtotal'}</span>
+                      <span className="font-semibold">{formatPrice(subtotal, locale)}</span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span>{locale === 'el' ? 'Μεταφορικά' : 'Shipping'}</span>
-                      <span>
+                      <span className="text-muted-foreground">{locale === 'el' ? 'Μεταφορικά' : 'Shipping'}</span>
+                      <span className="font-semibold">
                         {shippingCost === 0 ? (
-                          <span className="text-green-600 font-medium">{locale === 'el' ? 'Δωρεάν' : 'Free'}</span>
+                          <span className="inline-flex items-center px-2.5 py-0.5 bg-green-100 text-green-700 text-xs font-semibold rounded-full">{locale === 'el' ? 'Δωρεάν' : 'Free'}</span>
                         ) : (
                           formatPrice(shippingCost, locale)
                         )}
                       </span>
                     </div>
-                    <div className="flex justify-between text-base md:text-lg font-bold pt-2 border-t">
+                    <div className="flex justify-between items-center text-lg md:text-xl font-bold pt-3 border-t-2">
                       <span>{locale === 'el' ? 'Σύνολο' : 'Total'}</span>
-                      <span className="text-primary">{formatPrice(total, locale)}</span>
+                      <span className="text-2xl text-primary">{formatPrice(total, locale)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -800,7 +905,7 @@ export default function CheckoutPage() {
           )}
 
           {step < 3 && (
-            <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-2">
               {step > 1 && (
                 <Button 
                   variant="outline" 
@@ -809,14 +914,19 @@ export default function CheckoutPage() {
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                   }} 
                   size="lg" 
-                  className="w-full"
+                  className="w-full border-2 group"
                 >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <ArrowLeft className="mr-2 h-5 w-5 group-hover:-translate-x-1 transition-transform" />
                   {locale === 'el' ? 'Πίσω' : 'Back'}
                 </Button>
               )}
-              <Button onClick={handleContinue} size="lg" className="w-full text-base">
+              <Button 
+                onClick={handleContinue} 
+                size="lg" 
+                className="w-full text-base shadow-sm hover:shadow-md transition-all group"
+              >
                 {locale === 'el' ? 'Συνέχεια' : 'Continue'}
+                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </div>
           )}

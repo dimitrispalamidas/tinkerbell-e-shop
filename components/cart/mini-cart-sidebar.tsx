@@ -78,23 +78,29 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-background shadow-xl z-[70] transform transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-full sm:w-[400px] bg-background shadow-2xl z-[70] transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b">
-            <div className="flex items-center gap-2">
-              <ShoppingBag className="h-5 w-5 text-primary" />
-              <h2 className="text-lg font-bold">
-                {locale === 'el' ? 'Το Καλάθι σας' : 'Your Cart'}
-              </h2>
-              <span className="text-sm text-muted-foreground">({items.length})</span>
+          <div className="flex items-center justify-between p-4 border-b bg-muted/20">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center">
+                <ShoppingBag className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex items-baseline gap-2">
+                <h2 className="text-lg font-bold">
+                  {locale === 'el' ? 'Το Καλάθι σας' : 'Your Cart'}
+                </h2>
+                <span className="text-sm font-medium text-primary">
+                  ({items.length})
+                </span>
+              </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-accent rounded-full transition-colors"
+              className="p-2 hover:bg-muted rounded-full transition-all duration-200 hover:rotate-90"
               aria-label="Close cart"
             >
               <X className="h-5 w-5" />
@@ -104,74 +110,94 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
           {/* Cart Items */}
           <div className="flex-1 overflow-y-auto p-4">
             {items.length === 0 ? (
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <ShoppingBag className="h-16 w-16 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground mb-4">
+              <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                  <ShoppingBag className="h-10 w-10 text-primary" />
+                </div>
+                <p className="text-foreground font-medium mb-2">
                   {locale === 'el' ? 'Το καλάθι σας είναι άδειο' : 'Your cart is empty'}
                 </p>
-                <Button onClick={onClose} variant="outline">
+                <p className="text-muted-foreground text-sm mb-6">
+                  {locale === 'el' ? 'Προσθέστε προϊόντα για να συνεχίσετε' : 'Add products to continue'}
+                </p>
+                <Button 
+                  onClick={onClose} 
+                  variant="outline"
+                  size="lg"
+                  className="border-2"
+                >
                   {locale === 'el' ? 'Συνεχίστε τις Αγορές' : 'Continue Shopping'}
+                  <ShoppingBag className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {items.map((item) => (
                   <div
                     key={`${item.id}-${item.size}-${item.color}`}
-                    className="flex gap-3 p-3 bg-muted/50 rounded-lg"
+                    className="group relative flex gap-3 p-4 bg-background border border-border rounded-xl hover:shadow-md transition-all duration-200"
                   >
                     {/* Product Image */}
-                    <div className="w-16 h-16 bg-background rounded-md overflow-hidden flex-shrink-0">
+                    <div className="w-20 h-20 bg-muted rounded-lg overflow-hidden flex-shrink-0 border border-border">
                       {item.image ? (
                         <Image
                           src={item.image}
                           alt={item.name}
-                          width={64}
-                          height={64}
-                          className="object-cover w-full h-full"
+                          width={80}
+                          height={80}
+                          className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                          <ShoppingBag className="h-6 w-6 text-muted-foreground" />
+                        <div className="w-full h-full flex items-center justify-center bg-muted">
+                          <ShoppingBag className="h-8 w-8 text-muted-foreground" />
                         </div>
                       )}
                     </div>
 
                     {/* Product Details */}
                     <div className="flex-1 min-w-0 space-y-2">
-                      <h3 className="font-medium text-sm truncate">{item.name}</h3>
-                      <div className="text-xs text-muted-foreground space-y-0.5">
+                      <div className="pr-6">
+                        <h3 className="font-semibold text-sm leading-tight line-clamp-2">{item.name}</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                         {item.size && (
-                          <p>{locale === 'el' ? 'Μέγεθος' : 'Size'}: {item.size}</p>
+                          <span className="flex items-center gap-1">
+                            <span className="font-medium">{locale === 'el' ? 'Μέγεθος' : 'Size'}:</span>
+                            <span>{item.size}</span>
+                          </span>
                         )}
                         {item.color && (
-                          <p>{locale === 'el' ? 'Χρώμα' : 'Color'}: {item.color}</p>
+                          <span className="flex items-center gap-1">
+                            <span className="font-medium">{locale === 'el' ? 'Χρώμα' : 'Color'}:</span>
+                            <span>{item.color}</span>
+                          </span>
                         )}
                       </div>
                       
                       {/* Quantity Controls & Price */}
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1 border rounded">
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <div className="flex items-center gap-0.5 border-2 border-border rounded-lg overflow-hidden bg-background">
                           <button
                             onClick={() => handleQuantityChange(item.id, Math.max(1, item.quantity - 1), item.size, item.color)}
-                            className="p-1 hover:bg-accent transition-colors"
+                            className="p-2 hover:bg-primary/10 active:bg-primary/20 transition-colors"
                             aria-label="Decrease quantity"
+                            disabled={item.quantity <= 1}
                           >
-                            <Minus className="h-3 w-3" />
+                            <Minus className="h-3.5 w-3.5" />
                           </button>
-                          <span className="px-2 text-xs font-medium min-w-[24px] text-center">
+                          <span className="px-3 text-sm font-semibold min-w-[32px] text-center">
                             {item.quantity}
                           </span>
                           <button
                             onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.size, item.color)}
-                            className="p-1 hover:bg-accent transition-colors"
+                            className="p-2 hover:bg-primary/10 active:bg-primary/20 transition-colors"
                             aria-label="Increase quantity"
                           >
-                            <Plus className="h-3 w-3" />
+                            <Plus className="h-3.5 w-3.5" />
                           </button>
                         </div>
                         
-                        <p className="text-xs font-semibold">
+                        <p className="text-sm font-bold text-primary">
                           {formatPrice(item.price * item.quantity, locale)}
                         </p>
                       </div>
@@ -180,8 +206,9 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
                     {/* Remove Button */}
                     <button
                       onClick={() => removeItem(item.id, item.size, item.color)}
-                      className="flex-shrink-0 p-2 hover:bg-background rounded-md transition-colors text-destructive self-start"
+                      className="absolute top-3 right-3 p-1.5 hover:bg-destructive/10 rounded-md transition-colors text-muted-foreground hover:text-destructive group/remove"
                       aria-label="Remove item"
+                      title={locale === 'el' ? 'Αφαίρεση' : 'Remove'}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -193,24 +220,39 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
 
           {/* Footer with Total & Actions */}
           {items.length > 0 && (
-            <div className="border-t p-4 space-y-4">
+            <div className="border-t bg-muted/30 p-4 space-y-4">
               {/* Total */}
-              <div className="flex justify-between items-center text-lg font-bold">
-                <span>{locale === 'el' ? 'Σύνολο' : 'Total'}</span>
-                <span className="text-primary">{formatPrice(getTotal(), locale)}</span>
+              <div className="flex justify-between items-center px-1">
+                <span className="text-base font-semibold text-muted-foreground">
+                  {locale === 'el' ? 'Σύνολο' : 'Total'}
+                </span>
+                <span className="text-xl font-bold text-primary">
+                  {formatPrice(getTotal(), locale)}
+                </span>
               </div>
 
               {/* Action Buttons */}
-              <div className="space-y-2">
+              <div className="space-y-2.5">
                 <Link href="/checkout" onClick={onClose} className="block">
-                  <Button size="lg" className="w-full">
-                    {locale === 'el' ? 'Ολοκλήρωση Παραγγελίας' : 'Proceed to Checkout'}
-                    <ArrowRight className="ml-2 h-5 w-5" />
+                  <Button 
+                    size="lg" 
+                    className="w-full group shadow-sm hover:shadow-md transition-all duration-200"
+                  >
+                    <span className="flex-1 text-center">
+                      {locale === 'el' ? 'Ολοκλήρωση Παραγγελίας' : 'Proceed to Checkout'}
+                    </span>
+                    <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </Link>
                 <Link href="/shop" onClick={onClose} className="block">
-                  <Button variant="outline" className="w-full">
-                    {locale === 'el' ? 'Συνεχίστε τις Αγορές' : 'Continue Shopping'}
+                  <Button 
+                    variant="outline" 
+                    size="lg" 
+                    className="w-full border-2 group"
+                  >
+                    <span className="flex-1 text-center">
+                      {locale === 'el' ? 'Συνεχίστε τις Αγορές' : 'Continue Shopping'}
+                    </span>
                     <ShoppingBag className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
