@@ -128,7 +128,6 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="Τινκερμπελ" />
         
         {/* Additional Facebook/Messenger specific meta tags */}
-        <meta property="fb:app_id" content="" />
         <meta property="og:image:secure_url" content={`${siteUrl}/share_soscial_screen.png`} />
         
         {/* Structured Data for Google */}
