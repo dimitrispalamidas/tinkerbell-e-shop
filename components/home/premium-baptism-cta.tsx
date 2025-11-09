@@ -59,12 +59,12 @@ export function PremiumBaptismCta({ locale }: PremiumBaptismCtaProps) {
         </p>
 
         {/* Title */}
-        <h2 className="text-3xl md:text-5xl lg:text-6xl font-light mb-6 text-cream-50 tracking-tight leading-tight">
+        <h2 className="text-4xl md:text-6xl lg:text-7xl font-light mb-6 text-cream-50 tracking-tight leading-tight">
           {locale === 'el' ? 'Βαπτιστικά & Στολισμοί' : 'Baptism & Decorations'}
         </h2>
 
         {/* Description */}
-        <p className="text-base md:text-lg text-cream-200/90 mb-10 md:mb-12 max-w-2xl mx-auto leading-relaxed font-light px-4">
+        <p className="text-base md:text-lg text-cream-50 mb-10 md:mb-12 max-w-2xl mx-auto leading-relaxed font-light px-4 drop-shadow-lg">
           {locale === 'el'
             ? 'Δημιουργούμε μοναδικά βαπτιστικά πακέτα και στολισμούς που μετατρέπουν κάθε γιορτή σε αξέχαστη εμπειρία γεμάτη συγκίνηση και ομορφιά'
             : 'We create unique baptism packages and decorations that transform every celebration into an unforgettable experience filled with emotion and beauty'
