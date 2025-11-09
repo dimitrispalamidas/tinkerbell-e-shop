@@ -166,13 +166,22 @@ select:focus-visible {
   box-shadow: 0 0 0 1px var(--primary) !important;
 }
 
-/* Hide all video controls and play buttons */
+/* AGGRESSIVE: Hide all video controls and play buttons on all platforms */
+video {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
 video::-webkit-media-controls {
   display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 video::-webkit-media-controls-enclosure {
   display: none !important;
+  -webkit-appearance: none !important;
 }
 
 video::-webkit-media-controls-panel {
@@ -181,21 +190,55 @@ video::-webkit-media-controls-panel {
 
 video::-webkit-media-controls-play-button {
   display: none !important;
+  -webkit-appearance: none !important;
 }
 
 video::-webkit-media-controls-start-playback-button {
   display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
 }
 
 video::-internal-media-controls-overlay-cast-button {
   display: none !important;
 }
 
-/* Remove the big play button on mobile */
+/* Remove the BIG play button overlay on mobile iOS/Android */
 video::-webkit-media-controls-overlay-play-button {
   display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 video::--webkit-media-controls-overlay-enclosure {
+  display: none !important;
+}
+
+video::-webkit-media-controls-timeline {
+  display: none !important;
+}
+
+video::-webkit-media-controls-current-time-display {
+  display: none !important;
+}
+
+video::-webkit-media-controls-time-remaining-display {
+  display: none !important;
+}
+
+video::-webkit-media-controls-mute-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-toggle-closed-captions-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-volume-slider {
+  display: none !important;
+}
+
+video::-webkit-media-controls-fullscreen-button {
   display: none !important;
 }

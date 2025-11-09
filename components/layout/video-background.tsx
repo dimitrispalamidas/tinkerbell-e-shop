@@ -18,6 +18,7 @@ export function VideoBackground() {
   const [isLoading, setIsLoading] = useState(true);
   const [nextVideoReady, setNextVideoReady] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Aggressive play strategy for iOS 12+
   const attemptPlay = (video: HTMLVideoElement, retries = 5) => {
@@ -25,6 +26,7 @@ export function VideoBackground() {
       video.play()
         .then(() => {
           console.log('✅ Video playing successfully');
+          setIsPlaying(true);
         })
         .catch((error) => {
           console.log(`⚠️ Play attempt ${attempt} failed:`, error.message);
@@ -36,13 +38,29 @@ export function VideoBackground() {
     tryPlay(1);
   };
 
+  // Handle manual play from overlay tap
+  const handlePlayClick = () => {
+    const video = activeVideo === 1 ? video1Ref.current : video2Ref.current;
+    if (video) {
+      setHasInteracted(true);
+      attemptPlay(video);
+    }
+  };
+
   // Initial load - first video
   useEffect(() => {
     const video = video1Ref.current;
     if (!video) return;
 
+    // Force load the video
+    video.load();
+
     const handleCanPlay = () => {
       setIsLoading(false);
+      attemptPlay(video);
+    };
+
+    const handleLoadedData = () => {
       attemptPlay(video);
     };
 
@@ -50,16 +68,20 @@ export function VideoBackground() {
       attemptPlay(video);
     };
 
+    // Try to remove any controls that might interfere
+    video.removeAttribute('controls');
+
     video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     
-    // Multiple aggressive attempts for newer iOS
+    // Try to play on load - a few attempts
     setTimeout(() => attemptPlay(video), 100);
     setTimeout(() => attemptPlay(video), 500);
-    setTimeout(() => attemptPlay(video), 1000);
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
   }, []);
@@ -93,19 +115,22 @@ export function VideoBackground() {
       
       const video = activeVideo === 1 ? video1Ref.current : video2Ref.current;
       if (video && video.paused) {
+        console.log('🎮 User interacted, forcing play');
         attemptPlay(video);
       }
     };
 
-    // Listen for any user interaction
-    const events = ['touchstart', 'click', 'scroll'];
+    // Listen for ANY user interaction - more events
+    const events = ['touchstart', 'touchmove', 'touchend', 'click', 'scroll', 'keydown', 'mousemove'];
     events.forEach(event => {
       document.addEventListener(event, handleUserInteraction, { once: true, passive: true });
+      window.addEventListener(event, handleUserInteraction, { once: true, passive: true });
     });
 
     return () => {
       events.forEach(event => {
         document.removeEventListener(event, handleUserInteraction);
+        window.removeEventListener(event, handleUserInteraction);
       });
     };
   }, [activeVideo, hasInteracted]);
@@ -155,40 +180,56 @@ export function VideoBackground() {
       {/* Video 1 */}
       <video
         ref={video1Ref}
-        src={videos[0]}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-play-button]:hidden ${
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
           activeVideo === 1 ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
         }`}
         autoPlay
         muted
         playsInline
-        preload="metadata"
+        loop
         disablePictureInPicture
         disableRemotePlayback
         onEnded={handleVideoEnd}
+        onPlaying={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+        style={{ 
+          pointerEvents: 'none',
+          objectFit: 'cover'
+        }}
+      >
+        <source src={videos[0]} type="video/mp4" />
+      </video>
+
+      {/* Video 2 */}
+      <video
+        ref={video2Ref}
+        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
+          activeVideo === 2 ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
+        }`}
+        muted
+        playsInline
+        loop
+        disablePictureInPicture
+        disableRemotePlayback
+        onEnded={handleVideoEnd}
+        onPlaying={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
         style={{ 
           pointerEvents: 'none',
           objectFit: 'cover'
         }}
       />
 
-      {/* Video 2 */}
-      <video
-        ref={video2Ref}
-        className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-play-button]:hidden ${
-          activeVideo === 2 ? 'opacity-100 z-[1]' : 'opacity-0 z-0'
-        }`}
-        muted
-        playsInline
-        preload="metadata"
-        disablePictureInPicture
-        disableRemotePlayback
-        onEnded={handleVideoEnd}
-        style={{ 
-          pointerEvents: 'none',
-          objectFit: 'cover'
-        }}
-      />
+      {/* COMPLETELY INVISIBLE tap area for iOS - NO BUTTON VISIBLE */}
+      {!isPlaying && !isLoading && (
+        <div
+          onClick={handlePlayClick}
+          onTouchStart={handlePlayClick}
+          className="absolute inset-0 z-10 w-full h-full bg-transparent cursor-default md:hidden"
+          aria-label="Tap anywhere to play video"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        />
+      )}
 
       {/* Overlay για καλύτερη αναγνωσιμότητα του text */}
       <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/35 z-[2] pointer-events-none" />

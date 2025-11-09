@@ -7,6 +7,7 @@ export function HeroVideoBackground() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Aggressive play strategy for iOS 12+
   const attemptPlay = (video: HTMLVideoElement, retries = 5) => {
@@ -14,6 +15,7 @@ export function HeroVideoBackground() {
       video.play()
         .then(() => {
           console.log('✅ Hero video playing successfully');
+          setIsPlaying(true);
         })
         .catch((error) => {
           console.log(`⚠️ Hero play attempt ${attempt} failed:`, error.message);
@@ -25,12 +27,28 @@ export function HeroVideoBackground() {
     tryPlay(1);
   };
 
+  // Handle manual play from overlay tap
+  const handlePlayClick = () => {
+    const video = videoRef.current;
+    if (video) {
+      setHasInteracted(true);
+      attemptPlay(video);
+    }
+  };
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    // Force load the video
+    video.load();
+
     const handleCanPlay = () => {
       setIsLoading(false);
+      attemptPlay(video);
+    };
+
+    const handleLoadedData = () => {
       attemptPlay(video);
     };
 
@@ -38,16 +56,20 @@ export function HeroVideoBackground() {
       attemptPlay(video);
     };
 
+    // Try to remove any controls that might interfere
+    video.removeAttribute('controls');
+
     video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     
-    // Multiple aggressive attempts for newer iOS
+    // Try to play on load - a few attempts
     setTimeout(() => attemptPlay(video), 100);
     setTimeout(() => attemptPlay(video), 500);
-    setTimeout(() => attemptPlay(video), 1000);
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
   }, []);
@@ -81,19 +103,22 @@ export function HeroVideoBackground() {
       
       const video = videoRef.current;
       if (video && video.paused) {
+        console.log('🎮 Hero: User interacted, forcing play');
         attemptPlay(video);
       }
     };
 
-    // Listen for any user interaction
-    const events = ['touchstart', 'click', 'scroll'];
+    // Listen for ANY user interaction - more events
+    const events = ['touchstart', 'touchmove', 'touchend', 'click', 'scroll', 'keydown', 'mousemove'];
     events.forEach(event => {
       document.addEventListener(event, handleUserInteraction, { once: true, passive: true });
+      window.addEventListener(event, handleUserInteraction, { once: true, passive: true });
     });
 
     return () => {
       events.forEach(event => {
         document.removeEventListener(event, handleUserInteraction);
+        window.removeEventListener(event, handleUserInteraction);
       });
     };
   }, [hasInteracted]);
@@ -103,14 +128,15 @@ export function HeroVideoBackground() {
       {/* Video - NO PLAY BUTTON */}
       <video
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-play-button]:hidden"
+        className="absolute inset-0 w-full h-full object-cover"
         autoPlay
         loop
         muted
         playsInline
-        preload="metadata"
         disablePictureInPicture
         disableRemotePlayback
+        onPlaying={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
         style={{ 
           pointerEvents: 'none',
           objectFit: 'cover'
@@ -118,6 +144,17 @@ export function HeroVideoBackground() {
       >
         <source src="/heroVideo.mp4" type="video/mp4" />
       </video>
+
+      {/* COMPLETELY INVISIBLE tap area for iOS - NO BUTTON VISIBLE */}
+      {!isPlaying && !isLoading && (
+        <div
+          onClick={handlePlayClick}
+          onTouchStart={handlePlayClick}
+          className="absolute inset-0 z-10 w-full h-full bg-transparent cursor-default md:hidden"
+          aria-label="Tap anywhere to play video"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        />
+      )}
 
       {/* Premium subtle overlay - soft gradient for elegant readability */}
       <div className="absolute inset-0 bg-gradient-to-b from-sage-900/20 via-transparent to-sage-900/40 pointer-events-none" />
