@@ -4,7 +4,26 @@ import { useEffect, useRef, useState } from 'react';
 
 export function HeroVideoBackground() {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // Aggressive play strategy for iOS 12+
+  const attemptPlay = (video: HTMLVideoElement, retries = 5) => {
+    const tryPlay = (attempt: number) => {
+      video.play()
+        .then(() => {
+          console.log('✅ Hero video playing successfully');
+        })
+        .catch((error) => {
+          console.log(`⚠️ Hero play attempt ${attempt} failed:`, error.message);
+          if (attempt < retries) {
+            setTimeout(() => tryPlay(attempt + 1), 300 * attempt);
+          }
+        });
+    };
+    tryPlay(1);
+  };
 
   useEffect(() => {
     const video = videoRef.current;
@@ -12,24 +31,75 @@ export function HeroVideoBackground() {
 
     const handleCanPlay = () => {
       setIsLoading(false);
-      // Force play on mobile
-      video.play().catch(() => {
-        // If autoplay fails, that's ok
-      });
+      attemptPlay(video);
+    };
+
+    const handleLoadedMetadata = () => {
+      attemptPlay(video);
     };
 
     video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
     
-    // Force play on load for mobile
-    setTimeout(() => {
-      video.play().catch(() => {});
-    }, 100);
+    // Multiple aggressive attempts for newer iOS
+    setTimeout(() => attemptPlay(video), 100);
+    setTimeout(() => attemptPlay(video), 500);
+    setTimeout(() => attemptPlay(video), 1000);
 
-    return () => video.removeEventListener('canplay', handleCanPlay);
+    return () => {
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
   }, []);
 
+  // Intersection Observer - play when visible (for iOS 12+)
+  useEffect(() => {
+    const video = videoRef.current;
+    const container = containerRef.current;
+    if (!video || !container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && video.paused) {
+            attemptPlay(video);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  // User interaction fallback for strict autoplay policies
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      if (hasInteracted) return;
+      setHasInteracted(true);
+      
+      const video = videoRef.current;
+      if (video && video.paused) {
+        attemptPlay(video);
+      }
+    };
+
+    // Listen for any user interaction
+    const events = ['touchstart', 'click', 'scroll'];
+    events.forEach(event => {
+      document.addEventListener(event, handleUserInteraction, { once: true, passive: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleUserInteraction);
+      });
+    };
+  }, [hasInteracted]);
+
   return (
-    <div className="absolute inset-0 overflow-hidden">
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden">
       {/* Video - NO PLAY BUTTON */}
       <video
         ref={videoRef}
@@ -38,11 +108,9 @@ export function HeroVideoBackground() {
         loop
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         disablePictureInPicture
         disableRemotePlayback
-        webkit-playsinline="true"
-        x5-playsinline="true"
         style={{ 
           pointerEvents: 'none',
           objectFit: 'cover'

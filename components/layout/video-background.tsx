@@ -12,10 +12,29 @@ const videos = [
 export function VideoBackground() {
   const video1Ref = useRef<HTMLVideoElement>(null);
   const video2Ref = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [activeVideo, setActiveVideo] = useState<1 | 2>(1);
   const [isLoading, setIsLoading] = useState(true);
   const [nextVideoReady, setNextVideoReady] = useState(false);
+  const [hasInteracted, setHasInteracted] = useState(false);
+
+  // Aggressive play strategy for iOS 12+
+  const attemptPlay = (video: HTMLVideoElement, retries = 5) => {
+    const tryPlay = (attempt: number) => {
+      video.play()
+        .then(() => {
+          console.log('✅ Video playing successfully');
+        })
+        .catch((error) => {
+          console.log(`⚠️ Play attempt ${attempt} failed:`, error.message);
+          if (attempt < retries) {
+            setTimeout(() => tryPlay(attempt + 1), 300 * attempt);
+          }
+        });
+    };
+    tryPlay(1);
+  };
 
   // Initial load - first video
   useEffect(() => {
@@ -24,21 +43,72 @@ export function VideoBackground() {
 
     const handleCanPlay = () => {
       setIsLoading(false);
-      // Force play on mobile
-      video.play().catch(() => {
-        // If autoplay fails, that's ok
-      });
+      attemptPlay(video);
+    };
+
+    const handleLoadedMetadata = () => {
+      attemptPlay(video);
     };
 
     video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
     
-    // Force play on load for mobile
-    setTimeout(() => {
-      video.play().catch(() => {});
-    }, 100);
+    // Multiple aggressive attempts for newer iOS
+    setTimeout(() => attemptPlay(video), 100);
+    setTimeout(() => attemptPlay(video), 500);
+    setTimeout(() => attemptPlay(video), 1000);
 
-    return () => video.removeEventListener('canplay', handleCanPlay);
+    return () => {
+      video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+    };
   }, []);
+
+  // Intersection Observer - play when visible (for iOS 12+)
+  useEffect(() => {
+    const video = video1Ref.current;
+    const container = containerRef.current;
+    if (!video || !container) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            attemptPlay(video);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  // User interaction fallback for strict autoplay policies
+  useEffect(() => {
+    const handleUserInteraction = () => {
+      if (hasInteracted) return;
+      setHasInteracted(true);
+      
+      const video = activeVideo === 1 ? video1Ref.current : video2Ref.current;
+      if (video && video.paused) {
+        attemptPlay(video);
+      }
+    };
+
+    // Listen for any user interaction
+    const events = ['touchstart', 'click', 'scroll'];
+    events.forEach(event => {
+      document.addEventListener(event, handleUserInteraction, { once: true, passive: true });
+    });
+
+    return () => {
+      events.forEach(event => {
+        document.removeEventListener(event, handleUserInteraction);
+      });
+    };
+  }, [activeVideo, hasInteracted]);
 
   // Preload next video when current video is playing
   useEffect(() => {
@@ -73,17 +143,15 @@ export function VideoBackground() {
     // Switch active video for cross-fade
     setActiveVideo(prev => prev === 1 ? 2 : 1);
     
-    // Play the next video
+    // Play the next video with aggressive retry
     const nextVideoRef = activeVideo === 1 ? video2Ref.current : video1Ref.current;
     if (nextVideoRef) {
-      nextVideoRef.play().catch(error => {
-        console.error('Error playing next video:', error);
-      });
+      attemptPlay(nextVideoRef);
     }
   };
 
   return (
-    <div className="absolute inset-0 overflow-hidden bg-black">
+    <div ref={containerRef} className="absolute inset-0 overflow-hidden bg-black">
       {/* Video 1 */}
       <video
         ref={video1Ref}
@@ -94,11 +162,9 @@ export function VideoBackground() {
         autoPlay
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         disablePictureInPicture
         disableRemotePlayback
-        webkit-playsinline="true"
-        x5-playsinline="true"
         onEnded={handleVideoEnd}
         style={{ 
           pointerEvents: 'none',
@@ -114,11 +180,9 @@ export function VideoBackground() {
         }`}
         muted
         playsInline
-        preload="auto"
+        preload="metadata"
         disablePictureInPicture
         disableRemotePlayback
-        webkit-playsinline="true"
-        x5-playsinline="true"
         onEnded={handleVideoEnd}
         style={{ 
           pointerEvents: 'none',
