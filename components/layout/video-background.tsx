@@ -186,7 +186,6 @@ export function VideoBackground() {
         autoPlay
         muted
         playsInline
-        loop
         disablePictureInPicture
         disableRemotePlayback
         onEnded={handleVideoEnd}
@@ -208,7 +207,6 @@ export function VideoBackground() {
         }`}
         muted
         playsInline
-        loop
         disablePictureInPicture
         disableRemotePlayback
         onEnded={handleVideoEnd}
