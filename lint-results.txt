@@ -1,0 +1,248 @@
+﻿
+> tinkerbell@0.1.0 lint D:\Projects\personal\tinkerbell
+> eslint
+
+
+D:\Projects\personal\tinkerbell\app\(auth)\admin-login\page.tsx
+  56:15  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  84:14  warning  'error' is defined but never used          @typescript-eslint/no-unused-vars
+  84:21  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\(public)\checkout\success\page.tsx
+    4:10  warning  'useTranslations' is defined but never used  @typescript-eslint/no-unused-vars
+  182:41  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\(public)\gallery\baptism\page.tsx
+  13:9   warning  'locale' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  15:10  warning  'items' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  15:38  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\(public)\gallery\decorations\page.tsx
+  13:9   warning  'locale' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  15:10  warning  'items' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  15:38  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\(public)\product\[id]\product-client.tsx
+  33:9  warning  The 'getCartQuantity' function makes the dependencies of useEffect Hook (at line 52) change on every render. To fix this, wrap the definition of 'getCartQuantity' in its own useCallback() Hook                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/exhaustive-deps
+  47:7  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Projects\personal\tinkerbell\app\(public)\product\[id]\product-client.tsx:47:7
+  45 |       const cartQty = getCartQuantity(selectedSize, selectedColor);
+  46 |       // Available stock = database stock - what's already in cart
+> 47 |       setAvailableStock(Math.max(0, dbStock - cartQty));
+     |       ^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  48 |       setQuantity(1); // Reset quantity when variant changes
+  49 |     } else {
+  50 |       setAvailableStock(0);  react-hooks/set-state-in-effect
+  54:9  warning  'getVariantStock' is assigned a value but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+
+D:\Projects\personal\tinkerbell\app\(public)\shop\page.tsx
+  95:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\admin\analytics\page.tsx
+  116:6   warning  React Hook useEffect has a missing dependency: 'fetchAnalytics'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  177:64  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  188:49  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  211:34  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  237:39  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  275:11  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  392:38  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  514:42  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\admin\gallery\[id]\page.tsx
+   39:6   warning  React Hook useEffect has a missing dependency: 'fetchGalleryItem'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  119:21  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  152:21  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  223:38  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  278:21  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\admin\gallery\new\page.tsx
+  103:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  215:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\admin\gallery\page.tsx
+   49:6   warning  React Hook useEffect has a missing dependency: 'fetchGalleryItems'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  131:27  error    Unexpected any. Specify a different type                                                                              @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\admin\orders\[id]\page.tsx
+   4:10  warning  'useRouter' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-unused-vars
+  65:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Projects\personal\tinkerbell\app\admin\orders\[id]\page.tsx:65:5
+  63 |
+  64 |   useEffect(() => {
+> 65 |     fetchOrder();
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  66 |   }, [unwrappedParams.id]);
+  67 |
+  68 |   // Check if there are any changes  react-hooks/set-state-in-effect
+  66:6   warning  React Hook useEffect has a missing dependency: 'fetchOrder'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+
+D:\Projects\personal\tinkerbell\app\admin\orders\page.tsx
+  17:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\admin\page.tsx
+   17:15  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   18:13  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   20:22  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   21:25  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   48:21  warning  'allPaidOrders' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   86:36  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  184:41  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  219:57  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  243:54  error    Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\admin\products\[id]\page.tsx
+   31:48  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+   65:6   warning  React Hook useEffect has a missing dependency: 'fetchProduct'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   91:14  warning  'error' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+  107:14  warning  'error' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+  125:14  warning  'error' is defined but never used                                                                                @typescript-eslint/no-unused-vars
+  187:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  227:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+  332:21  error    Unexpected any. Specify a different type                                                                         @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\admin\products\new\page.tsx
+   27:48  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   56:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+   72:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+   90:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  129:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  226:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\app\admin\products\page.tsx
+  23:15  error    Unexpected any. Specify a different type                                                                          @typescript-eslint/no-explicit-any
+  44:6   warning  React Hook useEffect has a missing dependency: 'fetchProducts'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\Projects\personal\tinkerbell\app\api\webhooks\viva\route.ts
+  9:27  warning  'req' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Projects\personal\tinkerbell\components\cart\mini-cart-sidebar.tsx
+  54:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Projects\personal\tinkerbell\components\cart\mini-cart-sidebar.tsx:54:5
+  52 |   // Prevent hydration mismatch
+  53 |   useEffect(() => {
+> 54 |     setMounted(true);
+     |     ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  55 |   }, []);
+  56 |
+  57 |   // Lock body scroll when sidebar is open  react-hooks/set-state-in-effect
+
+D:\Projects\personal\tinkerbell\components\checkout\boxnow-locker-list.tsx
+  168:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Projects\personal\tinkerbell\components\checkout\boxnow-locker-list.tsx:168:5
+  166 |
+  167 |   useEffect(() => {
+> 168 |     fetchLockers();
+      |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  169 |   }, []);
+  170 |
+  171 |   const filteredLockers = lockers.filter((locker) => {  react-hooks/set-state-in-effect
+
+D:\Projects\personal\tinkerbell\components\gallery\photo-lightbox.tsx
+  39:6  warning  React Hook useEffect has missing dependencies: 'goToNext', 'goToPrevious', and 'onClose'. Either include them or remove the dependency array. If 'onClose' changes too often, find the parent component that defines it and wrap that definition in useCallback  react-hooks/exhaustive-deps
+
+D:\Projects\personal\tinkerbell\components\home\featured-products-carousel.tsx
+  39:5  error    Error: Cannot access variable before it is declared
+
+`scrollToIndex` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+D:\Projects\personal\tinkerbell\components\home\featured-products-carousel.tsx:39:5
+  37 |   const scrollToNext = () => {
+  38 |     const nextIndex = (currentIndex + 1) % products.length;
+> 39 |     scrollToIndex(nextIndex);
+     |     ^^^^^^^^^^^^^ `scrollToIndex` accessed before it is declared
+  40 |   };
+  41 |
+  42 |   const startAutoRotate = () => {
+
+D:\Projects\personal\tinkerbell\components\home\featured-products-carousel.tsx:57:3
+  55 |   }, [currentIndex, products.length]);
+  56 |
+> 57 |   const scrollToIndex = (index: number) => {
+     |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 58 |     if (!scrollContainerRef.current) return;
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 59 |     
+     ΓÇª
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 66 |     setCurrentIndex(index);
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 67 |   };
+     | ^^^^^ `scrollToIndex` is declared here
+  68 |
+  69 |   const scrollToPrev = () => {
+  70 |     const prevIndex = (currentIndex - 1 + products.length) % products.length;  react-hooks/immutability
+  55:6  warning  React Hook useEffect has a missing dependency: 'startAutoRotate'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+
+D:\Projects\personal\tinkerbell\components\layout\footer.tsx
+  3:20  warning  'useEffect' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\Projects\personal\tinkerbell\components\layout\header.tsx
+  24:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\Projects\personal\tinkerbell\components\layout\header.tsx:24:5
+  22 |   
+  23 |   useEffect(() => {
+> 24 |     setItemCount(useCartStore.getState().getItemCount())
+     |     ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  25 |     const unsubscribe = useCartStore.subscribe((state) => {
+  26 |       setItemCount(state.getItemCount())
+  27 |     })  react-hooks/set-state-in-effect
+
+D:\Projects\personal\tinkerbell\lib\actions\send-order-email.ts
+  54:68  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\lib\actions\viva-wallet.ts
+   73:11  warning  'baseUrl' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  156:21  error    Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\lib\services\boxnow.ts
+  187:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  210:15  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\Projects\personal\tinkerbell\scripts\create-og-image.js
+  1:15  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  2:7   warning  'fs' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  2:12  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  3:14  error    A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+D:\Projects\personal\tinkerbell\scripts\upload-images.ts
+  31:13  warning  'data' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  44:19  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+Γ£û 80 problems (50 errors, 30 warnings)
+
+ΓÇëELIFECYCLEΓÇë Command failed with exit code 1.

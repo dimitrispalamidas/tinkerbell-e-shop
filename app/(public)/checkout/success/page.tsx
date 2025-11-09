@@ -5,7 +5,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, Package, ArrowRight, Loader2, Mail, Phone } from 'lucide-react';
+import { CheckCircle, ArrowRight, Loader2, Mail, Phone } from 'lucide-react';
 import { useCartStore } from '@/lib/store/cart';
 import { getOrderByVivaCode, getOrderByTransactionId, getLatestPaidOrder, type OrderData } from '@/lib/actions/get-order';
 import { formatPrice } from '@/lib/utils';
@@ -13,8 +13,6 @@ import Confetti from 'react-confetti';
 import { useWindowSize } from '@/hooks/use-window-size';
 
 export default function CheckoutSuccess() {
-  const t = useTranslations('checkout');
-  const tCommon = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
   const searchParams = useSearchParams();

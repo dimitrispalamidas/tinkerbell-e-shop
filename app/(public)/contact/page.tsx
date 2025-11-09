@@ -1,4 +1,3 @@
-import { useTranslations } from 'next-intl'
 import { getTranslations } from 'next-intl/server'
 import { Mail, Phone, Clock, MapPin } from 'lucide-react'
 

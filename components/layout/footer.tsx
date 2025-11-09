@@ -8,11 +8,7 @@ import { Mail, Phone, MapPin } from 'lucide-react'
 
 export function Footer() {
   const t = useTranslations('nav')
-  const [year, setYear] = useState(2024)
-
-  useEffect(() => {
-    setYear(new Date().getFullYear())
-  }, [])
+  const [year] = useState(() => new Date().getFullYear())
 
   return (
     <footer className="border-t bg-muted/50">

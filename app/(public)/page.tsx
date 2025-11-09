@@ -2,11 +2,10 @@ import { getTranslations, getLocale } from 'next-intl/server';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, Store, ShoppingBag, Baby } from 'lucide-react';
+import { ArrowRight, Baby } from 'lucide-react';
 import { BsBalloonHeart } from 'react-icons/bs';
 import { createClient } from '@/lib/supabase/server';
 import Image from 'next/image';
-import { formatPrice } from '@/lib/utils';
 import { VideoBackground } from '@/components/layout/video-background';
 import { FeaturedProductsCarousel } from '@/components/home/featured-products-carousel';
 
@@ -14,7 +13,6 @@ export default async function HomePage() {
   const locale = await getLocale();
   const t = await getTranslations('home');
   const tNav = await getTranslations('nav');
-  const tCommon = await getTranslations('common');
 
   const supabase = await createClient();
   

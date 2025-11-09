@@ -28,11 +28,16 @@ export function FeaturedProductsCarousel({ products }: Props) {
   const [isDragging, setIsDragging] = useState(false);
   const autoRotateInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Auto-rotate every 5 seconds
-  useEffect(() => {
-    startAutoRotate();
-    return () => stopAutoRotate();
-  }, [currentIndex, products.length]);
+  const stopAutoRotate = () => {
+    if (autoRotateInterval.current) {
+      clearInterval(autoRotateInterval.current);
+    }
+  };
+
+  const scrollToNext = () => {
+    const nextIndex = (currentIndex + 1) % products.length;
+    scrollToIndex(nextIndex);
+  };
 
   const startAutoRotate = () => {
     stopAutoRotate();
@@ -43,11 +48,11 @@ export function FeaturedProductsCarousel({ products }: Props) {
     }, 5000);
   };
 
-  const stopAutoRotate = () => {
-    if (autoRotateInterval.current) {
-      clearInterval(autoRotateInterval.current);
-    }
-  };
+  // Auto-rotate every 5 seconds
+  useEffect(() => {
+    startAutoRotate();
+    return () => stopAutoRotate();
+  }, [currentIndex, products.length]);
 
   const scrollToIndex = (index: number) => {
     if (!scrollContainerRef.current) return;
@@ -59,11 +64,6 @@ export function FeaturedProductsCarousel({ products }: Props) {
       behavior: 'smooth'
     });
     setCurrentIndex(index);
-  };
-
-  const scrollToNext = () => {
-    const nextIndex = (currentIndex + 1) % products.length;
-    scrollToIndex(nextIndex);
   };
 
   const scrollToPrev = () => {

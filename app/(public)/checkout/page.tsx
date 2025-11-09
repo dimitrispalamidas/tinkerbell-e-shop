@@ -23,7 +23,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const locale = useLocale();
   
-  const { items, getTotal, clearCart } = useCartStore();
+  const { items, getTotal } = useCartStore();
   const [step, setStep] = useState(1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<Record<string, boolean>>({});

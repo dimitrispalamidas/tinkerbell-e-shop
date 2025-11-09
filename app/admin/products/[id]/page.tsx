@@ -424,7 +424,7 @@ export default function EditProductPage() {
                   }}
                   onBlur={(e) => {
                     // Format on blur - convert comma to dot
-                    let value = e.target.value.replace(',', '.');
+                    const value = e.target.value.replace(',', '.');
                     const num = parseFloat(value);
                     if (!isNaN(num)) {
                       setFormData({ ...formData, price: num.toFixed(2) });

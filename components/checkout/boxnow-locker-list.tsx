@@ -124,10 +124,6 @@ export function BoxnowLockerList({ selectedLockerId, onSelectLocker, locale }: B
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  useEffect(() => {
-    fetchLockers();
-  }, []);
-
   const fetchLockers = async () => {
     try {
       setLoading(true);
@@ -149,7 +145,7 @@ export function BoxnowLockerList({ selectedLockerId, onSelectLocker, locale }: B
               return;
             }
           }
-        } catch (apiError) {
+        } catch {
           console.log('API not available, using mock data');
         }
       }
@@ -167,6 +163,10 @@ export function BoxnowLockerList({ selectedLockerId, onSelectLocker, locale }: B
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchLockers();
+  }, []);
 
   const filteredLockers = lockers.filter((locker) => {
     const searchLower = searchTerm.toLowerCase();

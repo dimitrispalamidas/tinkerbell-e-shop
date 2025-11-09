@@ -15,7 +15,6 @@ import type { Order, OrderItem } from '@/lib/types/database';
 
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
-  const router = useRouter();
   const t = useTranslations('admin');
   const tCommon = useTranslations('common');
   const locale = useLocale();
@@ -29,15 +28,6 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   // Store original data for comparison
   const [originalStatus, setOriginalStatus] = useState('');
   const [originalTrackingCode, setOriginalTrackingCode] = useState('');
-
-  useEffect(() => {
-    fetchOrder();
-  }, [unwrappedParams.id]);
-
-  // Check if there are any changes
-  const hasChanges = useMemo(() => {
-    return status !== originalStatus || trackingCode !== originalTrackingCode;
-  }, [status, trackingCode, originalStatus, originalTrackingCode]);
 
   const fetchOrder = async () => {
     const supabase = createClient();
@@ -70,6 +60,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     }
     setIsLoading(false);
   };
+
+  useEffect(() => {
+    fetchOrder();
+  }, [unwrappedParams.id]);
+
+  // Check if there are any changes
+  const hasChanges = useMemo(() => {
+    return status !== originalStatus || trackingCode !== originalTrackingCode;
+  }, [status, trackingCode, originalStatus, originalTrackingCode]);
 
   const handleUpdateOrder = async () => {
     const supabase = createClient();

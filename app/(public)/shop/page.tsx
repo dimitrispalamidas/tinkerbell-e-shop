@@ -14,7 +14,6 @@ export default async function ShopPage({
   const locale = await getLocale();
   const { type, category } = await searchParams;
   const t = await getTranslations('shop');
-  const tCommon = await getTranslations('common');
 
   const supabase = await createClient();
   

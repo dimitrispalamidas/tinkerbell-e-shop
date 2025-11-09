@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/lib/store/cart';
 import { toast } from 'sonner';
 import type { Product, ProductVariant } from '@/lib/types/database';
-import { formatPrice } from '@/lib/utils';
 import { ShoppingCart, Minus, Plus } from 'lucide-react';
 
 interface ProductClientProps {
@@ -50,28 +49,13 @@ export function ProductClient({ product, variants, locale, translations }: Produ
     } else {
       setAvailableStock(0);
     }
-  }, [selectedSize, selectedColor, variants, cartItems]);
+  }, [selectedSize, selectedColor, variants, cartItems, getCartQuantity]);
 
   const getVariantStock = (size: string, color: string): number => {
     const variant = variants.find(v => v.size === size && v.color === color);
     return variant?.stock || 0;
   };
 
-  const isVariantAvailable = (size?: string, color?: string): boolean => {
-    if (!size && !color) return true;
-    if (size && !selectedColor) {
-      // Check if this size has any color with stock
-      return variants.some(v => v.size === size && v.stock > 0);
-    }
-    if (color && !selectedSize) {
-      // Check if this color has any size with stock
-      return variants.some(v => v.color === color && v.stock > 0);
-    }
-    if (size && color) {
-      return getVariantStock(size, color) > 0;
-    }
-    return false;
-  };
 
   const handleAddToCart = () => {
     if (product.sizes.length > 0 && !selectedSize) {
