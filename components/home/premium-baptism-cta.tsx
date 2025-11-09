@@ -64,7 +64,7 @@ export function PremiumBaptismCta({ locale }: PremiumBaptismCtaProps) {
         </h2>
 
         {/* Description */}
-        <p className="text-base md:text-lg text-cream-50 mb-10 md:mb-12 max-w-2xl mx-auto leading-relaxed font-light px-4 drop-shadow-lg">
+        <p className="text-base md:text-lg text-cream-100 mb-10 md:mb-12 max-w-2xl mx-auto leading-relaxed font-light px-4 drop-shadow-lg">
           {locale === 'el'
             ? 'Δημιουργούμε μοναδικά βαπτιστικά πακέτα και στολισμούς που μετατρέπουν κάθε γιορτή σε αξέχαστη εμπειρία γεμάτη συγκίνηση και ομορφιά'
             : 'We create unique baptism packages and decorations that transform every celebration into an unforgettable experience filled with emotion and beauty'

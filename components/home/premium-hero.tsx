@@ -35,7 +35,7 @@ export function PremiumHero({ locale }: PremiumHeroProps) {
       </h1>
 
       {/* Description */}
-      <p className="text-base md:text-lg text-cream-200/80 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-light px-4">
+      <p className="text-base md:text-lg text-cream-100 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-light px-4 drop-shadow-lg">
         {locale === 'el' 
           ? 'Επιλεγμένα παιδικά ρούχα και αξεσουάρ, ολοκληρωμένα βαπτιστικά πακέτα και μοναδικοί στολισμοί που μετατρέπουν κάθε στιγμή σε αξέχαστη εμπειρία.'
           : 'Curated kids clothing and accessories, complete baptism packages, and unique decorations that turn every moment into an unforgettable experience.'
