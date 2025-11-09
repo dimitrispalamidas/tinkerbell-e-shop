@@ -7,6 +7,7 @@ import { BsBalloonHeart } from 'react-icons/bs';
 import { createClient } from '@/lib/supabase/server';
 import Image from 'next/image';
 import { VideoBackground } from '@/components/layout/video-background';
+import { HeroVideoBackground } from '@/components/layout/hero-video-background';
 import { FeaturedProductsCarousel } from '@/components/home/featured-products-carousel';
 
 export default async function HomePage() {
@@ -23,22 +24,10 @@ export default async function HomePage() {
 
   return (
     <div className="flex flex-col">
-      {/* Hero Section με Static Background */}
+      {/* Hero Section με Video Background */}
       <section className="relative flex items-center min-h-[calc(100vh-4rem)]">
-        {/* Static Background Image */}
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="/hero-children2.jpg"
-            alt="Τινκερμπελ - Παιδικά Ρούχα, Βαπτιστικά, Στολισμοί"
-            fill
-            className="object-cover object-center"
-            style={{ objectPosition: 'center 40%' }}
-            priority
-            quality={90}
-          />
-          {/* Overlay για καλύτερη αναγνωσιμότητα */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/40 to-black/60" />
-        </div>
+        {/* Video Background */}
+        <HeroVideoBackground />
         
         {/* Content */}
         <div className="container mx-auto px-4 relative z-10">
