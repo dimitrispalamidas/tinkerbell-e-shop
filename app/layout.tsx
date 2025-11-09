@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     description: 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά ρούχα, παπούτσια, και βαπτιστικά πακέτα. Βαπτιστικά, στολισμοί εκδηλώσεων με αγάπη και φροντίδα.',
     images: [
       {
-        url: '/og-homepage.jpg',
+        url: '/share_soscial_screen.png',
         width: 1200,
         height: 630,
         alt: 'Τινκερμπελ - Παιδικά & Εφηβικά Ρούχα και Παπούτσια',
@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'Τινκερμπελ - Παιδικά & Εφηβικά Ρούχα και Παπούτσια',
     description: 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά ρούχα, παπούτσια, και βαπτιστικά πακέτα.',
-    images: ['/og-homepage.jpg'],
+    images: ['/share_soscial_screen.png'],
   },
   robots: {
     index: true,
