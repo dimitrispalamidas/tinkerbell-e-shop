@@ -292,3 +292,24 @@ video::-webkit-media-controls-volume-slider {
 video::-webkit-media-controls-fullscreen-button {
   display: none !important;
 }
+
+/* iOS-specific: Force hide overlay and controls */
+video[webkit-playsinline] {
+  -webkit-appearance: none !important;
+}
+
+video::-webkit-media-controls-overlay-enclosure {
+  display: none !important;
+  -webkit-appearance: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Completely remove play button for iOS */
+video::-internal-media-controls-overlay-cast-button {
+  display: none !important;
+}
+
+video[poster] {
+  object-fit: cover !important;
+}
