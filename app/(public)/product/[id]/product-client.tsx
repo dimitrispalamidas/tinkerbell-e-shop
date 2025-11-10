@@ -18,6 +18,7 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
   const [selectedColor, setSelectedColor] = useState<string>('');
   const [quantity, setQuantity] = useState(1);
   const [availableStock, setAvailableStock] = useState(0);
+  const [isAddingToCart, setIsAddingToCart] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
   const cartItems = useCartStore((state) => state.items);
 
@@ -28,6 +29,24 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
     );
     return cartItem?.quantity || 0;
   };
+
+  // Auto-select first available color on mount
+  useEffect(() => {
+    if (product.colors && product.colors.length > 0 && !selectedColor) {
+      // Find the first color that has available stock
+      const firstAvailableColor = product.colors.find(color => {
+        return variants.some(v => {
+          if (v.color !== color) return false;
+          const cartQty = getCartQuantity(v.size, v.color);
+          return v.stock > cartQty;
+        });
+      });
+      
+      if (firstAvailableColor) {
+        setSelectedColor(firstAvailableColor);
+      }
+    }
+  }, [product.colors, variants]);
 
   // Update available stock when size/color changes
   useEffect(() => {
@@ -41,7 +60,7 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
     } else {
       setAvailableStock(0);
     }
-  }, [selectedSize, selectedColor, variants]);
+  }, [selectedSize, selectedColor, variants, cartItems]);
 
   const getVariantStock = (size: string, color: string): number => {
     const variant = variants.find(v => v.size === size && v.color === color);
@@ -50,6 +69,11 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
 
 
   const handleAddToCart = () => {
+    // Prevent multiple clicks while adding to cart
+    if (isAddingToCart) {
+      return;
+    }
+
     if (product.sizes.length > 0 && !selectedSize) {
       toast.error(locale === 'el' ? 'Επιλέξτε μέγεθος' : 'Select size');
       return;
@@ -71,18 +95,28 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
       }
     }
 
-    addItem({
-      id: product.id,
-      name: locale === 'el' ? product.name_el : product.name_en,
-      price: product.price,
-      quantity,
-      size: selectedSize || undefined,
-      color: selectedColor || undefined,
-      image: product.images[0] || undefined,
-      stock: availableStock, // Pass current stock for validation
-    });
+    // Set loading state to prevent multiple additions
+    setIsAddingToCart(true);
 
-    toast.success(locale === 'el' ? 'Προστέθηκε στο καλάθι!' : 'Added to cart!');
+    try {
+      addItem({
+        id: product.id,
+        name: locale === 'el' ? product.name_el : product.name_en,
+        price: product.price,
+        quantity,
+        size: selectedSize || undefined,
+        color: selectedColor || undefined,
+        image: product.images[0] || undefined,
+        stock: availableStock, // Pass current stock for validation
+      });
+
+      toast.success(locale === 'el' ? 'Προστέθηκε στο καλάθι!' : 'Added to cart!');
+    } finally {
+      // Reset loading state after a short delay to prevent rapid clicking
+      setTimeout(() => {
+        setIsAddingToCart(false);
+      }, 500);
+    }
   };
 
   // Get available sizes based on selected color
@@ -260,12 +294,15 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
       {/* Add to Cart Button */}
       <Button
         size="lg"
-        className="w-full bg-magenta-600 hover:bg-magenta-700 text-white py-6 rounded-full text-base md:text-lg font-light tracking-wide shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group"
+        className="w-full bg-magenta-600 hover:bg-magenta-700 text-white py-6 rounded-full text-base md:text-lg font-light tracking-wide shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         onClick={handleAddToCart}
-        disabled={variants.length > 0 && availableStock === 0}
+        disabled={isAddingToCart || (variants.length > 0 && availableStock === 0)}
       >
         <ShoppingCart className="mr-3 h-5 w-5 group-hover:scale-110 transition-transform" />
-        {locale === 'el' ? 'Προσθήκη στο Καλάθι' : 'Add to Cart'}
+        {isAddingToCart 
+          ? (locale === 'el' ? 'Προσθήκη...' : 'Adding...')
+          : (locale === 'el' ? 'Προσθήκη στο Καλάθι' : 'Add to Cart')
+        }
       </Button>
     </div>
   );
