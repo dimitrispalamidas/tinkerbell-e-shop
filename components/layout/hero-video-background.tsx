@@ -63,7 +63,8 @@ export function HeroVideoBackground() {
     // Try to remove any controls that might interfere
     video.removeAttribute('controls');
     
-    // Extra iOS-specific attributes to prevent play button
+    // Extra iOS-specific attributes to prevent play button (CRITICAL!)
+    video.setAttribute('playsinline', ''); // lowercase for iOS - CRITICAL FIX!
     video.setAttribute('webkit-playsinline', 'true');
     video.setAttribute('x-webkit-airplay', 'deny');
 
