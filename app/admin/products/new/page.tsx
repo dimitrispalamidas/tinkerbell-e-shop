@@ -8,12 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { ArrowLeft, Upload, X, Languages } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { VariantManager, type Variant } from '@/components/admin/variant-manager';
 import { translateText } from '@/lib/utils/translate';
+import { Color } from '@/lib/types/database';
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -23,6 +26,8 @@ export default function NewProductPage() {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [variants, setVariants] = useState<Variant[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
+  const [colors, setColors] = useState<Color[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
   const [translating, setTranslating] = useState({ name: false, description: false });
   const [formData, setFormData] = useState({
     sku: '',
@@ -39,6 +44,7 @@ export default function NewProductPage() {
 
   useEffect(() => {
     fetchCategories();
+    fetchColors();
   }, []);
 
   const fetchCategories = async () => {
@@ -54,6 +60,29 @@ export default function NewProductPage() {
     } catch (error) {
       console.error('Failed to fetch categories');
     }
+  };
+
+  const fetchColors = async () => {
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('colors')
+        .select('*')
+        .eq('is_active', true)
+        .order('name_el');
+      
+      if (data) setColors(data);
+    } catch (error) {
+      console.error('Failed to fetch colors');
+    }
+  };
+
+  const handleColorToggle = (colorName: string) => {
+    setSelectedColors(prev => 
+      prev.includes(colorName)
+        ? prev.filter(c => c !== colorName)
+        : [...prev, colorName]
+    );
   };
 
   const handleTranslateName = async () => {
@@ -184,7 +213,7 @@ export default function NewProductPage() {
           price: parseFloat(formData.price.replace(',', '.')),
           category_id: formData.category_id || null,
           sizes: formData.sizes ? formData.sizes.split(',').map(s => s.trim()) : [],
-          colors: formData.colors ? formData.colors.split(',').map(c => c.trim()) : [],
+          colors: selectedColors,
           is_active: formData.is_active && totalStock > 0,
           status: productStatus,
           images: imageUrls,
@@ -499,13 +528,35 @@ export default function NewProductPage() {
                 <label className="block text-sm font-medium mb-2">
                   {locale === 'el' ? 'Χρώματα' : 'Colors'}
                 </label>
-                <Input
-                  value={formData.colors}
-                  onChange={(e) => setFormData({ ...formData, colors: e.target.value })}
-                  placeholder="Ροζ, Μπλε, Πράσινο"
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  {locale === 'el' ? 'Χωρίστε με κόμμα (π.χ. Κόκκινο, Μπλε, Πράσινο)' : 'Comma separated (e.g. Red, Blue, Green)'}
+                {colors.length > 0 ? (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 border rounded-lg p-4 max-h-[300px] overflow-y-auto">
+                    {colors.map((color) => (
+                      <div key={color.id} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`color-${color.id}`}
+                          checked={selectedColors.includes(color.name_el)}
+                          onCheckedChange={() => handleColorToggle(color.name_el)}
+                        />
+                        <div 
+                          className="w-5 h-5 rounded border-2 border-gray-200 flex-shrink-0"
+                          style={{ backgroundColor: color.hex_value }}
+                        />
+                        <Label
+                          htmlFor={`color-${color.id}`}
+                          className="text-sm cursor-pointer flex-1"
+                        >
+                          {locale === 'el' ? color.name_el : color.name_en}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {locale === 'el' ? 'Δεν υπάρχουν διαθέσιμα χρώματα. Προσθέστε χρώματα από τη σελίδα Χρώματα.' : 'No colors available. Add colors from the Colors page.'}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-2">
+                  {locale === 'el' ? `Επιλεγμένα: ${selectedColors.length}` : `Selected: ${selectedColors.length}`}
                 </p>
               </div>
             </CardContent>
@@ -513,7 +564,7 @@ export default function NewProductPage() {
 
           <VariantManager
             sizes={formData.sizes ? formData.sizes.split(',').map(s => s.trim()).filter(s => s) : []}
-            colors={formData.colors ? formData.colors.split(',').map(c => c.trim()).filter(c => c) : []}
+            colors={selectedColors}
             variants={variants}
             onChange={setVariants}
           />

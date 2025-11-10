@@ -7,7 +7,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Package, ShoppingCart, Image as ImageIcon, LogOut, Menu, X, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Image as ImageIcon, LogOut, Menu, X, BarChart3, Palette } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function AdminNav() {
@@ -28,6 +28,7 @@ export function AdminNav() {
     { href: '/admin', label: locale === 'el' ? 'Πίνακας Ελέγχου' : 'Dashboard', icon: LayoutDashboard },
     { href: '/admin/analytics', label: locale === 'el' ? 'Πωλήσεις' : 'Sales', icon: BarChart3 },
     { href: '/admin/products', label: locale === 'el' ? 'Προϊόντα' : 'Products', icon: Package },
+    { href: '/admin/colors', label: locale === 'el' ? 'Χρώματα' : 'Colors', icon: Palette },
     { href: '/admin/orders', label: locale === 'el' ? 'Παραγγελίες' : 'Orders', icon: ShoppingCart },
     { href: '/admin/gallery', label: locale === 'el' ? 'Γκαλερί' : 'Gallery', icon: ImageIcon },
   ];

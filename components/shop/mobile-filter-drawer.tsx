@@ -42,6 +42,17 @@ export function MobileFilterDrawer({
     selectedPriceRange[0] !== minPrice || 
     selectedPriceRange[1] !== maxPrice;
 
+  // Check if there are any available filters
+  // If no sizes, colors, it means no products exist
+  const hasAvailableFilters = 
+    availableSizes.length > 0 || 
+    availableColors.length > 0;
+
+  // Don't show mobile filter button if there are no available filters
+  if (!hasAvailableFilters) {
+    return null;
+  }
+
   return (
     <>
       {/* Mobile Filter Button */}

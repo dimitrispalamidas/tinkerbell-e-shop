@@ -272,7 +272,7 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
           <div className="flex gap-8">
             {/* Desktop Sidebar Filters */}
             <aside className="hidden lg:block w-72 flex-shrink-0">
-              <div className="sticky top-32 bg-white rounded-2xl shadow-lg p-6 border border-sage-100">
+              <div className="sticky top-32 max-h-[calc(100vh-10rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-sage-300 scrollbar-track-sage-50 hover:scrollbar-thumb-sage-400 bg-white/80 backdrop-blur-sm border-r border-sage-200 pr-6">
                 <ProductFilters
                   locale={locale}
                   minPrice={minPrice}

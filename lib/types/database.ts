@@ -11,6 +11,16 @@ export type Category = {
   updated_at: string
 }
 
+export type Color = {
+  id: string
+  name_el: string
+  name_en: string
+  hex_value: string
+  is_active: boolean
+  created_at: string
+  updated_at: string
+}
+
 export type Product = {
   id: string
   sku: string

@@ -17,11 +17,11 @@ const Slider = React.forwardRef<
     )}
     {...props}
   >
-    <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-sage-100">
-      <SliderPrimitive.Range className="absolute h-full bg-magenta-600" />
+    <SliderPrimitive.Track className="relative h-2 w-full grow overflow-hidden rounded-full bg-sage-50">
+      <SliderPrimitive.Range className="absolute h-full bg-sage-400 transition-colors hover:bg-sage-500" />
     </SliderPrimitive.Track>
-    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-magenta-600 bg-white ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-magenta-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
-    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-magenta-600 bg-white ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-magenta-400 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" />
+    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-sage-400 bg-white ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-300 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:border-sage-500" />
+    <SliderPrimitive.Thumb className="block h-5 w-5 rounded-full border-2 border-sage-400 bg-white ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sage-300 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:border-sage-500" />
   </SliderPrimitive.Root>
 ))
 Slider.displayName = SliderPrimitive.Root.displayName

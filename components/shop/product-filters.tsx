@@ -7,6 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { X, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
+import { createClient } from '@/lib/supabase/client';
+import { Color } from '@/lib/types/database';
 
 interface ProductFiltersProps {
   locale: string;
@@ -43,12 +45,31 @@ export function ProductFilters({
   const [localPriceRange, setLocalPriceRange] = useState(selectedPriceRange);
   const [minInputValue, setMinInputValue] = useState(selectedPriceRange[0].toString());
   const [maxInputValue, setMaxInputValue] = useState(selectedPriceRange[1].toString());
+  const [colorsFromDB, setColorsFromDB] = useState<Color[]>([]);
 
   useEffect(() => {
     setLocalPriceRange(selectedPriceRange);
     setMinInputValue(selectedPriceRange[0].toString());
     setMaxInputValue(selectedPriceRange[1].toString());
   }, [selectedPriceRange]);
+
+  useEffect(() => {
+    fetchColors();
+  }, []);
+
+  const fetchColors = async () => {
+    try {
+      const supabase = createClient();
+      const { data } = await supabase
+        .from('colors')
+        .select('*')
+        .eq('is_active', true);
+      
+      if (data) setColorsFromDB(data);
+    } catch (error) {
+      console.error('Failed to fetch colors from database');
+    }
+  };
 
   const handleSizeToggle = (size: string) => {
     const newSizes = selectedSizes.includes(size)
@@ -79,6 +100,12 @@ export function ProductFilters({
     selectedColors.length > 0 || 
     selectedPriceRange[0] !== minPrice || 
     selectedPriceRange[1] !== maxPrice;
+
+  // Check if there are any available filters
+  // If no sizes, colors, AND the price range is default (0-100), it means no products exist
+  const hasAvailableFilters = 
+    availableSizes.length > 0 || 
+    availableColors.length > 0;
 
   // Translate size labels
   const getSizeLabel = (size: string) => {
@@ -144,6 +171,91 @@ export function ProductFilters({
       ? (colorMap[color.toLowerCase()]?.el || color)
       : (colorMap[color.toLowerCase()]?.en || color);
   };
+
+  // Get color hex code for display
+  const getColorHex = (color: string) => {
+    // First, try to find color from database
+    const colorFromDB = colorsFromDB.find(c => 
+      c.name_el.toLowerCase() === color.toLowerCase() || 
+      c.name_en.toLowerCase() === color.toLowerCase()
+    );
+    
+    if (colorFromDB) {
+      return colorFromDB.hex_value;
+    }
+
+    // Fallback to hardcoded mapping for backwards compatibility
+    const normalizedColor = color.toLowerCase();
+    const hexMap: Record<string, string> = {
+      // English names
+      'white': '#FFFFFF',
+      'black': '#000000',
+      'red': '#DC2626',
+      'blue': '#3B82F6',
+      'green': '#10B981',
+      'yellow': '#FCD34D',
+      'pink': '#EC4899',
+      'purple': '#A855F7',
+      'orange': '#F97316',
+      'brown': '#92400E',
+      'gray': '#6B7280',
+      'grey': '#6B7280',
+      'beige': '#F5F5DC',
+      'navy': '#1E3A8A',
+      'cream': '#FFFDD0',
+      'gold': '#FFD700',
+      'silver': '#C0C0C0',
+      // Greek names
+      'λευκό': '#FFFFFF',
+      'μαύρο': '#000000',
+      'κόκκινο': '#DC2626',
+      'μπλε': '#3B82F6',
+      'πράσινο': '#10B981',
+      'κίτρινο': '#FCD34D',
+      'ροζ': '#EC4899',
+      'μωβ': '#A855F7',
+      'πορτοκαλί': '#F97316',
+      'καφέ': '#92400E',
+      'γκρι': '#6B7280',
+      'μπεζ': '#F5F5DC',
+      'μπλε σκούρο': '#1E3A8A',
+      'κρεμ': '#FFFDD0',
+      'χρυσό': '#FFD700',
+      'ασημί': '#C0C0C0',
+      'φούξια': '#D946EF',
+    };
+
+    return hexMap[normalizedColor] || '#9CA3AF'; // default gray
+  };
+
+  // If no filters are available, show a message
+  if (!hasAvailableFilters) {
+    return (
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between pb-4 border-b border-sage-200">
+          <div className="flex items-center gap-2">
+            <SlidersHorizontal className="h-5 w-5 text-sage-700" />
+            <h2 className="text-lg font-light text-sage-900">
+              {locale === 'el' ? 'Φίλτρα' : 'Filters'}
+            </h2>
+          </div>
+        </div>
+        
+        {/* No filters available message */}
+        <div className="py-8 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-sage-50 mb-4">
+            <SlidersHorizontal className="h-8 w-8 text-sage-400" />
+          </div>
+          <p className="text-sm text-sage-600 font-light">
+            {locale === 'el' 
+              ? 'Δεν υπάρχουν διαθέσιμα φίλτρα για αυτή την κατηγορία' 
+              : 'No filters available for this category'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -350,6 +462,11 @@ export function ProductFilters({
                     checked={selectedColors.includes(color)}
                     onCheckedChange={() => handleColorToggle(color)}
                     className="border-sage-300 data-[state=checked]:bg-magenta-600 data-[state=checked]:border-magenta-600"
+                  />
+                  <div 
+                    className="w-5 h-5 rounded border-2 border-sage-200 flex-shrink-0 shadow-sm"
+                    style={{ backgroundColor: getColorHex(color) }}
+                    aria-hidden="true"
                   />
                   <Label
                     htmlFor={`color-${color}`}
