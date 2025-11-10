@@ -8,12 +8,6 @@ export function HeroVideoBackground() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isClient, setIsClient] = useState(false);
-
-  // Wait for client-side hydration
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   // Aggressive play strategy for iOS 12+
   const attemptPlay = (video: HTMLVideoElement, retries = 5) => {
@@ -43,8 +37,6 @@ export function HeroVideoBackground() {
   };
 
   useEffect(() => {
-    if (!isClient) return; // Wait for hydration
-    
     const video = videoRef.current;
     if (!video) return;
 
@@ -89,7 +81,7 @@ export function HeroVideoBackground() {
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
-  }, [isClient]);
+  }, []);
 
   // Intersection Observer - play when visible (for iOS 12+)
   useEffect(() => {
@@ -179,9 +171,7 @@ export function HeroVideoBackground() {
           objectFit: 'cover'
         }}
       >
-        <source src="/homevideo.mp4" type="video/mp4" />
-        {/* Empty captions track for accessibility compliance */}
-        <track kind="captions" label="No audio" srcLang="en" />
+        <source src="/heroVideo.mp4" type="video/mp4" />
       </video>
 
       {/* COMPLETELY INVISIBLE tap area for iOS - NO BUTTON VISIBLE */}
