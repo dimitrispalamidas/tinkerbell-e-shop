@@ -40,10 +40,6 @@ export function HeroVideoBackground() {
     const video = videoRef.current;
     if (!video) return;
 
-    // Force muted state and load (critical for iOS autoplay)
-    video.muted = true;
-    video.defaultMuted = true;
-    
     // Force load the video
     video.load();
 
@@ -62,19 +58,15 @@ export function HeroVideoBackground() {
 
     // Try to remove any controls that might interfere
     video.removeAttribute('controls');
-    
-    // Extra iOS-specific attributes to prevent play button (CRITICAL!)
-    video.setAttribute('playsinline', ''); // lowercase for iOS - CRITICAL FIX!
-    video.setAttribute('webkit-playsinline', 'true');
-    video.setAttribute('x-webkit-airplay', 'deny');
 
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     
-    // Try to play on load - a few attempts
+    // Multiple aggressive attempts for newer iOS
     setTimeout(() => attemptPlay(video), 100);
     setTimeout(() => attemptPlay(video), 500);
+    setTimeout(() => attemptPlay(video), 1000);
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
@@ -92,7 +84,7 @@ export function HeroVideoBackground() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+          if (entry.isIntersecting && video.paused) {
             attemptPlay(video);
           }
         });
@@ -118,8 +110,8 @@ export function HeroVideoBackground() {
       }
     };
 
-    // Listen for ANY user interaction
-    const events = ['touchstart', 'click', 'scroll'];
+    // Listen for ANY user interaction - more events
+    const events = ['touchstart', 'touchmove', 'touchend', 'click', 'scroll', 'keydown', 'mousemove'];
     events.forEach(event => {
       document.addEventListener(event, handleUserInteraction, { once: true, passive: true });
       window.addEventListener(event, handleUserInteraction, { once: true, passive: true });
@@ -138,18 +130,16 @@ export function HeroVideoBackground() {
       {/* Video - NO PLAY BUTTON */}
       <video
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover [&::-webkit-media-controls]:hidden [&::-webkit-media-controls-play-button]:hidden"
         autoPlay
         loop
         muted
         playsInline
-        preload="auto"
-        controls={false}
+        preload="metadata"
         disablePictureInPicture
         disableRemotePlayback
         onPlaying={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
-        aria-hidden="true"
         style={{ 
           pointerEvents: 'none',
           objectFit: 'cover'
