@@ -10,7 +10,7 @@ export function HeroVideoBackground() {
   const [isPlaying, setIsPlaying] = useState(false);
 
   // Aggressive play strategy for iOS 12+
-  const attemptPlay = (video: HTMLVideoElement, retries = 10) => {
+  const attemptPlay = (video: HTMLVideoElement, retries = 5) => {
     const tryPlay = (attempt: number) => {
       video.play()
         .then(() => {
@@ -20,8 +20,7 @@ export function HeroVideoBackground() {
         .catch((error) => {
           console.log(`⚠️ Hero play attempt ${attempt} failed:`, error.message);
           if (attempt < retries) {
-            // Exponential backoff with more attempts
-            setTimeout(() => tryPlay(attempt + 1), 200 * attempt);
+            setTimeout(() => tryPlay(attempt + 1), 300 * attempt);
           }
         });
     };
@@ -41,35 +40,31 @@ export function HeroVideoBackground() {
     const video = videoRef.current;
     if (!video) return;
 
-    // Force muted state FIRST (critical for iOS autoplay)
+    // Force muted state and load (critical for iOS autoplay)
     video.muted = true;
     video.defaultMuted = true;
-    video.volume = 0;
     
     // Force load the video
     video.load();
 
     const handleCanPlay = () => {
-      console.log('📺 Hero video can play - attempting autoplay');
       setIsLoading(false);
       attemptPlay(video);
     };
 
     const handleLoadedData = () => {
-      console.log('📺 Hero video data loaded - attempting autoplay');
       attemptPlay(video);
     };
 
     const handleLoadedMetadata = () => {
-      console.log('📺 Hero video metadata loaded - attempting autoplay');
-      setIsLoading(false);
       attemptPlay(video);
     };
 
     // Try to remove any controls that might interfere
     video.removeAttribute('controls');
     
-    // Extra iOS-specific attributes to prevent play button
+    // Extra iOS-specific attributes to prevent play button (CRITICAL!)
+    video.setAttribute('playsinline', ''); // lowercase for iOS
     video.setAttribute('webkit-playsinline', 'true');
     video.setAttribute('x-webkit-airplay', 'deny');
 
@@ -77,11 +72,9 @@ export function HeroVideoBackground() {
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     
-    // Aggressive autoplay attempts
+    // Try to play on load - a few attempts
     setTimeout(() => attemptPlay(video), 100);
-    setTimeout(() => attemptPlay(video), 300);
     setTimeout(() => attemptPlay(video), 500);
-    setTimeout(() => attemptPlay(video), 1000);
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
@@ -90,7 +83,7 @@ export function HeroVideoBackground() {
     };
   }, []);
 
-  // Intersection Observer - play when visible
+  // Intersection Observer - play when visible (for iOS 12+)
   useEffect(() => {
     const video = videoRef.current;
     const container = containerRef.current;
@@ -99,8 +92,7 @@ export function HeroVideoBackground() {
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && video.paused) {
-            console.log('📺 Hero video is visible, attempting to play');
+          if (entry.isIntersecting) {
             attemptPlay(video);
           }
         });
@@ -111,6 +103,23 @@ export function HeroVideoBackground() {
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
+
+  // Persistent retry loop for iOS - keep trying until video plays
+  useEffect(() => {
+    if (isPlaying) return;
+
+    const video = videoRef.current;
+    if (!video) return;
+
+    const retryInterval = setInterval(() => {
+      if (!isPlaying && video.paused && video.readyState >= 2) {
+        console.log('🔄 Retry: Attempting to play hero video...');
+        attemptPlay(video);
+      }
+    }, 2000); // Try every 2 seconds
+
+    return () => clearInterval(retryInterval);
+  }, [isPlaying]);
 
   // User interaction fallback for strict autoplay policies
   useEffect(() => {
@@ -150,7 +159,6 @@ export function HeroVideoBackground() {
         loop
         muted
         playsInline
-        webkit-playsinline="true"
         preload="auto"
         controls={false}
         disablePictureInPicture

@@ -76,11 +76,13 @@ export function VideoBackground() {
     // Try to remove any controls that might interfere
     video.removeAttribute('controls');
     
-    // Extra iOS-specific attributes for both videos
+    // Extra iOS-specific attributes for both videos (CRITICAL!)
+    video.setAttribute('playsinline', ''); // lowercase for iOS
     video.setAttribute('webkit-playsinline', 'true');
     video.setAttribute('x-webkit-airplay', 'deny');
     if (video2) {
       video2.removeAttribute('controls');
+      video2.setAttribute('playsinline', ''); // lowercase for iOS
       video2.setAttribute('webkit-playsinline', 'true');
       video2.setAttribute('x-webkit-airplay', 'deny');
       // Force muted state for video2 (critical for iOS autoplay)
@@ -203,7 +205,6 @@ export function VideoBackground() {
         autoPlay
         muted
         playsInline
-        webkit-playsinline="true"
         preload="auto"
         controls={false}
         disablePictureInPicture
@@ -227,7 +228,6 @@ export function VideoBackground() {
         }`}
         muted
         playsInline
-        webkit-playsinline="true"
         preload="auto"
         controls={false}
         disablePictureInPicture
