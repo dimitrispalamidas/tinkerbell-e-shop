@@ -76,7 +76,7 @@ export function PremiumBaptismCta({ locale }: PremiumBaptismCtaProps) {
           <Link href="/gallery/baptism">
             <Button
               size="lg"
-              className="bg-cream-50 hover:bg-cream-100 text-sage-900 shadow-2xl px-8 py-6 text-base md:text-lg font-light tracking-wide transition-all duration-300 hover:scale-105 group"
+              className="w-64 bg-cream-50 hover:bg-cream-100 text-sage-900 shadow-2xl px-8 py-6 text-base md:text-lg font-light tracking-wide transition-all duration-300 hover:scale-105 group"
             >
               <Baby className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
               {locale === 'el' ? 'Βάπτιση' : 'Baptism'}
@@ -86,7 +86,7 @@ export function PremiumBaptismCta({ locale }: PremiumBaptismCtaProps) {
             <Button
               size="lg"
               variant="outline"
-              className="border-2 border-cream-100/50 bg-transparent hover:bg-cream-50/10 text-cream-50 shadow-xl px-8 py-6 text-base md:text-lg font-light tracking-wide backdrop-blur-sm transition-all duration-300 hover:border-cream-50 group"
+              className="w-64 border-2 border-cream-100/50 bg-transparent hover:bg-cream-50/10 text-cream-50 shadow-xl px-8 py-6 text-base md:text-lg font-light tracking-wide backdrop-blur-sm transition-all duration-300 hover:border-cream-50 group"
             >
               <BsBalloonHeart className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform duration-300" />
               {locale === 'el' ? 'Διακόσμηση' : 'Decorations'}

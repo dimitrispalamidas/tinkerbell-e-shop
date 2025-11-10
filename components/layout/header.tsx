@@ -5,11 +5,12 @@ import { useLocale } from 'next-intl'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCartStore } from '@/lib/store/cart'
-import { ShoppingCart, Globe, LogIn, Menu, X, Home, Store, Image as ImageIcon, Mail, Baby } from 'lucide-react'
+import { ShoppingCart, Globe, LogIn, Menu, X, Home, Store, Image as ImageIcon, Mail, Baby, Shirt, Footprints, ChevronDown } from 'lucide-react'
 import { BsBalloonHeart } from 'react-icons/bs'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
 import { MiniCartSidebar } from '@/components/cart/mini-cart-sidebar'
+import { createClient } from '@/lib/supabase/client'
 
 export function Header() {
   const locale = useLocale()
@@ -17,6 +18,9 @@ export function Header() {
   const [itemCount, setItemCount] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
+  const [categories, setCategories] = useState<any[]>([])
+  const [shopSubmenuOpen, setShopSubmenuOpen] = useState(false)
+  const [gallerySubmenuOpen, setGallerySubmenuOpen] = useState(false)
   
   useEffect(() => {
     setItemCount(useCartStore.getState().getItemCount())
@@ -24,6 +28,23 @@ export function Header() {
       setItemCount(state.getItemCount())
     })
     return unsubscribe
+  }, [])
+
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const supabase = createClient()
+      const { data } = await supabase
+        .from('categories')
+        .select('*')
+        .order('type', { ascending: true })
+        .order('name_el', { ascending: true })
+      
+      if (data) {
+        setCategories(data)
+      }
+    }
+    fetchCategories()
   }, [])
 
   const toggleLocale = async () => {
@@ -61,28 +82,82 @@ export function Header() {
             <Home className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
             {locale === 'el' ? 'Αρχική' : 'Home'}
           </Link>
-          <Link href="/shop" className="group flex items-center gap-2 text-sage-800 font-light tracking-wide transition-all duration-300 hover:text-sage-600">
-            <Store className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
-            {locale === 'el' ? 'Κατάστημα' : 'Shop'}
-          </Link>
+          
+          {/* Shop Dropdown */}
+          <div className="relative group">
+            <button className="flex items-center gap-2 text-sage-800 font-light tracking-wide transition-all duration-300 hover:text-sage-600 py-2">
+              <Store className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
+              {locale === 'el' ? 'Κατάστημα' : 'Shop'}
+            </button>
+            <div className="absolute left-0 top-full pt-2 hidden group-hover:block">
+              <div className="w-64 rounded-xl shadow-xl bg-white border border-sage-200/30 overflow-hidden">
+                <div className="py-2">
+                  {/* All Products Link */}
+                  <Link href="/shop" className="block px-4 py-3 text-base text-sage-800 hover:bg-sage-50 transition-colors flex items-center gap-3 font-light border-b border-sage-100">
+                    <Store className="h-4 w-4" />
+                    {locale === 'el' ? 'Όλα τα Προϊόντα' : 'All Products'}
+                  </Link>
+                  
+                  {/* Clothing Section */}
+                  <div className="px-4 pt-3 pb-1">
+                    <div className="flex items-center gap-2 text-xs font-medium text-sage-600 uppercase tracking-wider mb-2">
+                      <Shirt className="h-3.5 w-3.5" />
+                      {locale === 'el' ? 'Ρούχα' : 'Clothing'}
+                    </div>
+                    {categories.filter(cat => cat.type === 'clothing').map((cat) => (
+                      <Link 
+                        key={cat.id}
+                        href={`/shop?category=${cat.id}`} 
+                        className="block px-2 py-2 text-sm text-sage-700 hover:bg-sage-50 hover:text-sage-900 transition-colors rounded-md font-light"
+                      >
+                        {locale === 'el' ? cat.name_el : cat.name_en}
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Shoes Section */}
+                  <div className="px-4 pt-2 pb-3">
+                    <div className="flex items-center gap-2 text-xs font-medium text-sage-600 uppercase tracking-wider mb-2">
+                      <Footprints className="h-3.5 w-3.5" />
+                      {locale === 'el' ? 'Παπούτσια' : 'Shoes'}
+                    </div>
+                    {categories.filter(cat => cat.type === 'shoes').map((cat) => (
+                      <Link 
+                        key={cat.id}
+                        href={`/shop?category=${cat.id}`} 
+                        className="block px-2 py-2 text-sm text-sage-700 hover:bg-sage-50 hover:text-sage-900 transition-colors rounded-md font-light"
+                      >
+                        {locale === 'el' ? cat.name_el : cat.name_en}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Gallery Dropdown */}
           <div className="relative group">
             <button className="flex items-center gap-2 text-sage-800 font-light tracking-wide transition-all duration-300 hover:text-sage-600 py-2">
               <ImageIcon className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
               {locale === 'el' ? 'Γκαλερί' : 'Gallery'}
             </button>
-            <div className="absolute left-0 top-full w-56 rounded-xl shadow-xl bg-white border border-sage-200/30 hidden group-hover:block mt-2 overflow-hidden">
-              <div className="py-2">
-                <Link href="/gallery/decorations" className="block px-4 py-3 text-base text-sage-800 hover:bg-sage-50 transition-colors flex items-center gap-3 font-light">
-                  <BsBalloonHeart className="h-4 w-4" />
-                  {locale === 'el' ? 'Στολισμοί' : 'Decorations'}
-                </Link>
-                <Link href="/gallery/baptism" className="block px-4 py-3 text-base text-sage-800 hover:bg-sage-50 transition-colors flex items-center gap-3 font-light">
-                  <Baby className="h-4 w-4" />
-                  {locale === 'el' ? 'Βαπτιστικά' : 'Baptism'}
-                </Link>
+            <div className="absolute left-0 top-full pt-2 hidden group-hover:block">
+              <div className="w-56 rounded-xl shadow-xl bg-white border border-sage-200/30 overflow-hidden">
+                <div className="py-2">
+                  <Link href="/gallery/decorations" className="block px-4 py-3 text-base text-sage-800 hover:bg-sage-50 transition-colors flex items-center gap-3 font-light">
+                    <BsBalloonHeart className="h-4 w-4" />
+                    {locale === 'el' ? 'Στολισμοί' : 'Decorations'}
+                  </Link>
+                  <Link href="/gallery/baptism" className="block px-4 py-3 text-base text-sage-800 hover:bg-sage-50 transition-colors flex items-center gap-3 font-light">
+                    <Baby className="h-4 w-4" />
+                    {locale === 'el' ? 'Βαπτιστικά' : 'Baptism'}
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
+
           <Link href="/contact" className="group flex items-center gap-2 text-sage-800 font-light tracking-wide transition-all duration-300 hover:text-sage-600">
             <Mail className="h-4 w-4 transition-transform duration-300 group-hover:scale-110" />
             {locale === 'el' ? 'Επικοινωνία' : 'Contact'}
@@ -164,35 +239,103 @@ export function Header() {
               <Home className="h-5 w-5" />
               {locale === 'el' ? 'Αρχική' : 'Home'}
             </Link>
-            <Link 
-              href="/shop" 
-              className="text-base py-3 px-3 rounded-lg transition-all duration-300 text-sage-800 hover:bg-sage-50 hover:text-sage-900 flex items-center gap-3 font-light"
-              onClick={closeMobileMenu}
-            >
-              <Store className="h-5 w-5" />
-              {locale === 'el' ? 'Κατάστημα' : 'Shop'}
-            </Link>
+            
+            {/* Shop with Categories */}
             <div className="flex flex-col space-y-1">
-              <span className="text-base py-3 px-3 font-light text-sage-700 flex items-center gap-3">
-                <ImageIcon className="h-5 w-5" />
-                {locale === 'el' ? 'Γκαλερί' : 'Gallery'}
-              </span>
-              <Link 
-                href="/gallery/decorations" 
-                className="text-sm py-2 px-3 pl-12 rounded-lg transition-all duration-300 text-sage-700 hover:bg-sage-50 hover:text-sage-900 flex items-center gap-2 font-light"
-                onClick={closeMobileMenu}
+              <button 
+                onClick={() => setShopSubmenuOpen(!shopSubmenuOpen)}
+                className="text-base py-3 px-3 font-light text-sage-800 flex items-center justify-between gap-3 rounded-lg hover:bg-sage-50 transition-all duration-300"
               >
-                <BsBalloonHeart className="h-4 w-4" />
-                {locale === 'el' ? 'Στολισμοί' : 'Decorations'}
-              </Link>
-              <Link 
-                href="/gallery/baptism" 
-                className="text-sm py-2 px-3 pl-12 rounded-lg transition-all duration-300 text-sage-700 hover:bg-sage-50 hover:text-sage-900 flex items-center gap-2 font-light"
-                onClick={closeMobileMenu}
+                <span className="flex items-center gap-3">
+                  <Store className="h-5 w-5" />
+                  {locale === 'el' ? 'Κατάστημα' : 'Shop'}
+                </span>
+                <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${shopSubmenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {shopSubmenuOpen && (
+                <>
+                  <Link 
+                    href="/shop" 
+                    className="text-sm py-2 px-3 pl-12 rounded-lg transition-all duration-300 text-sage-700 hover:bg-sage-50 hover:text-sage-900 flex items-center gap-2 font-light"
+                    onClick={closeMobileMenu}
+                  >
+                    <Store className="h-4 w-4" />
+                    {locale === 'el' ? 'Όλα τα Προϊόντα' : 'All Products'}
+                  </Link>
+                  
+                  {/* Clothing */}
+                  <div className="pl-12 py-1">
+                    <div className="flex items-center gap-2 text-xs font-medium text-sage-600 uppercase tracking-wider px-3 py-1">
+                      <Shirt className="h-3 w-3" />
+                      {locale === 'el' ? 'Ρούχα' : 'Clothing'}
+                    </div>
+                    {categories.filter(cat => cat.type === 'clothing').map((cat) => (
+                      <Link 
+                        key={cat.id}
+                        href={`/shop?category=${cat.id}`} 
+                        className="text-sm py-2 px-3 rounded-lg transition-all duration-300 text-sage-600 hover:bg-sage-50 hover:text-sage-900 flex items-center font-light"
+                        onClick={closeMobileMenu}
+                      >
+                        {locale === 'el' ? cat.name_el : cat.name_en}
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Shoes */}
+                  <div className="pl-12 py-1">
+                    <div className="flex items-center gap-2 text-xs font-medium text-sage-600 uppercase tracking-wider px-3 py-1">
+                      <Footprints className="h-3 w-3" />
+                      {locale === 'el' ? 'Παπούτσια' : 'Shoes'}
+                    </div>
+                    {categories.filter(cat => cat.type === 'shoes').map((cat) => (
+                      <Link 
+                        key={cat.id}
+                        href={`/shop?category=${cat.id}`} 
+                        className="text-sm py-2 px-3 rounded-lg transition-all duration-300 text-sage-600 hover:bg-sage-50 hover:text-sage-900 flex items-center font-light"
+                        onClick={closeMobileMenu}
+                      >
+                        {locale === 'el' ? cat.name_el : cat.name_en}
+                      </Link>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Gallery with Submenu */}
+            <div className="flex flex-col space-y-1">
+              <button 
+                onClick={() => setGallerySubmenuOpen(!gallerySubmenuOpen)}
+                className="text-base py-3 px-3 font-light text-sage-800 flex items-center justify-between gap-3 rounded-lg hover:bg-sage-50 transition-all duration-300"
               >
-                <Baby className="h-4 w-4" />
-                {locale === 'el' ? 'Βαπτιστικά' : 'Baptism'}
-              </Link>
+                <span className="flex items-center gap-3">
+                  <ImageIcon className="h-5 w-5" />
+                  {locale === 'el' ? 'Γκαλερί' : 'Gallery'}
+                </span>
+                <ChevronDown className={`h-4 w-4 transition-transform duration-300 ${gallerySubmenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              
+              {gallerySubmenuOpen && (
+                <>
+                  <Link 
+                    href="/gallery/decorations" 
+                    className="text-sm py-2 px-3 pl-12 rounded-lg transition-all duration-300 text-sage-700 hover:bg-sage-50 hover:text-sage-900 flex items-center gap-2 font-light"
+                    onClick={closeMobileMenu}
+                  >
+                    <BsBalloonHeart className="h-4 w-4" />
+                    {locale === 'el' ? 'Στολισμοί' : 'Decorations'}
+                  </Link>
+                  <Link 
+                    href="/gallery/baptism" 
+                    className="text-sm py-2 px-3 pl-12 rounded-lg transition-all duration-300 text-sage-700 hover:bg-sage-50 hover:text-sage-900 flex items-center gap-2 font-light"
+                    onClick={closeMobileMenu}
+                  >
+                    <Baby className="h-4 w-4" />
+                    {locale === 'el' ? 'Βαπτιστικά' : 'Baptism'}
+                  </Link>
+                </>
+              )}
             </div>
             <Link 
               href="/contact" 

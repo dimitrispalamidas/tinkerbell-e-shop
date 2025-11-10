@@ -47,7 +47,7 @@ export function PremiumHero({ locale }: PremiumHeroProps) {
         <Link href="/shop">
           <Button 
             size="lg" 
-            className="bg-cream-50 hover:bg-cream-100 text-sage-900 shadow-2xl px-8 py-6 text-base md:text-lg font-light tracking-wide transition-all duration-300 hover:scale-105"
+            className="w-64 bg-cream-50 hover:bg-cream-100 text-sage-900 shadow-2xl px-8 py-6 text-base md:text-lg font-light tracking-wide transition-all duration-300 hover:scale-105 border-2 border-cream-50"
           >
             {locale === 'el' ? 'Εξερευνήστε τη Συλλογή' : 'Explore Collection'}
             <ArrowRight className="ml-2 h-5 w-5" />
@@ -57,7 +57,7 @@ export function PremiumHero({ locale }: PremiumHeroProps) {
           <Button 
             size="lg" 
             variant="outline"
-            className="border-2 border-cream-100/50 bg-transparent hover:bg-cream-50/10 text-cream-50 shadow-xl px-8 py-6 text-base md:text-lg font-light tracking-wide backdrop-blur-sm transition-all duration-300 hover:border-cream-50"
+            className="w-64 border-2 border-cream-100/50 bg-transparent hover:bg-cream-50/20 text-cream-50 hover:text-white shadow-xl px-8 py-6 text-base md:text-lg font-light tracking-wide backdrop-blur-sm transition-all duration-300 hover:border-cream-50 hover:shadow-2xl"
           >
             {locale === 'el' ? 'Βαπτιστικά & Στολισμοί' : 'Baptism & Decorations'}
           </Button>

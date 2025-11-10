@@ -78,7 +78,7 @@ export function PremiumCategories({ locale }: PremiumCategoriesProps) {
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
               }`}
             >
-              <div className="relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+              <div className="relative overflow-hidden rounded-2xl bg-white shadow-lg hover:shadow-2xl transition-all duration-500 hover:-translate-y-2 h-full flex flex-col">
                 {/* Image */}
                 <div className="aspect-[4/3] relative overflow-hidden">
                   <Image
@@ -97,11 +97,11 @@ export function PremiumCategories({ locale }: PremiumCategoriesProps) {
                 </div>
 
                 {/* Content */}
-                <div className="p-6 md:p-8">
+                <div className="p-6 md:p-8 flex-1 flex flex-col">
                   <h3 className="text-2xl md:text-3xl font-light text-sage-900 mb-2 tracking-tight">
                     {locale === 'el' ? category.titleEl : category.titleEn}
                   </h3>
-                  <p className="text-xs md:text-base text-sage-700/80 font-light leading-relaxed">
+                  <p className="text-sm md:text-base text-sage-700/80 font-light leading-relaxed">
                     {locale === 'el' ? category.descriptionEl : category.descriptionEn}
                   </p>
                 </div>
