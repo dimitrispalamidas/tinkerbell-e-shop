@@ -40,26 +40,11 @@ export function HeroVideoBackground() {
     const video = videoRef.current;
     if (!video) return;
 
-    // Force muted state and load (critical for iOS autoplay)
+    // Force muted state FIRST (critical for iOS autoplay)
     video.muted = true;
     video.defaultMuted = true;
+    video.volume = 0;
     
-    // Force load the video
-    video.load();
-
-    const handleCanPlay = () => {
-      setIsLoading(false);
-      attemptPlay(video);
-    };
-
-    const handleLoadedData = () => {
-      attemptPlay(video);
-    };
-
-    const handleLoadedMetadata = () => {
-      attemptPlay(video);
-    };
-
     // Try to remove any controls that might interfere
     video.removeAttribute('controls');
     
@@ -67,14 +52,65 @@ export function HeroVideoBackground() {
     video.setAttribute('playsinline', ''); // lowercase for iOS
     video.setAttribute('webkit-playsinline', 'true');
     video.setAttribute('x-webkit-airplay', 'deny');
+    video.setAttribute('muted', ''); // Force muted attribute
+    
+    // Force load the video
+    video.load();
+
+    const handleCanPlay = () => {
+      setIsLoading(false);
+      // Immediate aggressive play
+      video.play().then(() => {
+        console.log('✅ Hero video playing on canplay');
+        setIsPlaying(true);
+      }).catch(() => {
+        attemptPlay(video);
+      });
+    };
+
+    const handleLoadedData = () => {
+      // Immediate aggressive play
+      video.play().then(() => {
+        console.log('✅ Hero video playing on loadeddata');
+        setIsPlaying(true);
+      }).catch(() => {
+        attemptPlay(video);
+      });
+    };
+
+    const handleLoadedMetadata = () => {
+      // Immediate aggressive play
+      video.play().then(() => {
+        console.log('✅ Hero video playing on loadedmetadata');
+        setIsPlaying(true);
+      }).catch(() => {
+        attemptPlay(video);
+      });
+    };
 
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     
-    // Try to play on load - a few attempts
-    setTimeout(() => attemptPlay(video), 100);
-    setTimeout(() => attemptPlay(video), 500);
+    // SUPER AGGRESSIVE: Try to play immediately and repeatedly
+    setTimeout(() => {
+      video.play().catch(() => attemptPlay(video));
+    }, 50);
+    setTimeout(() => {
+      video.play().catch(() => attemptPlay(video));
+    }, 100);
+    setTimeout(() => {
+      video.play().catch(() => attemptPlay(video));
+    }, 200);
+    setTimeout(() => {
+      video.play().catch(() => attemptPlay(video));
+    }, 300);
+    setTimeout(() => {
+      video.play().catch(() => attemptPlay(video));
+    }, 500);
+    setTimeout(() => {
+      video.play().catch(() => attemptPlay(video));
+    }, 1000);
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
@@ -116,9 +152,30 @@ export function HeroVideoBackground() {
         console.log('🔄 Retry: Attempting to play hero video...');
         attemptPlay(video);
       }
-    }, 2000); // Try every 2 seconds
+    }, 1000); // Try every 1 second
 
     return () => clearInterval(retryInterval);
+  }, [isPlaying]);
+
+  // Smart trick: Simulate tiny interaction to unlock iOS autoplay
+  useEffect(() => {
+    if (isPlaying) return;
+
+    // Wait a bit for page to load, then simulate interaction
+    const timer = setTimeout(() => {
+      // Trigger a tiny scroll to "unlock" autoplay policy
+      window.scrollBy(0, 1);
+      setTimeout(() => window.scrollBy(0, -1), 50); // Scroll back
+      
+      // Then try to play
+      const video = videoRef.current;
+      if (video && video.paused) {
+        console.log('🎯 After micro-scroll, attempting play');
+        video.play().catch(() => attemptPlay(video));
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
   }, [isPlaying]);
 
   // User interaction fallback for strict autoplay policies
@@ -163,6 +220,10 @@ export function HeroVideoBackground() {
         controls={false}
         disablePictureInPicture
         disableRemotePlayback
+        onLoadedMetadata={(e) => {
+          const video = e.currentTarget;
+          video.play().catch(() => console.log('Autoplay blocked'));
+        }}
         onPlaying={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
         aria-hidden="true"
