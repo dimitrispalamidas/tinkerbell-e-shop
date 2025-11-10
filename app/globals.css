@@ -215,6 +215,19 @@ video::--webkit-media-controls-overlay-enclosure {
   display: none !important;
 }
 
+/* Extra iOS Safari play button hiding */
+video::-webkit-media-controls-wireless-playback-picker-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-picture-in-picture-button {
+  display: none !important;
+}
+
+video::-webkit-media-controls-fullscreen-button {
+  display: none !important;
+}
+
 video::-webkit-media-controls-timeline {
   display: none !important;
 }

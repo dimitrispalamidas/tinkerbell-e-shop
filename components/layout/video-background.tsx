@@ -50,6 +50,7 @@ export function VideoBackground() {
   // Initial load - first video
   useEffect(() => {
     const video = video1Ref.current;
+    const video2 = video2Ref.current;
     if (!video) return;
 
     // Force load the video
@@ -70,6 +71,15 @@ export function VideoBackground() {
 
     // Try to remove any controls that might interfere
     video.removeAttribute('controls');
+    
+    // Extra iOS-specific attributes for both videos
+    video.setAttribute('webkit-playsinline', 'true');
+    video.setAttribute('x-webkit-airplay', 'deny');
+    if (video2) {
+      video2.removeAttribute('controls');
+      video2.setAttribute('webkit-playsinline', 'true');
+      video2.setAttribute('x-webkit-airplay', 'deny');
+    }
 
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('loadeddata', handleLoadedData);
