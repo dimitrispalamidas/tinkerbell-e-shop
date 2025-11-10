@@ -11,6 +11,12 @@ export function HeroVideoBackground() {
 
   // Aggressive play strategy for iOS 12+
   const attemptPlay = (video: HTMLVideoElement, retries = 10) => {
+    // Only attempt play if video has enough data loaded (iOS requirement)
+    if (video.readyState < 2) {
+      console.log('⏳ Video not ready yet (readyState:', video.readyState, ') - waiting for loadeddata event');
+      return;
+    }
+
     const tryPlay = (attempt: number) => {
       video.play()
         .then(() => {
@@ -44,7 +50,7 @@ export function HeroVideoBackground() {
     // Force muted state (critical for iOS autoplay)
     video.muted = true;
     video.defaultMuted = true;
-    video.load();
+    video.setAttribute('muted', ''); // Extra safety for Safari iOS
 
     const handleCanPlay = () => {
       setIsLoading(false);
@@ -69,10 +75,10 @@ export function HeroVideoBackground() {
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
 
-    // Multiple aggressive attempts
-    setTimeout(() => attemptPlay(video), 100);
-    setTimeout(() => attemptPlay(video), 500);
-    setTimeout(() => attemptPlay(video), 1000);
+    // Single attempt only when ready - events will handle the rest
+    if (video.readyState >= 2) {
+      attemptPlay(video);
+    }
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
