@@ -559,6 +559,10 @@ export default function CheckoutPage() {
                           ? 'border-primary bg-primary/10 shadow-md'
                           : 'border-border hover:border-primary/50 hover:shadow-sm'
                       }`}
+                      type="button"
+                      role="radio"
+                      aria-checked={formData.deliveryMethod === 'boxnow'}
+                      aria-label={locale === 'el' ? 'Επιλογή παράδοσης σε BOXNOW Locker - Δωρεάν' : 'Select BOXNOW Locker delivery - Free'}
                     >
                       <div className="flex items-start gap-4">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${
@@ -593,6 +597,10 @@ export default function CheckoutPage() {
                           ? 'border-primary bg-primary/10 shadow-md'
                           : 'border-border hover:border-primary/50 hover:shadow-sm'
                       }`}
+                      type="button"
+                      role="radio"
+                      aria-checked={formData.deliveryMethod === 'home'}
+                      aria-label={locale === 'el' ? 'Επιλογή παράδοσης στο σπίτι - €3.50' : 'Select home delivery - €3.50'}
                     >
                       <div className="flex items-start gap-4">
                         <div className={`w-12 h-12 rounded-lg flex items-center justify-center transition-colors ${
@@ -801,7 +809,7 @@ export default function CheckoutPage() {
                         <strong>{locale === 'el' ? '💳 Στοιχεία Κάρτας:' : '💳 Card Information:'}</strong> {locale === 'el' ? 'Δεν αποθηκεύουμε ούτε διατηρούμε στοιχεία των καρτών σας. Όλα τα στοιχεία υποβάλλονται απευθείας στη Viva Wallet.' : 'We do not store or retain your card information. All details are submitted directly to Viva Wallet.'}
                       </p>
                       <p>
-                        <strong>{locale === 'el' ? '🛡️ GDPR:' : '🛡️ GDPR:'}</strong> {locale === 'el' ? 'Τα προσωπικά σας δεδομένα προστατεύονται σύμφωνα με τον GDPR. Δείτε την' : 'Your personal data is protected according to GDPR. See our'} <a href={locale === 'el' ? '/el/privacy-policy' : '/en/privacy-policy'} className="text-primary hover:underline" target="_blank">{locale === 'el' ? 'Πολιτική Απορρήτου' : 'Privacy Policy'}</a>.
+                        <strong>{locale === 'el' ? '🛡️ GDPR:' : '🛡️ GDPR:'}</strong> {locale === 'el' ? 'Τα προσωπικά σας δεδομένα προστατεύονται σύμφωνα με τον GDPR. Δείτε την' : 'Your personal data is protected according to GDPR. See our'} <a href={locale === 'el' ? '/el/privacy-policy' : '/en/privacy-policy'} className="text-primary hover:underline" target="_blank" rel="noopener noreferrer">{locale === 'el' ? 'Πολιτική Απορρήτου' : 'Privacy Policy'}</a>.
                       </p>
                     </div>
                   </div>

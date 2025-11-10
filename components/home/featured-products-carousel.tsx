@@ -155,8 +155,10 @@ export function FeaturedProductsCarousel({ products }: Props) {
         size="icon"
         onClick={scrollToPrev}
         className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 z-10 bg-white/90 hover:bg-white shadow-lg"
+        aria-label={locale === 'el' ? 'Προηγούμενο προϊόν' : 'Previous product'}
+        type="button"
       >
-        <ChevronLeft className="h-6 w-6" />
+        <ChevronLeft className="h-6 w-6" aria-hidden="true" />
       </Button>
       
       <Button
@@ -164,8 +166,10 @@ export function FeaturedProductsCarousel({ products }: Props) {
         size="icon"
         onClick={scrollToNext}
         className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 z-10 bg-white/90 hover:bg-white shadow-lg"
+        aria-label={locale === 'el' ? 'Επόμενο προϊόν' : 'Next product'}
+        type="button"
       >
-        <ChevronRight className="h-6 w-6" />
+        <ChevronRight className="h-6 w-6" aria-hidden="true" />
       </Button>
 
       {/* Dots Indicator */}

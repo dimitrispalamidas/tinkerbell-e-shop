@@ -199,10 +199,6 @@ video::-webkit-media-controls-start-playback-button {
   opacity: 0 !important;
 }
 
-video::-internal-media-controls-overlay-cast-button {
-  display: none !important;
-}
-
 /* Remove the BIG play button overlay on mobile iOS/Android */
 video::-webkit-media-controls-overlay-play-button {
   display: none !important;

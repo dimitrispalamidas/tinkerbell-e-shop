@@ -141,12 +141,15 @@ export function HeroVideoBackground() {
         disableRemotePlayback
         onPlaying={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
+        aria-hidden="true"
         style={{ 
           pointerEvents: 'none',
           objectFit: 'cover'
         }}
       >
         <source src="/heroVideo.mp4" type="video/mp4" />
+        {/* Empty captions track for accessibility compliance */}
+        <track kind="captions" label="No audio" srcLang="en" />
       </video>
 
       {/* COMPLETELY INVISIBLE tap area for iOS - NO BUTTON VISIBLE */}

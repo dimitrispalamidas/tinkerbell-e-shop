@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -8,12 +8,14 @@ import { Card, CardContent } from '@/components/ui/card';
 import { formatPrice } from '@/lib/utils';
 import { Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { SearchInput } from '@/components/ui/search-input';
 
 export default function AdminOrdersPage() {
   const locale = useLocale();
   
   const [orders, setOrders] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const getStatusLabel = (status: string) => {
     const statusMap: Record<string, { el: string; en: string }> = {
@@ -46,6 +48,25 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const filteredOrders = useMemo(() => {
+    if (!searchQuery.trim()) return orders;
+
+    const query = searchQuery.toLowerCase();
+    return orders.filter(order => {
+      const customerName = (order.customer_name || '').toLowerCase();
+      const customerEmail = (order.customer_email || '').toLowerCase();
+      const customerPhone = (order.customer_phone || '').toLowerCase();
+      const orderId = (order.id || '').toLowerCase();
+      const status = (order.status || '').toLowerCase();
+      
+      return customerName.includes(query) ||
+             customerEmail.includes(query) ||
+             customerPhone.includes(query) ||
+             orderId.includes(query) ||
+             status.includes(query);
+    });
+  }, [orders, searchQuery]);
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -64,9 +85,16 @@ export default function AdminOrdersPage() {
         <p className="text-sm md:text-base text-muted-foreground">{locale === 'el' ? 'Διαχείριση παραγγελιών πελατών' : 'Manage customer orders'}</p>
       </div>
 
-      {orders && orders.length > 0 ? (
+      {/* Search Bar */}
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder={locale === 'el' ? 'Αναζήτηση παραγγελιών (όνομα, email, τηλέφωνο)...' : 'Search orders (name, email, phone)...'}
+      />
+
+      {filteredOrders && filteredOrders.length > 0 ? (
         <div className="grid gap-3 md:gap-4">
-          {orders.map((order) => (
+          {filteredOrders.map((order) => (
             <Card key={order.id}>
               <CardContent className="p-3 md:p-4">
                 <div className="flex flex-col gap-3">
@@ -134,7 +162,12 @@ export default function AdminOrdersPage() {
       ) : (
         <Card>
           <CardContent className="p-8 md:p-12 text-center">
-            <p className="text-sm md:text-base text-muted-foreground">{locale === 'el' ? 'Δεν υπάρχουν παραγγελίες ακόμα' : 'No orders yet'}</p>
+            <p className="text-sm md:text-base text-muted-foreground">
+              {searchQuery.trim() 
+                ? (locale === 'el' ? 'Δεν βρέθηκαν παραγγελίες που να ταιριάζουν με την αναζήτηση' : 'No orders found matching your search')
+                : (locale === 'el' ? 'Δεν υπάρχουν παραγγελίες ακόμα' : 'No orders yet')
+              }
+            </p>
           </CardContent>
         </Card>
       )}

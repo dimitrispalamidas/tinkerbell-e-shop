@@ -55,10 +55,12 @@ export function DecorationsGalleryClient({ locale, photos }: DecorationsGalleryC
                 key={index}
                 onClick={() => openLightbox(index)}
                 className="relative aspect-square overflow-hidden rounded bg-gradient-to-br from-sunny/20 to-coral/20 hover:scale-105 transition-transform duration-300 group"
+                type="button"
+                aria-label={`${locale === 'el' ? 'Δείτε φωτογραφία στολισμού' : 'View decoration photo'} ${index + 1}`}
               >
                 <Image
                   src={photo}
-                  alt={`${locale === 'el' ? 'Στολισμοί' : 'Decorations'} ${index + 1}`}
+                  alt={`${locale === 'el' ? 'Στολισμοί εκδήλωσης' : 'Event decoration'} ${index + 1}`}
                   fill
                   className="object-cover"
                   sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"

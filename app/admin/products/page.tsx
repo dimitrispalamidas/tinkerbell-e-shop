@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
@@ -10,6 +10,7 @@ import { Plus, Pencil, Archive, PackageCheck, RotateCcw } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 import Image from 'next/image';
 import { toast } from 'sonner';
+import { SearchInput } from '@/components/ui/search-input';
 
 type Product = {
   id: string;
@@ -36,6 +37,7 @@ export default function AdminProductsPage() {
   const [activeTab, setActiveTab] = useState<TabType>('active');
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchProducts();
@@ -115,7 +117,26 @@ export default function AdminProductsPage() {
     }
   };
 
-  const filteredProducts = products.filter(p => p.status === activeTab);
+  const filteredProducts = useMemo(() => {
+    // First filter by status
+    let filtered = products.filter(p => p.status === activeTab);
+    
+    // Then apply search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(product => {
+        const nameEl = (product.name_el || '').toLowerCase();
+        const nameEn = (product.name_en || '').toLowerCase();
+        const sku = (product.sku || '').toLowerCase();
+        
+        return nameEl.includes(query) ||
+               nameEn.includes(query) ||
+               sku.includes(query);
+      });
+    }
+    
+    return filtered;
+  }, [products, activeTab, searchQuery]);
 
   const getTabCount = (status: TabType) => {
     return products.filter(p => p.status === status).length;
@@ -177,6 +198,13 @@ export default function AdminProductsPage() {
           </Button>
         </Link>
       </div>
+
+      {/* Search Bar */}
+      <SearchInput
+        value={searchQuery}
+        onChange={setSearchQuery}
+        placeholder={locale === 'el' ? 'Αναζήτηση προϊόντων (όνομα, κωδικός)...' : 'Search products (name, SKU)...'}
+      />
 
       {/* Tabs */}
       <div className="border-b overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">

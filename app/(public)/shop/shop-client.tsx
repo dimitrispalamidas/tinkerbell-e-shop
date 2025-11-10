@@ -9,6 +9,7 @@ import { formatPrice } from '@/lib/utils';
 import { ShoppingBag, Sparkles, ArrowUpDown } from 'lucide-react';
 import { ProductFilters } from '@/components/shop/product-filters';
 import { MobileFilterDrawer } from '@/components/shop/mobile-filter-drawer';
+import { SearchInput } from '@/components/ui/search-input';
 
 interface ShopClientProps {
   locale: string;
@@ -25,6 +26,7 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   
   // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
@@ -80,6 +82,25 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
 
     // Apply filters
     let filtered = products.filter(product => {
+      // Search filter
+      if (searchQuery.trim()) {
+        const query = searchQuery.toLowerCase();
+        const nameEl = (product.name_el || '').toLowerCase();
+        const nameEn = (product.name_en || '').toLowerCase();
+        const descEl = (product.description_el || '').toLowerCase();
+        const descEn = (product.description_en || '').toLowerCase();
+        const sku = (product.sku || '').toLowerCase();
+        
+        const matchesSearch = 
+          nameEl.includes(query) ||
+          nameEn.includes(query) ||
+          descEl.includes(query) ||
+          descEn.includes(query) ||
+          sku.includes(query);
+        
+        if (!matchesSearch) return false;
+      }
+
       // Price filter
       if (product.price < priceRange[0] || product.price > priceRange[1]) {
         return false;
@@ -126,9 +147,10 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
     });
 
     return sorted;
-  }, [products, priceRange, selectedSizes, selectedColors, sortBy, locale]);
+  }, [products, searchQuery, priceRange, selectedSizes, selectedColors, sortBy, locale]);
 
   const handleClearAllFilters = () => {
+    setSearchQuery('');
     setPriceRange([minPrice, maxPrice]);
     setSelectedSizes([]);
     setSelectedColors([]);
@@ -270,6 +292,16 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
 
             {/* Main Content */}
             <div className="flex-1">
+              {/* Search Bar */}
+              <div className="mb-6">
+                <SearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder={locale === 'el' ? 'Αναζήτηση προϊόντων...' : 'Search products...'}
+                  className="max-w-md"
+                />
+              </div>
+
               {/* Sorting Bar */}
               <div className="flex items-center justify-between mb-6 pb-4 border-b border-sage-200">
                 <p className="text-sm text-sage-600 font-light">

@@ -7,11 +7,15 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: 'swap',
+  preload: true,
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: 'swap',
+  preload: true,
 });
 
 const siteUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.tinkerbell.gr';
@@ -109,6 +113,17 @@ export default function RootLayout({
   return (
     <html lang="el">
       <head>
+        {/* Preconnect to external domains */}
+        <link
+          rel="preconnect"
+          href="https://bkuqjcbyabaanzgisgcz.supabase.co"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://bkuqjcbyabaanzgisgcz.supabase.co"
+        />
+        
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon-192.png" type="image/png" sizes="192x192" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />

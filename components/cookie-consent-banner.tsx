@@ -67,6 +67,8 @@ export function CookieConsentBanner() {
                   onClick={handleAccept}
                   size="sm"
                   className="flex-1 sm:flex-initial"
+                  type="button"
+                  aria-label={locale === 'el' ? 'Αποδοχή cookies' : 'Accept cookies'}
                 >
                   {locale === 'el' ? 'Αποδοχή' : 'Accept'}
                 </Button>
@@ -75,6 +77,8 @@ export function CookieConsentBanner() {
                   variant="outline"
                   size="sm"
                   className="flex-1 sm:flex-initial"
+                  type="button"
+                  aria-label={locale === 'el' ? 'Απόρριψη cookies' : 'Reject cookies'}
                 >
                   {locale === 'el' ? 'Απόρριψη' : 'Reject'}
                 </Button>
@@ -84,7 +88,8 @@ export function CookieConsentBanner() {
             <button
               onClick={handleReject}
               className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-              aria-label="Close"
+              type="button"
+              aria-label={locale === 'el' ? 'Κλείσιμο cookie banner' : 'Close cookie banner'}
             >
               <X className="h-5 w-5" />
             </button>

@@ -60,10 +60,13 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                   ? 'ring-2 ring-magenta-600 ring-offset-2 shadow-lg scale-105' 
                   : 'hover:shadow-md hover:scale-105 opacity-70 hover:opacity-100'
               }`}
+              aria-label={`View image ${idx + 1} of ${images.length}`}
+              aria-pressed={selectedImage === idx}
+              type="button"
             >
               <Image
                 src={image}
-                alt={`${productName} - ${idx + 1}`}
+                alt={`${productName} - View ${idx + 1}`}
                 width={200}
                 height={200}
                 className="object-cover w-full h-full"

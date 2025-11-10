@@ -84,16 +84,16 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
       >
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="flex items-center justify-between p-4 border-b bg-muted/20">
+          <div className="flex items-center justify-between p-4 border-b bg-muted/40">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-primary/15 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center">
                 <ShoppingBag className="h-5 w-5 text-primary" />
               </div>
               <div className="flex items-baseline gap-2">
                 <h2 className="text-lg font-bold">
                   {locale === 'el' ? 'Το Καλάθι σας' : 'Your Cart'}
                 </h2>
-                <span className="text-sm font-medium text-primary">
+                <span className="text-sm font-bold text-primary">
                   ({items.length})
                 </span>
               </div>
@@ -101,7 +101,8 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
             <button
               onClick={onClose}
               className="p-2 hover:bg-muted rounded-full transition-all duration-200 hover:rotate-90"
-              aria-label="Close cart"
+              aria-label={locale === 'el' ? 'Κλείσιμο καλαθιού' : 'Close cart'}
+              type="button"
             >
               <X className="h-5 w-5" />
             </button>
@@ -180,10 +181,11 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
                           <button
                             onClick={() => handleQuantityChange(item.id, Math.max(1, item.quantity - 1), item.size, item.color)}
                             className="p-2 hover:bg-primary/10 active:bg-primary/20 transition-colors"
-                            aria-label="Decrease quantity"
+                            aria-label={locale === 'el' ? 'Μείωση ποσότητας' : 'Decrease quantity'}
+                            type="button"
                             disabled={item.quantity <= 1}
                           >
-                            <Minus className="h-3.5 w-3.5" />
+                            <Minus className="h-3.5 w-3.5" aria-hidden="true" />
                           </button>
                           <span className="px-3 text-sm font-semibold min-w-[32px] text-center">
                             {item.quantity}
@@ -191,13 +193,14 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
                           <button
                             onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.size, item.color)}
                             className="p-2 hover:bg-primary/10 active:bg-primary/20 transition-colors"
-                            aria-label="Increase quantity"
+                            aria-label={locale === 'el' ? 'Αύξηση ποσότητας' : 'Increase quantity'}
+                            type="button"
                           >
-                            <Plus className="h-3.5 w-3.5" />
+                            <Plus className="h-3.5 w-3.5" aria-hidden="true" />
                           </button>
                         </div>
                         
-                        <p className="text-sm font-bold text-primary">
+                        <p className="text-sm font-extrabold text-primary">
                           {formatPrice(item.price * item.quantity, locale)}
                         </p>
                       </div>
@@ -207,10 +210,11 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
                     <button
                       onClick={() => removeItem(item.id, item.size, item.color)}
                       className="absolute top-3 right-3 p-1.5 hover:bg-destructive/10 rounded-md transition-colors text-muted-foreground hover:text-destructive group/remove"
-                      aria-label="Remove item"
+                      aria-label={locale === 'el' ? 'Αφαίρεση προϊόντος από το καλάθι' : 'Remove item from cart'}
+                      type="button"
                       title={locale === 'el' ? 'Αφαίρεση' : 'Remove'}
                     >
-                      <Trash2 className="h-4 w-4" />
+                      <Trash2 className="h-4 w-4" aria-hidden="true" />
                     </button>
                   </div>
                 ))}
@@ -220,10 +224,10 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
 
           {/* Footer with Total & Actions */}
           {items.length > 0 && (
-            <div className="border-t bg-muted/30 p-4 space-y-4">
+            <div className="border-t bg-muted/50 p-4 space-y-4">
               {/* Total */}
               <div className="flex justify-between items-center px-1">
-                <span className="text-base font-semibold text-muted-foreground">
+                <span className="text-base font-bold text-foreground">
                   {locale === 'el' ? 'Σύνολο' : 'Total'}
                 </span>
                 <span className="text-xl font-bold text-primary">

@@ -59,9 +59,9 @@ export function Footer() {
           <div className="col-span-1 md:col-span-6 grid grid-cols-2 md:grid-cols-3 gap-8">
             {/* Shop Links */}
             <div>
-              <h4 className="font-light text-sage-900 mb-4 md:mb-5 text-base md:text-lg tracking-wide">
+              <h3 className="font-light text-sage-900 mb-4 md:mb-5 text-base md:text-lg tracking-wide">
                 {locale === 'el' ? 'Κατάστημα' : 'Shop'}
-              </h4>
+              </h3>
               <ul className="space-y-2.5 md:space-y-3 text-sm md:text-base">
                 <li>
                   <Link href="/shop" className="text-sage-700 hover:text-sage-900 transition-colors font-light">
@@ -78,9 +78,9 @@ export function Footer() {
             
             {/* Gallery Links */}
             <div>
-              <h4 className="font-light text-sage-900 mb-4 md:mb-5 text-base md:text-lg tracking-wide">
+              <h3 className="font-light text-sage-900 mb-4 md:mb-5 text-base md:text-lg tracking-wide">
                 {locale === 'el' ? 'Γκαλερί' : 'Gallery'}
-              </h4>
+              </h3>
               <ul className="space-y-2.5 md:space-y-3 text-sm md:text-base">
                 <li>
                   <Link href="/gallery/baptism" className="text-sage-700 hover:text-sage-900 transition-colors font-light">
@@ -97,9 +97,9 @@ export function Footer() {
             
             {/* Legal Links */}
             <div className="col-span-2 md:col-span-1">
-              <h4 className="font-light text-sage-900 mb-4 md:mb-5 text-base md:text-lg tracking-wide">
+              <h3 className="font-light text-sage-900 mb-4 md:mb-5 text-base md:text-lg tracking-wide">
                 {locale === 'el' ? 'Νομικά' : 'Legal'}
-              </h4>
+              </h3>
               <ul className="space-y-2.5 md:space-y-3 text-sm md:text-base">
                 <li>
                   <Link href="/privacy-policy" className="text-sage-700 hover:text-sage-900 transition-colors font-light">
@@ -122,9 +122,9 @@ export function Footer() {
 
           {/* Contact Info */}
           <div className="md:col-span-3">
-            <h4 className="font-light text-sage-900 mb-4 md:mb-5 text-base md:text-lg tracking-wide">
+            <h3 className="font-light text-sage-900 mb-4 md:mb-5 text-base md:text-lg tracking-wide">
               {locale === 'el' ? 'Επικοινωνία' : 'Contact'}
-            </h4>
+            </h3>
             <div className="space-y-3 md:space-y-4 text-sm md:text-base">
               <div className="flex items-center gap-3">
                 <Mail className="h-4 w-4 md:h-5 md:w-5 text-sage-600 flex-shrink-0" />
