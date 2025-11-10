@@ -19,26 +19,19 @@ export function VideoBackground() {
   const [nextVideoReady, setNextVideoReady] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showPlayButton, setShowPlayButton] = useState(false);
 
   // Aggressive play strategy for iOS 12+
-  const attemptPlay = (video: HTMLVideoElement, retries = 5) => {
+  const attemptPlay = (video: HTMLVideoElement, retries = 10) => {
     const tryPlay = (attempt: number) => {
       video.play()
         .then(() => {
           console.log('✅ Video playing successfully');
           setIsPlaying(true);
-          setShowPlayButton(false);
         })
         .catch((error) => {
           console.log(`⚠️ Play attempt ${attempt} failed:`, error.message);
           if (attempt < retries) {
-            setTimeout(() => tryPlay(attempt + 1), 300 * attempt);
-          } else {
-            // After all attempts fail, show elegant play button
-            console.log('⚠️ Autoplay blocked - showing play button');
-            setShowPlayButton(true);
-            setIsLoading(false);
+            setTimeout(() => tryPlay(attempt + 1), 200 * attempt);
           }
         });
     };
@@ -248,32 +241,8 @@ export function VideoBackground() {
         }}
       />
 
-      {/* Elegant Play Button - Only shown when autoplay fails (iOS Low Power Mode, Data Saver, etc) */}
-      {showPlayButton && !isPlaying && (
-        <div
-          onClick={handlePlayClick}
-          onTouchStart={handlePlayClick}
-          className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer group"
-          aria-label="Tap to play video"
-          style={{ WebkitTapHighlightColor: 'transparent' }}
-        >
-          {/* Elegant pulsing play button */}
-          <div className="relative">
-            {/* Pulse rings */}
-            <div className="absolute inset-0 rounded-full bg-pink/30 animate-ping" />
-            <div className="absolute inset-0 rounded-full bg-baby-blue/20 animate-pulse" />
-            
-            {/* Play button */}
-            <div className="relative w-20 h-20 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-2xl group-hover:bg-white group-hover:scale-110 transition-all duration-300">
-              {/* Play triangle */}
-              <div className="w-0 h-0 border-l-[16px] border-l-magenta-600 border-y-[10px] border-y-transparent ml-1" />
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* COMPLETELY INVISIBLE tap area for iOS - When video is paused but autoplay not blocked */}
-      {!isPlaying && !isLoading && !showPlayButton && (
+      {/* COMPLETELY INVISIBLE tap area for iOS - NO BUTTON VISIBLE */}
+      {!isPlaying && !isLoading && (
         <div
           onClick={handlePlayClick}
           onTouchStart={handlePlayClick}

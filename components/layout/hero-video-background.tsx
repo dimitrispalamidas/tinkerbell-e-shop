@@ -8,26 +8,20 @@ export function HeroVideoBackground() {
   const [isLoading, setIsLoading] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [showPlayButton, setShowPlayButton] = useState(false);
 
   // Aggressive play strategy for iOS 12+
-  const attemptPlay = (video: HTMLVideoElement, retries = 5) => {
+  const attemptPlay = (video: HTMLVideoElement, retries = 10) => {
     const tryPlay = (attempt: number) => {
       video.play()
         .then(() => {
           console.log('✅ Hero video playing successfully');
           setIsPlaying(true);
-          setShowPlayButton(false);
         })
         .catch((error) => {
           console.log(`⚠️ Hero play attempt ${attempt} failed:`, error.message);
           if (attempt < retries) {
-            setTimeout(() => tryPlay(attempt + 1), 300 * attempt);
-          } else {
-            // After all attempts fail, show elegant play button
-            console.log('⚠️ Autoplay blocked - showing play button');
-            setShowPlayButton(true);
-            setIsLoading(false);
+            // Exponential backoff with more attempts
+            setTimeout(() => tryPlay(attempt + 1), 200 * attempt);
           }
         });
     };
@@ -47,20 +41,28 @@ export function HeroVideoBackground() {
     const video = videoRef.current;
     if (!video) return;
 
+    // Force muted state FIRST (critical for iOS autoplay)
+    video.muted = true;
+    video.defaultMuted = true;
+    video.volume = 0;
+    
     // Force load the video
     video.load();
 
     const handleCanPlay = () => {
+      console.log('📺 Hero video can play - attempting autoplay');
       setIsLoading(false);
       attemptPlay(video);
     };
 
     const handleLoadedData = () => {
+      console.log('📺 Hero video data loaded - attempting autoplay');
       attemptPlay(video);
     };
 
     const handleLoadedMetadata = () => {
-      setIsLoading(false); // Set loading to false when metadata loads
+      console.log('📺 Hero video metadata loaded - attempting autoplay');
+      setIsLoading(false);
       attemptPlay(video);
     };
 
@@ -70,35 +72,25 @@ export function HeroVideoBackground() {
     // Extra iOS-specific attributes to prevent play button
     video.setAttribute('webkit-playsinline', 'true');
     video.setAttribute('x-webkit-airplay', 'deny');
-    
-    // Force muted state (critical for iOS autoplay)
-    video.muted = true;
-    video.defaultMuted = true;
 
     video.addEventListener('canplay', handleCanPlay);
     video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     
-    // Try to play on load - a few attempts
+    // Aggressive autoplay attempts
     setTimeout(() => attemptPlay(video), 100);
+    setTimeout(() => attemptPlay(video), 300);
     setTimeout(() => attemptPlay(video), 500);
-
-    // Fallback: Force isLoading to false after 2 seconds
-    // This ensures the tap area appears even if events don't fire properly on iOS
-    const loadingTimeout = setTimeout(() => {
-      console.log('⏱️ Loading timeout - forcing tap area to appear');
-      setIsLoading(false);
-    }, 2000);
+    setTimeout(() => attemptPlay(video), 1000);
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
       video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      clearTimeout(loadingTimeout);
     };
   }, []);
 
-  // Intersection Observer - play when visible (for iOS 12+)
+  // Intersection Observer - play when visible
   useEffect(() => {
     const video = videoRef.current;
     const container = containerRef.current;
@@ -108,6 +100,7 @@ export function HeroVideoBackground() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && video.paused) {
+            console.log('📺 Hero video is visible, attempting to play');
             attemptPlay(video);
           }
         });
@@ -132,8 +125,8 @@ export function HeroVideoBackground() {
       }
     };
 
-    // Listen for ANY user interaction - more events
-    const events = ['touchstart', 'touchmove', 'touchend', 'click', 'scroll', 'keydown', 'mousemove'];
+    // Listen for ANY user interaction
+    const events = ['touchstart', 'click', 'scroll'];
     events.forEach(event => {
       document.addEventListener(event, handleUserInteraction, { once: true, passive: true });
       window.addEventListener(event, handleUserInteraction, { once: true, passive: true });
@@ -175,32 +168,8 @@ export function HeroVideoBackground() {
         <track kind="captions" label="No audio" srcLang="en" />
       </video>
 
-      {/* Elegant Play Button - Only shown when autoplay fails (iOS Low Power Mode, Data Saver, etc) */}
-      {showPlayButton && !isPlaying && (
-        <div
-          onClick={handlePlayClick}
-          onTouchStart={handlePlayClick}
-          className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer group"
-          aria-label="Tap to play video"
-          style={{ WebkitTapHighlightColor: 'transparent' }}
-        >
-          {/* Elegant pulsing play button */}
-          <div className="relative">
-            {/* Pulse rings */}
-            <div className="absolute inset-0 rounded-full bg-white/20 animate-ping" />
-            <div className="absolute inset-0 rounded-full bg-white/10 animate-pulse" />
-            
-            {/* Play button */}
-            <div className="relative w-20 h-20 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-2xl group-hover:bg-white group-hover:scale-110 transition-all duration-300">
-              {/* Play triangle */}
-              <div className="w-0 h-0 border-l-[16px] border-l-sage-700 border-y-[10px] border-y-transparent ml-1" />
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {/* COMPLETELY INVISIBLE tap area for iOS - When video is paused but autoplay not blocked */}
-      {!isPlaying && !isLoading && !showPlayButton && (
+      {/* COMPLETELY INVISIBLE tap area for iOS - NO BUTTON VISIBLE */}
+      {!isPlaying && !isLoading && (
         <div
           onClick={handlePlayClick}
           onTouchStart={handlePlayClick}
