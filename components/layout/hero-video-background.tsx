@@ -7,34 +7,51 @@ export function HeroVideoBackground() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasInteracted, setHasInteracted] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
 
   // Aggressive play strategy for iOS 12+
-  const attemptPlay = (video: HTMLVideoElement, retries = 5) => {
+  const attemptPlay = (video: HTMLVideoElement, retries = 10) => {
     const tryPlay = (attempt: number) => {
       video.play()
         .then(() => {
           console.log('✅ Hero video playing successfully');
+          setIsPlaying(true);
         })
         .catch((error) => {
           console.log(`⚠️ Hero play attempt ${attempt} failed:`, error.message);
           if (attempt < retries) {
-            setTimeout(() => tryPlay(attempt + 1), 300 * attempt);
+            setTimeout(() => tryPlay(attempt + 1), 200 * attempt);
           }
         });
     };
     tryPlay(1);
   };
 
+  // Handle manual play from overlay tap
+  const handlePlayClick = () => {
+    const video = videoRef.current;
+    if (video) {
+      setHasInteracted(true);
+      attemptPlay(video);
+    }
+  };
+
+  // Initial load
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
+    // Force muted state (critical for iOS autoplay)
+    video.muted = true;
+    video.defaultMuted = true;
+    video.load();
+
     const handleCanPlay = () => {
       setIsLoading(false);
-      // Force play on mobile
-      video.play().catch(() => {
-        // If autoplay fails, that's ok
-      });
+      attemptPlay(video);
+    };
+
+    const handleLoadedData = () => {
       attemptPlay(video);
     };
 
@@ -42,21 +59,24 @@ export function HeroVideoBackground() {
       attemptPlay(video);
     };
 
+    // Remove controls and add iOS-specific attributes
+    video.removeAttribute('controls');
+    video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', 'true');
+    video.setAttribute('x-webkit-airplay', 'deny');
+
     video.addEventListener('canplay', handleCanPlay);
+    video.addEventListener('loadeddata', handleLoadedData);
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
 
-    // Force play on load for mobile
-    setTimeout(() => {
-      video.play().catch(() => {});
-    }, 100);
-
-    // Multiple aggressive attempts for newer iOS
+    // Multiple aggressive attempts
     setTimeout(() => attemptPlay(video), 100);
     setTimeout(() => attemptPlay(video), 500);
     setTimeout(() => attemptPlay(video), 1000);
 
     return () => {
       video.removeEventListener('canplay', handleCanPlay);
+      video.removeEventListener('loadeddata', handleLoadedData);
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
     };
   }, []);
@@ -91,19 +111,22 @@ export function HeroVideoBackground() {
       
       const video = videoRef.current;
       if (video && video.paused) {
+        console.log('🎮 User interacted, forcing hero video play');
         attemptPlay(video);
       }
     };
 
-    // Listen for any user interaction
-    const events = ['touchstart', 'click', 'scroll'];
+    // Listen for ANY user interaction - more events
+    const events = ['touchstart', 'touchmove', 'touchend', 'click', 'scroll', 'keydown', 'mousemove'];
     events.forEach(event => {
       document.addEventListener(event, handleUserInteraction, { once: true, passive: true });
+      window.addEventListener(event, handleUserInteraction, { once: true, passive: true });
     });
 
     return () => {
       events.forEach(event => {
         document.removeEventListener(event, handleUserInteraction);
+        window.removeEventListener(event, handleUserInteraction);
       });
     };
   }, [hasInteracted]);
@@ -118,11 +141,12 @@ export function HeroVideoBackground() {
         loop
         muted
         playsInline
-        preload="metadata"
+        preload="auto"
+        controls={false}
         disablePictureInPicture
         disableRemotePlayback
-        webkit-playsinline="true"
-        x5-playsinline="true"
+        onPlaying={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
         style={{ 
           pointerEvents: 'none',
           objectFit: 'cover'
@@ -131,13 +155,24 @@ export function HeroVideoBackground() {
         <source src="/heroVideo.mp4" type="video/mp4" />
       </video>
 
+      {/* COMPLETELY INVISIBLE tap area for iOS - NO BUTTON VISIBLE */}
+      {!isPlaying && !isLoading && (
+        <div
+          onClick={handlePlayClick}
+          onTouchStart={handlePlayClick}
+          className="absolute inset-0 z-10 w-full h-full bg-transparent cursor-default md:hidden"
+          aria-label="Tap anywhere to play video"
+          style={{ WebkitTapHighlightColor: 'transparent' }}
+        />
+      )}
+
       {/* Premium subtle overlay - soft gradient for elegant readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-sage-900/20 via-transparent to-sage-900/40 pointer-events-none" />
-      <div className="absolute inset-0 bg-black/15 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-b from-sage-900/20 via-transparent to-sage-900/40 pointer-events-none z-[2]" />
+      <div className="absolute inset-0 bg-black/15 pointer-events-none z-[2]" />
 
       {/* Loading state */}
       {isLoading && (
-        <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/30 via-sage-100/30 to-mint-100/30 animate-pulse pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-100/30 via-sage-100/30 to-mint-100/30 animate-pulse pointer-events-none z-[3]" />
       )}
     </div>
   );
