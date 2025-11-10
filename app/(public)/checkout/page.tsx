@@ -13,6 +13,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, ShoppingBag, Package, Home } from '
 import { BoxnowLockerList } from '@/components/checkout/boxnow-locker-list';
 import Image from 'next/image';
 import { z } from 'zod';
+import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js';
 
 const CHECKOUT_STORAGE_KEY = 'tinkerbell_checkout_data';
 const HOME_DELIVERY_COST = 3.50; // €3.50 for home delivery
@@ -88,9 +89,31 @@ export default function CheckoutPage() {
   };
 
   const validatePhone = (phone: string): boolean => {
-    // Greek phone: 10 digits starting with 2 or 6
-    const phoneRegex = /^[26]\d{9}$/;
-    return phoneRegex.test(phone.replace(/\s/g, ''));
+    try {
+      // Clean the phone number
+      const cleanPhone = phone.replace(/\s/g, '');
+      
+      // Check if it's a valid Greek phone number
+      return isValidPhoneNumber(cleanPhone, 'GR');
+    } catch (error) {
+      return false;
+    }
+  };
+
+  const formatPhoneNumber = (phone: string): string => {
+    try {
+      const cleanPhone = phone.replace(/\s/g, '');
+      if (cleanPhone.length === 0) return '';
+      
+      // Try to parse as Greek number
+      const phoneNumber = parsePhoneNumber(cleanPhone, 'GR');
+      if (phoneNumber) {
+        return phoneNumber.formatNational(); // Format as national (e.g., "69 1234 5678")
+      }
+      return cleanPhone;
+    } catch (error) {
+      return phone;
+    }
   };
 
   const validatePostalCode = (postalCode: string): boolean => {
@@ -481,26 +504,31 @@ export default function CheckoutPage() {
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => {
-                      // Allow only digits
-                      const value = e.target.value.replace(/\D/g, '');
+                      // Allow only digits and spaces
+                      const value = e.target.value.replace(/[^\d\s]/g, '');
                       setFormData({ ...formData, phone: value });
                       if (errors.phone) setErrors({ ...errors, phone: false });
                     }}
                     onBlur={(e) => {
                       const cleanPhone = e.target.value.replace(/\s/g, '');
-                      if (cleanPhone && !validatePhone(cleanPhone)) {
-                        setErrors({ ...errors, phone: true });
+                      if (cleanPhone) {
+                        if (!validatePhone(cleanPhone)) {
+                          setErrors({ ...errors, phone: true });
+                        } else {
+                          // Auto-format the phone number on blur if valid
+                          const formatted = formatPhoneNumber(cleanPhone);
+                          setFormData({ ...formData, phone: formatted });
+                        }
                       }
                     }}
                     required
-                    maxLength={10}
                     className={`text-base h-11 ${errors.phone ? 'border-red-500 border-2 focus-visible:ring-red-500' : 'border-2'}`}
-                    placeholder={locale === 'el' ? 'π.χ. 6912345678' : 'e.g. 6912345678'}
+                    placeholder={locale === 'el' ? 'π.χ. 6912345678 ή 2101234567' : 'e.g. 6912345678 or 2101234567'}
                   />
                   {errors.phone && (
                     <p className="text-xs text-red-500 mt-2 flex items-start gap-1">
                       <span className="font-medium">⚠</span>
-                      <span>{locale === 'el' ? 'Μόνο 10 ψηφία, π.χ. 6912345678 ή 2101234567' : 'Only 10 digits, e.g. 6912345678 or 2101234567'}</span>
+                      <span>{locale === 'el' ? 'Παρακαλώ εισάγετε έγκυρο ελληνικό τηλέφωνο (10 ψηφία, 69ΧΧΧΧΧΧΧΧ ή 2ΧΧΧΧΧΧΧΧΧ)' : 'Please enter a valid Greek phone number (10 digits, 69XXXXXXXX or 2XXXXXXXXX)'}</span>
                     </p>
                   )}
                 </div>
@@ -760,35 +788,25 @@ export default function CheckoutPage() {
                       </div>
                       {locale === 'el' ? 'Ασφαλής Πληρωμή με Viva Wallet' : 'Secure Payment with Viva Wallet'}
                     </h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed ml-10">
+                    <p className="text-sm text-muted-foreground leading-relaxed ml-10 mb-3">
                       {locale === 'el' 
                         ? 'Θα ανακατευθυνθείτε στη σελίδα πληρωμής της Viva Wallet για να ολοκληρώσετε την παραγγελία σας με ασφάλεια.' 
                         : 'You will be redirected to Viva Wallet secure payment page to complete your order.'}
                     </p>
-                  </div>
-
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">{locale === 'el' ? 'Ασφαλής κρυπτογράφηση' : 'Secure encryption'}</p>
-                        <p className="text-xs text-muted-foreground">{locale === 'el' ? 'SSL 256-bit' : 'SSL 256-bit'}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg">
-                      <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-sm">{locale === 'el' ? 'Υποστήριξη όλων των καρτών' : 'All cards supported'}</p>
-                        <p className="text-xs text-muted-foreground">Visa, Mastercard, etc.</p>
-                      </div>
+                    <div className="ml-10 space-y-2 text-xs text-muted-foreground">
+                      <p>
+                        <strong>{locale === 'el' ? '🔒 Ασφάλεια:' : '🔒 Security:'}</strong> {locale === 'el' ? 'Η Viva Wallet συμμορφώνεται με τα πρότυπα PCI-DSS Level 1 για τη μέγιστη ασφάλεια συναλλαγών.' : 'Viva Wallet complies with PCI-DSS Level 1 standards for maximum transaction security.'}
+                      </p>
+                      <p>
+                        <strong>{locale === 'el' ? '💳 Στοιχεία Κάρτας:' : '💳 Card Information:'}</strong> {locale === 'el' ? 'Δεν αποθηκεύουμε ούτε διατηρούμε στοιχεία των καρτών σας. Όλα τα στοιχεία υποβάλλονται απευθείας στη Viva Wallet.' : 'We do not store or retain your card information. All details are submitted directly to Viva Wallet.'}
+                      </p>
+                      <p>
+                        <strong>{locale === 'el' ? '🛡️ GDPR:' : '🛡️ GDPR:'}</strong> {locale === 'el' ? 'Τα προσωπικά σας δεδομένα προστατεύονται σύμφωνα με τον GDPR. Δείτε την' : 'Your personal data is protected according to GDPR. See our'} <a href={locale === 'el' ? '/el/privacy-policy' : '/en/privacy-policy'} className="text-primary hover:underline" target="_blank">{locale === 'el' ? 'Πολιτική Απορρήτου' : 'Privacy Policy'}</a>.
+                      </p>
                     </div>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+                  <div className="flex flex-col sm:flex-row gap-3 md:gap-4 mt-6">
                     <Button
                       variant="outline"
                       onClick={() => {

@@ -1,137 +1,199 @@
-import { useLocale } from 'next-intl';
+import { getLocale } from 'next-intl/server';
+import Link from 'next/link';
+import type { Metadata } from 'next';
 
-export default function PrivacyPolicyPage() {
-  const locale = useLocale();
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  
+  return {
+    title: locale === 'el' ? 'Πολιτική Απορρήτου & Προστασίας Προσωπικών Δεδομένων' : 'Privacy & Personal Data Protection Policy',
+    description: locale === 'el' 
+      ? 'Η πολιτική απορρήτου της Τινκερμπελ σύμφωνα με τον GDPR. Μάθετε πώς προστατεύουμε τα προσωπικά σας δεδομένα.'
+      : 'Tinkerbell\'s privacy policy in accordance with GDPR. Learn how we protect your personal data.',
+    openGraph: {
+      title: locale === 'el' ? 'Πολιτική Απορρήτου | Τινκερμπελ' : 'Privacy Policy | Tinkerbell',
+      description: locale === 'el' 
+        ? 'Η πολιτική απορρήτου της Τινκερμπελ σύμφωνα με τον GDPR.'
+        : 'Tinkerbell\'s privacy policy in accordance with GDPR.',
+    },
+  };
+}
+
+export default async function PrivacyPolicyPage() {
+  const locale = await getLocale();
   
   return (
-    <div className="container mx-auto px-4 py-12 max-w-4xl">
-      <h1 className="text-4xl font-bold mb-8">
-        {locale === 'el' ? 'Πολιτική Απορρήτου' : 'Privacy Policy'}
-      </h1>
-      
-      <div className="prose prose-slate max-w-none space-y-6">
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {locale === 'el' ? '1. Εισαγωγή' : '1. Introduction'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {locale === 'el' ? 'Το Τινκερμπελ δεσμεύεται να προστατεύει την προσωπική σας ιδιωτικότητα. Η παρούσα Πολιτική Απορρήτου εξηγεί πώς συλλέγουμε, χρησιμοποιούμε, κοινοποιούμε και προστατεύουμε τις προσωπικές σας πληροφορίες όταν χρησιμοποιείτε την ιστοσελίδα μας.' : 'Tinkerbell is committed to protecting your personal privacy. This Privacy Policy explains how we collect, use, share, and protect your personal information when you use our website.'}
+    <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="container mx-auto px-4 py-16 max-w-4xl">
+        {/* Header */}
+        <div className="mb-12 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight">
+            {locale === 'el' ? 'Πολιτική Απορρήτου' : 'Privacy Policy'}
+          </h1>
+          <p className="text-muted-foreground text-lg">
+            {locale === 'el' ? 'Πώς προστατεύουμε τα προσωπικά σας δεδομένα' : 'How we protect your personal data'}
           </p>
-        </section>
+        </div>
 
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {locale === 'el' ? '2. Πληροφορίες που Συλλέγουμε' : '2. Information We Collect'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {locale === 'el' ? 'Συλλέγουμε τις ακόλουθες πληροφορίες:' : 'We collect the following information:'}
-          </p>
-          <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-            <li>{locale === 'el' ? 'Στοιχεία επικοινωνίας (όνομα, email, τηλέφωνο)' : 'Contact details (name, email, phone)'}</li>
-            <li>{locale === 'el' ? 'Διεύθυνση αποστολής και χρέωσης' : 'Shipping and billing address'}</li>
-            <li>{locale === 'el' ? 'Πληροφορίες παραγγελίας και ιστορικό αγορών' : 'Order information and purchase history'}</li>
-            <li>{locale === 'el' ? 'Πληροφορίες πλοήγησης (cookies, IP address)' : 'Browsing information (cookies, IP address)'}</li>
-          </ul>
-        </section>
+        {/* Content */}
+        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-lg p-8 md:p-12 space-y-12">
+          
+          {/* Section 1 */}
+          <section>
+            <h2 className="text-2xl font-bold mb-4 border-b pb-2">
+              {locale === 'el' ? '1. Υπεύθυνος Επεξεργασίας' : '1. Data Controller'}
+            </h2>
+            <div className="space-y-2 text-muted-foreground">
+              <p><strong>Τινκερμπελ (Tinkerbell)</strong></p>
+              <p>Γεωργούλη 8, Καλαμάτα 24100</p>
+              <p>Email: <a href="mailto:tinkerbellkalamatas@gmail.com" className="text-primary hover:underline">tinkerbellkalamatas@gmail.com</a></p>
+              <p>Τηλ: 2721 406303</p>
+            </div>
+          </section>
 
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {locale === 'el' ? '3. Χρήση Πληροφοριών' : '3. Use of Information'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {locale === 'el' ? 'Χρησιμοποιούμε τις πληροφορίες σας για:' : 'We use your information to:'}
-          </p>
-          <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-            <li>{locale === 'el' ? 'Επεξεργασία και εκτέλεση παραγγελιών' : 'Process and fulfill orders'}</li>
-            <li>{locale === 'el' ? 'Επικοινωνία σχετικά με τις παραγγελίες σας' : 'Communicate about your orders'}</li>
-            <li>{locale === 'el' ? 'Βελτίωση των υπηρεσιών μας' : 'Improve our services'}</li>
-            <li>{locale === 'el' ? 'Αποστολή ενημερώσεων και προωθητικών προσφορών (με τη συγκατάθεσή σας)' : 'Send updates and promotional offers (with your consent)'}</li>
-            <li>{locale === 'el' ? 'Προστασία από απάτες και ασφάλεια της πλατφόρμας' : 'Protect against fraud and ensure platform security'}</li>
-          </ul>
-        </section>
+          {/* Section 2 */}
+          <section>
+            <h2 className="text-2xl font-bold mb-4 border-b pb-2">
+              {locale === 'el' ? '2. Τι Δεδομένα Συλλέγουμε' : '2. What Data We Collect'}
+            </h2>
+            <div className="space-y-4 text-muted-foreground">
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">Προσωπικά Στοιχεία:</h3>
+                <p>Όνομα, επώνυμο, email, τηλέφωνο, διεύθυνση παράδοσης</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">Παραγγελίες:</h3>
+                <p>Ιστορικό αγορών, προϊόντα, τιμές, κατάσταση παραγγελίας</p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground mb-2">Τεχνικά:</h3>
+                <p>IP address, browser, συσκευή, γλώσσα</p>
+              </div>
+            </div>
+          </section>
 
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {locale === 'el' ? '4. Κοινοποίηση Πληροφοριών' : '4. Sharing Information'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {locale === 'el' ? 'Δεν πουλάμε ούτε μισθώνουμε τα προσωπικά σας δεδομένα σε τρίτους. Μπορεί να κοινοποιήσουμε πληροφορίες με:' : 'We do not sell or rent your personal data to third parties. We may share information with:'}
-          </p>
-          <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-            <li>{locale === 'el' ? 'Εταιρείες μεταφορών για την παράδοση των προϊόντων' : 'Shipping companies for product delivery'}</li>
-            <li>{locale === 'el' ? 'Παρόχους υπηρεσιών πληρωμών για την επεξεργασία συναλλαγών' : 'Payment service providers for transaction processing'}</li>
-            <li>{locale === 'el' ? 'Νομικές αρχές όταν απαιτείται από το νόμο' : 'Legal authorities when required by law'}</li>
-          </ul>
-        </section>
+          {/* Section 3 - Payment */}
+          <section className="bg-amber-50 dark:bg-amber-950/20 p-6 rounded-xl border-l-4 border-amber-500">
+            <h2 className="text-2xl font-bold mb-4">
+              {locale === 'el' ? '3. Πληρωμές & Viva Wallet' : '3. Payments & Viva Wallet'}
+            </h2>
+            <div className="space-y-3 text-muted-foreground">
+              <p className="font-semibold text-amber-900 dark:text-amber-400">
+                ⚠️ {locale === 'el' ? 'ΔΕΝ αποθηκεύουμε στοιχεία καρτών' : 'We do NOT store card details'}
+              </p>
+              <p>
+                {locale === 'el' 
+                  ? 'Όλες οι πληρωμές επεξεργάζονται από τη Viva Wallet (PCI-DSS Level 1 certified). Τα στοιχεία της κάρτας σας εισάγονται απευθείας στην ασφαλή πλατφόρμα της Viva μέσω κρυπτογραφημένης σύνδεσης SSL 256-bit.'
+                  : 'All payments are processed by Viva Wallet (PCI-DSS Level 1 certified). Your card details are entered directly into Viva\'s secure platform via encrypted SSL 256-bit connection.'}
+              </p>
+              <p className="text-sm">
+                <a href="https://www.viva.com/privacy/" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  {locale === 'el' ? 'Πολιτική Απορρήτου Viva Wallet →' : 'Viva Wallet Privacy Policy →'}
+                </a>
+              </p>
+            </div>
+          </section>
 
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {locale === 'el' ? '5. Cookies' : '5. Cookies'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {locale === 'el' ? 'Χρησιμοποιούμε cookies για να βελτιώσουμε την εμπειρία σας στην ιστοσελίδα μας. Τα cookies μας βοηθούν να απομνημονεύουμε τις προτιμήσεις σας και να αναλύουμε την κίνηση στην ιστοσελίδα. Μπορείτε να ρυθμίσετε τον browser σας να απορρίπτει cookies, αλλά αυτό μπορεί να περιορίσει κάποιες λειτουργίες.' : 'We use cookies to improve your experience on our website. Cookies help us remember your preferences and analyze website traffic. You can set your browser to reject cookies, but this may limit some functionality.'}
-          </p>
-        </section>
+          {/* Section 4 */}
+          <section>
+            <h2 className="text-2xl font-bold mb-4 border-b pb-2">
+              {locale === 'el' ? '4. Γιατί Χρησιμοποιούμε τα Δεδομένα σας' : '4. Why We Use Your Data'}
+            </h2>
+            <ul className="space-y-2 text-muted-foreground">
+              <li>• {locale === 'el' ? 'Επεξεργασία και εκτέλεση παραγγελιών' : 'Order processing and fulfillment'}</li>
+              <li>• {locale === 'el' ? 'Παράδοση προϊόντων (BOXNOW)' : 'Product delivery (BOXNOW)'}</li>
+              <li>• {locale === 'el' ? 'Επικοινωνία για παραγγελίες' : 'Order-related communication'}</li>
+              <li>• {locale === 'el' ? 'Νομικές υποχρεώσεις (φορολογικά)' : 'Legal obligations (tax)'}</li>
+              <li>• {locale === 'el' ? 'Προστασία από απάτες' : 'Fraud protection'}</li>
+            </ul>
+          </section>
 
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {locale === 'el' ? '6. Ασφάλεια Δεδομένων' : '6. Data Security'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {locale === 'el' ? 'Λαμβάνουμε κατάλληλα τεχνικά και οργανωτικά μέτρα για την προστασία των προσωπικών σας δεδομένων από μη εξουσιοδοτημένη πρόσβαση, απώλεια ή καταστροφή. Οι συναλλαγές πληρωμής γίνονται μέσω ασφαλών καναλιών με κρυπτογράφηση.' : 'We take appropriate technical and organizational measures to protect your personal data from unauthorized access, loss, or destruction. Payment transactions are conducted through secure channels with encryption.'}
-          </p>
-        </section>
+          {/* Section 5 */}
+          <section>
+            <h2 className="text-2xl font-bold mb-4 border-b pb-2">
+              {locale === 'el' ? '5. Με Ποιους Μοιραζόμαστε Δεδομένα' : '5. Who We Share Data With'}
+            </h2>
+            <div className="space-y-3 text-muted-foreground">
+              <p className="font-semibold text-foreground">{locale === 'el' ? 'Δεν πουλάμε τα δεδομένα σας. Μοιραζόμαστε μόνο με:' : 'We don\'t sell your data. We only share with:'}</p>
+              <ul className="space-y-2">
+                <li>• <strong>BOXNOW:</strong> {locale === 'el' ? 'Για παράδοση προϊόντων' : 'For product delivery'}</li>
+                <li>• <strong>Viva Wallet:</strong> {locale === 'el' ? 'Για επεξεργασία πληρωμών (χωρίς στοιχεία καρτών)' : 'For payment processing (without card details)'}</li>
+                <li>• <strong>{locale === 'el' ? 'Νομικές Αρχές:' : 'Legal Authorities:'}</strong> {locale === 'el' ? 'Μόνο αν απαιτείται από το νόμο' : 'Only if required by law'}</li>
+              </ul>
+            </div>
+          </section>
 
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {locale === 'el' ? '7. Τα Δικαιώματά Σας' : '7. Your Rights'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {locale === 'el' ? 'Σύμφωνα με τον GDPR, έχετε το δικαίωμα:' : 'Under GDPR, you have the right to:'}
-          </p>
-          <ul className="list-disc pl-6 text-muted-foreground space-y-2">
-            <li>{locale === 'el' ? 'Πρόσβασης στα προσωπικά σας δεδομένα' : 'Access your personal data'}</li>
-            <li>{locale === 'el' ? 'Διόρθωσης ανακριβών δεδομένων' : 'Rectify inaccurate data'}</li>
-            <li>{locale === 'el' ? 'Διαγραφής των δεδομένων σας' : 'Erase your data'}</li>
-            <li>{locale === 'el' ? 'Περιορισμού της επεξεργασίας' : 'Restrict processing'}</li>
-            <li>{locale === 'el' ? 'Φορητότητας δεδομένων' : 'Data portability'}</li>
-            <li>{locale === 'el' ? 'Εναντίωσης στην επεξεργασία' : 'Object to processing'}</li>
-          </ul>
-        </section>
+          {/* Section 6 - Cookies */}
+          <section>
+            <h2 className="text-2xl font-bold mb-4 border-b pb-2">
+              {locale === 'el' ? '6. Cookies & Τοπική Αποθήκευση' : '6. Cookies & Local Storage'}
+            </h2>
+            <div className="space-y-4 text-muted-foreground">
+              <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-lg">
+                <p className="font-semibold text-green-800 dark:text-green-400 mb-2">
+                  ✓ {locale === 'el' ? 'ΔΕΝ χρησιμοποιούμε:' : 'We do NOT use:'}
+                </p>
+                <p className="text-sm">{locale === 'el' ? 'Tracking, Analytics, Διαφημίσεις, Google Analytics, Facebook Pixel' : 'Tracking, Analytics, Ads, Google Analytics, Facebook Pixel'}</p>
+              </div>
+              
+              <div>
+                <p className="font-semibold text-foreground mb-2">{locale === 'el' ? 'Χρησιμοποιούμε ΜΟΝΟ:' : 'We ONLY use:'}</p>
+                <ul className="space-y-1 text-sm">
+                  <li>• <code className="bg-muted px-2 py-1 rounded">locale</code> - {locale === 'el' ? 'Επιλογή γλώσσας' : 'Language preference'}</li>
+                  <li>• <code className="bg-muted px-2 py-1 rounded">cart-storage</code> - {locale === 'el' ? 'Καλάθι αγορών' : 'Shopping cart'}</li>
+                  <li>• <code className="bg-muted px-2 py-1 rounded">checkout_data</code> - {locale === 'el' ? 'Στοιχεία φόρμας' : 'Form data'}</li>
+                  <li>• <code className="bg-muted px-2 py-1 rounded">cookie_consent</code> - {locale === 'el' ? 'Επιλογή banner' : 'Banner choice'}</li>
+                </ul>
+              </div>
+            </div>
+          </section>
 
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {locale === 'el' ? '8. Διατήρηση Δεδομένων' : '8. Data Retention'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {locale === 'el' ? 'Διατηρούμε τα προσωπικά σας δεδομένα για όσο χρονικό διάστημα είναι απαραίτητο για την εκπλήρωση των σκοπών που περιγράφονται σε αυτή την πολιτική, εκτός εάν απαιτείται ή επιτρέπεται μεγαλύτερη περίοδος διατήρησης από το νόμο.' : 'We retain your personal data for as long as necessary to fulfill the purposes described in this policy, unless a longer retention period is required or permitted by law.'}
-          </p>
-        </section>
+          {/* Section 7 - Rights */}
+          <section className="bg-blue-50 dark:bg-blue-950/20 p-6 rounded-xl">
+            <h2 className="text-2xl font-bold mb-4">
+              {locale === 'el' ? '7. Τα Δικαιώματά σας (GDPR)' : '7. Your Rights (GDPR)'}
+            </h2>
+            <div className="space-y-3 text-muted-foreground">
+              <p>{locale === 'el' ? 'Έχετε δικαίωμα:' : 'You have the right to:'}</p>
+              <ul className="space-y-1">
+                <li>• {locale === 'el' ? 'Πρόσβασης στα δεδομένα σας' : 'Access your data'}</li>
+                <li>• {locale === 'el' ? 'Διόρθωσης ανακριβών δεδομένων' : 'Rectify inaccurate data'}</li>
+                <li>• {locale === 'el' ? 'Διαγραφής ("δικαίωμα στη λήθη")' : 'Erasure ("right to be forgotten")'}</li>
+                <li>• {locale === 'el' ? 'Φορητότητας δεδομένων' : 'Data portability'}</li>
+                <li>• {locale === 'el' ? 'Καταγγελίας στην Αρχή Προστασίας Δεδομένων' : 'Lodge a complaint with the Data Protection Authority'}</li>
+              </ul>
+              <div className="mt-4 p-4 bg-white dark:bg-slate-800 rounded-lg">
+                <p className="text-sm font-semibold text-foreground mb-1">{locale === 'el' ? 'Επικοινωνήστε μαζί μας:' : 'Contact us:'}</p>
+                <p className="text-sm">Email: <a href="mailto:tinkerbellkalamatas@gmail.com" className="text-primary hover:underline">tinkerbellkalamatas@gmail.com</a></p>
+                <p className="text-sm">{locale === 'el' ? 'Απάντηση εντός 30 ημερών' : 'Response within 30 days'}</p>
+              </div>
+            </div>
+          </section>
 
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {locale === 'el' ? '9. Αλλαγές στην Πολιτική' : '9. Policy Changes'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {locale === 'el' ? 'Διατηρούμε το δικαίωμα να τροποποιήσουμε αυτή την Πολιτική Απορρήτου ανά πάσα στιγμή. Οι αλλαγές θα δημοσιεύονται σε αυτή τη σελίδα και θα ισχύουν αμέσως μετά τη δημοσίευσή τους.' : 'We reserve the right to modify this Privacy Policy at any time. Changes will be posted on this page and take effect immediately upon publication.'}
-          </p>
-        </section>
+          {/* Section 8 */}
+          <section>
+            <h2 className="text-2xl font-bold mb-4 border-b pb-2">
+              {locale === 'el' ? '8. Ασφάλεια & Διατήρηση' : '8. Security & Retention'}
+            </h2>
+            <div className="space-y-3 text-muted-foreground">
+              <p><strong>{locale === 'el' ? 'Ασφάλεια:' : 'Security:'}</strong> SSL/TLS encryption, Supabase (certified), περιορισμένη πρόσβαση</p>
+              <p><strong>{locale === 'el' ? 'Διατήρηση:' : 'Retention:'}</strong></p>
+              <ul className="space-y-1 text-sm ml-4">
+                <li>• {locale === 'el' ? 'Παραγγελίες: 10 έτη (φορολογικές υποχρεώσεις)' : 'Orders: 10 years (tax obligations)'}</li>
+                <li>• {locale === 'el' ? 'Επικοινωνία: 2 έτη ή μέχρι αίτημα διαγραφής' : 'Communication: 2 years or until deletion request'}</li>
+                <li>• {locale === 'el' ? 'Τεχνικά logs: 90 ημέρες' : 'Technical logs: 90 days'}</li>
+              </ul>
+            </div>
+          </section>
 
-        <section>
-          <h2 className="text-2xl font-semibold mb-4">
-            {locale === 'el' ? '10. Επικοινωνία' : '10. Contact'}
-          </h2>
-          <p className="text-muted-foreground mb-4">
-            {locale === 'el' ? 'Για ερωτήσεις σχετικά με την πολιτική απορρήτου, επικοινωνήστε μαζί μας:' : 'For questions about our privacy policy, please contact us:'}
-          </p>
-          <div className="text-muted-foreground">
-            <p>Email: tinkerbellkalamatas@gmail.com</p>
-            <p>{locale === 'el' ? 'Τηλέφωνο' : 'Phone'}: 2721 406303</p>
-          </div>
-        </section>
+        </div>
 
-        <div className="mt-8 pt-8 border-t text-sm text-muted-foreground">
+        {/* Footer */}
+        <div className="mt-8 text-center text-sm text-muted-foreground">
           <p>{locale === 'el' ? 'Τελευταία ενημέρωση: Νοέμβριος 2025' : 'Last updated: November 2025'}</p>
+          <p className="mt-2">
+            {locale === 'el' ? 'Συμμόρφωση με GDPR (ΕΕ) 2016/679' : 'GDPR (EU) 2016/679 Compliant'}
+          </p>
         </div>
       </div>
     </div>

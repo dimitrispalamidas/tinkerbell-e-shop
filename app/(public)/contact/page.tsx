@@ -1,10 +1,26 @@
-"use client"
-
-import { useLocale } from 'next-intl'
+import { getLocale } from 'next-intl/server'
 import { Mail, Phone, Clock, MapPin } from 'lucide-react'
+import type { Metadata } from 'next';
 
-export default function ContactPage() {
-  const locale = useLocale()
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  
+  return {
+    title: locale === 'el' ? 'Επικοινωνία' : 'Contact Us',
+    description: locale === 'el' 
+      ? 'Επικοινωνήστε με το Τινκερμπελ. Γεωργούλη 8, Καλαμάτα. Τηλ: 2721 406303. Email: tinkerbellkalamatas@gmail.com'
+      : 'Contact Tinkerbell. Georgouli 8, Kalamata. Tel: 2721 406303. Email: tinkerbellkalamatas@gmail.com',
+    openGraph: {
+      title: locale === 'el' ? 'Επικοινωνία | Τινκερμπελ' : 'Contact Us | Tinkerbell',
+      description: locale === 'el' 
+        ? 'Επικοινωνήστε μαζί μας για ερωτήσεις ή ραντεβού.'
+        : 'Get in touch with us for questions or appointments.',
+    },
+  };
+}
+
+export default async function ContactPage() {
+  const locale = await getLocale()
   
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">

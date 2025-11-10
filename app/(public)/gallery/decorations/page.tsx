@@ -1,128 +1,37 @@
-"use client"
+import { getLocale } from 'next-intl/server';
+import { createClient } from '@/lib/supabase/server';
+import { DecorationsGalleryClient } from './decorations-client';
+import type { Metadata } from 'next';
 
-import { useState, useEffect } from 'react';
-import { useLocale } from 'next-intl';
-import { createClient } from '@/lib/supabase/client';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Mail, Phone } from 'lucide-react';
-import { PhotoLightbox } from '@/components/gallery/photo-lightbox';
-
-export default function DecorationsGalleryPage() {
-  const locale = useLocale();
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
   
-  const [items, setItems] = useState<any[]>([]);
-  const [allPhotos, setAllPhotos] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-
-  useEffect(() => {
-    fetchGalleryItems();
-  }, []);
-
-  const fetchGalleryItems = async () => {
-    try {
-      const supabase = createClient();
-      const { data } = await supabase
-        .from('gallery_items')
-        .select('*')
-        .eq('category', 'decoration')
-        .eq('is_active', true)
-        .order('display_order', { ascending: true });
-
-      if (data) {
-        setItems(data);
-        // Extract image from each item
-        const photos = data.map((item) => item.image).filter(Boolean);
-        setAllPhotos(photos);
-      }
-    } catch (error) {
-      console.error('Failed to fetch gallery items:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  return {
+    title: locale === 'el' ? 'Στολισμοί Εκδηλώσεων' : 'Event Decorations',
+    description: locale === 'el' 
+      ? 'Δημιουργούμε πρωτότυπες ιδέες για τη διοργάνωση του γάμου σας ή της βάπτισης με προσκλητήρια, μπομπονιέρες και στολισμούς. Ανακαλύψτε τη συλλογή μας!'
+      : 'We create original ideas for organizing your wedding or baptism with invitations, favors, and decorations. Discover our collection!',
+    openGraph: {
+      title: locale === 'el' ? 'Στολισμοί Εκδηλώσεων | Τινκερμπελ' : 'Event Decorations | Tinkerbell',
+      description: locale === 'el' 
+        ? 'Δημιουργούμε πρωτότυπες ιδέες για τη διοργάνωση του γάμου σας ή της βάπτισης.'
+        : 'We create original ideas for organizing your wedding or baptism.',
+    },
   };
+}
 
-  const openLightbox = (index: number) => {
-    setLightboxIndex(index);
-    setLightboxOpen(true);
-  };
+export default async function DecorationsGalleryPage() {
+  const locale = await getLocale();
+  const supabase = await createClient();
+  
+  const { data: items } = await supabase
+    .from('gallery_items')
+    .select('*')
+    .eq('category', 'decoration')
+    .eq('is_active', true)
+    .order('display_order', { ascending: true });
 
-  if (isLoading) {
-    return (
-      <div className="container mx-auto px-4 py-6 md:py-8">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <p className="text-muted-foreground">{locale === 'el' ? 'Φόρτωση...' : 'Loading...'}</p>
-        </div>
-      </div>
-    );
-  }
+  const allPhotos = items ? items.map((item) => item.image).filter(Boolean) : [];
 
-  return (
-    <div className="container mx-auto px-4 py-6 md:py-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8 md:mb-12">
-          <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-3 md:mb-4">
-            {locale === 'el' ? 'Στολισμοί' : 'Decorations'}
-          </h1>
-          <p className="text-base md:text-lg text-muted-foreground max-w-5xl mx-auto mb-6 leading-relaxed">
-            {locale === 'el' ? 'Για τη μοναδική στιγμή της ζωής σας δημιουργούμε πρωτότυπες ιδέες για την διοργάνωση του γάμου σας ή της βάπτισης με προσκλητήρια, μπομπονιέρες και στολισμούς! Σας περιμένουμε να γνωριστούμε από κοντά με μοναδικές τιμές και διάθεσή για δημιουργία να φτιάξουμε μαζί το ομορφότερο μυστήριο για εσάς!' : 'For the unique moment of your life, we create original ideas for organizing your wedding or baptism with invitations, favors, and decorations! We look forward to meeting you in person with unique prices and a creative spirit to build together the most beautiful celebration for you!'}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="gap-2" asChild>
-              <a href="mailto:tinkerbellkalamatas@gmail.com">
-                <Mail className="h-5 w-5" />
-                tinkerbellkalamatas@gmail.com
-              </a>
-            </Button>
-            <Button size="lg" variant="outline" className="gap-2" asChild>
-              <a href="tel:+302721406303">
-                <Phone className="h-5 w-5" />
-                2721 406303
-              </a>
-            </Button>
-          </div>
-        </div>
-
-        {/* Photo Grid */}
-        {allPhotos.length > 0 ? (
-          <div className="grid grid-cols-3 gap-1 md:gap-2">
-            {allPhotos.map((photo, index) => (
-              <button
-                key={index}
-                onClick={() => openLightbox(index)}
-                className="relative aspect-square overflow-hidden rounded bg-gradient-to-br from-sunny/20 to-coral/20 hover:scale-105 transition-transform duration-300 group"
-              >
-                <Image
-                  src={photo}
-                  alt={`${locale === 'el' ? 'Στολισμοί' : 'Decorations'} ${index + 1}`}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-                />
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-              </button>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-16">
-            <p className="text-xl text-muted-foreground">
-              {locale === 'el' ? 'Σύντομα νέα έργα!' : 'New works coming soon!'}
-            </p>
-          </div>
-        )}
-      </div>
-
-      {/* Lightbox */}
-      {lightboxOpen && (
-        <PhotoLightbox
-          images={allPhotos}
-          initialIndex={lightboxIndex}
-          onClose={() => setLightboxOpen(false)}
-        />
-      )}
-    </div>
-  );
+  return <DecorationsGalleryClient locale={locale} photos={allPhotos} />;
 }

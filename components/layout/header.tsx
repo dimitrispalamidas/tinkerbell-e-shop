@@ -5,7 +5,7 @@ import { useLocale } from 'next-intl'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useCartStore } from '@/lib/store/cart'
-import { ShoppingCart, Globe, LogIn, Menu, X, Home, Store, Image as ImageIcon, Mail, Baby, Shirt, Footprints, ChevronDown } from 'lucide-react'
+import { ShoppingCart, Globe, Menu, X, Home, Store, Image as ImageIcon, Mail, Baby, Shirt, Footprints, ChevronDown } from 'lucide-react'
 import { BsBalloonHeart } from 'react-icons/bs'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
@@ -175,12 +175,6 @@ export function Header() {
           >
             <Globe className="h-5 w-5" />
           </Button>
-
-          <Link href="/admin-login">
-            <Button variant="ghost" size="icon" title="Admin Login" className="text-sage-700 hover:text-sage-900 hover:bg-sage-50 transition-all duration-300">
-              <LogIn className="h-5 w-5" />
-            </Button>
-          </Link>
           
           <Button 
             variant="ghost" 
@@ -346,7 +340,7 @@ export function Header() {
               {locale === 'el' ? 'Επικοινωνία' : 'Contact'}
             </Link>
             
-            <div className="pt-4 mt-4 border-t border-sage-200/30 flex items-center justify-between gap-3">
+            <div className="pt-4 mt-4 border-t border-sage-200/30">
               <Button
                 variant="outline"
                 size="sm"
@@ -354,18 +348,11 @@ export function Header() {
                   toggleLocale()
                   closeMobileMenu()
                 }}
-                className="flex items-center gap-2 border-sage-300 text-sage-800 hover:bg-sage-50 font-light"
+                className="flex items-center gap-2 border-sage-300 text-sage-800 hover:bg-sage-50 font-light w-full"
               >
                 <Globe className="h-4 w-4" />
                 {locale === 'el' ? 'English' : 'Ελληνικά'}
               </Button>
-
-              <Link href="/admin-login" onClick={closeMobileMenu}>
-                <Button variant="outline" size="sm" className="flex items-center gap-2 border-sage-300 text-sage-800 hover:bg-sage-50 font-light">
-                  <LogIn className="h-4 w-4" />
-                  Admin
-                </Button>
-              </Link>
             </div>
           </nav>
         </div>

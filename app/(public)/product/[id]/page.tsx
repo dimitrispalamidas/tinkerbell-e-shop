@@ -88,8 +88,42 @@ export default async function ProductPage({
     .order('size')
     .order('color');
 
+  // Prepare structured data for SEO
+  const productName = locale === 'el' ? product.name_el : product.name_en;
+  const description = locale === 'el' ? product.description_el : product.description_en;
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.tinkerbell.gr';
+  
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": productName,
+    "description": description || productName,
+    "image": product.images || [],
+    "sku": product.sku,
+    "brand": {
+      "@type": "Brand",
+      "name": "Τινκερμπελ"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": `${baseUrl}/product/${id}`,
+      "priceCurrency": "EUR",
+      "price": product.price,
+      "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "seller": {
+        "@type": "Organization",
+        "name": "Τινκερμπελ"
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-sage-50/10 to-cream-50/20">
+      {/* Structured Data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       {/* Premium Breadcrumb/Back Navigation */}
       <div className="border-b bg-white/80 backdrop-blur-sm sticky top-16 z-10">
         <div className="container mx-auto px-4 py-4">

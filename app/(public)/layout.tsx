@@ -3,6 +3,7 @@ import { getLocale, getMessages } from 'next-intl/server';
 import { Header } from '@/components/layout/header';
 import { Footer } from '@/components/layout/footer';
 import { Toaster } from '@/components/ui/toaster';
+import { CookieConsentBanner } from '@/components/cookie-consent-banner';
 
 export default async function PublicLayout({
   children,
@@ -20,6 +21,7 @@ export default async function PublicLayout({
         <Footer />
       </div>
       <Toaster />
+      <CookieConsentBanner />
     </NextIntlClientProvider>
   );
 }

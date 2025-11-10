@@ -5,6 +5,28 @@ import { PremiumHero } from '@/components/home/premium-hero';
 import { PremiumCategories } from '@/components/home/premium-categories';
 import { PremiumFeaturedProducts } from '@/components/home/premium-featured-products';
 import { PremiumBaptismCta } from '@/components/home/premium-baptism-cta';
+import type { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  
+  return {
+    title: locale === 'el' 
+      ? 'Τινκερμπελ - Παιδικά & Εφηβικά Ρούχα και Παπούτσια | Καλαμάτα' 
+      : 'Tinkerbell - Kids & Teen Clothing and Shoes | Kalamata',
+    description: locale === 'el' 
+      ? 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά ρούχα, παπούτσια, και βαπτιστικά πακέτα στην Καλαμάτα. Βαπτιστικά, στολισμοί εκδηλώσεων και παιδικά είδη με αγάπη και φροντίδα.'
+      : 'Discover our unique collection of kids clothing, shoes, and baptism packages in Kalamata. Baptisms, event decorations and children\'s items with love and care.',
+    openGraph: {
+      title: locale === 'el' 
+        ? 'Τινκερμπελ - Παιδικά & Εφηβικά Ρούχα και Παπούτσια' 
+        : 'Tinkerbell - Kids & Teen Clothing and Shoes',
+      description: locale === 'el' 
+        ? 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά ρούχα, παπούτσια, και βαπτιστικά πακέτα.'
+        : 'Discover our unique collection of kids clothing, shoes, and baptism packages.',
+    },
+  };
+}
 
 export default async function HomePage() {
   const locale = await getLocale();

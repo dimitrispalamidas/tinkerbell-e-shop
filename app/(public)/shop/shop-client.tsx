@@ -1,11 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/utils';
-import { ShoppingBag, Sparkles } from 'lucide-react';
+import { ShoppingBag, Sparkles, ArrowUpDown } from 'lucide-react';
+import { ProductFilters } from '@/components/shop/product-filters';
+import { MobileFilterDrawer } from '@/components/shop/mobile-filter-drawer';
 
 interface ShopClientProps {
   locale: string;
@@ -15,13 +18,132 @@ interface ShopClientProps {
   category?: string;
 }
 
+type SortOption = 'newest' | 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc';
+
 export function ShopClient({ locale, products, allCategories, type, category }: ShopClientProps) {
   const [isVisible, setIsVisible] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  
+  // Filter states
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
 
   useEffect(() => {
     const timer = setTimeout(() => setIsVisible(true), 100);
     return () => clearTimeout(timer);
   }, []);
+
+  // Static price range
+  const minPrice = 0;
+  const maxPrice = 100;
+
+  // Initialize price range on mount
+  useEffect(() => {
+    setPriceRange([minPrice, maxPrice]);
+  }, []);
+
+  // Get all available sizes from products
+  const availableSizes = useMemo(() => {
+    const sizes = new Set<string>();
+    products?.forEach(product => {
+      product.sizes?.forEach((size: string) => sizes.add(size));
+    });
+    return Array.from(sizes).sort((a, b) => {
+      // Custom sort for sizes
+      const order = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+      const aIndex = order.indexOf(a);
+      const bIndex = order.indexOf(b);
+      if (aIndex !== -1 && bIndex !== -1) return aIndex - bIndex;
+      if (aIndex !== -1) return -1;
+      if (bIndex !== -1) return 1;
+      // For numeric sizes
+      const aNum = parseFloat(a);
+      const bNum = parseFloat(b);
+      if (!isNaN(aNum) && !isNaN(bNum)) return aNum - bNum;
+      return a.localeCompare(b);
+    });
+  }, [products]);
+
+  // Get all available colors from products
+  const availableColors = useMemo(() => {
+    const colors = new Set<string>();
+    products?.forEach(product => {
+      product.colors?.forEach((color: string) => colors.add(color));
+    });
+    return Array.from(colors).sort();
+  }, [products]);
+
+  // Filter and sort products
+  const filteredAndSortedProducts = useMemo(() => {
+    if (!products) return [];
+
+    // Apply filters
+    let filtered = products.filter(product => {
+      // Price filter
+      if (product.price < priceRange[0] || product.price > priceRange[1]) {
+        return false;
+      }
+
+      // Size filter
+      if (selectedSizes.length > 0) {
+        const hasMatchingSize = product.sizes?.some((size: string) => 
+          selectedSizes.includes(size)
+        );
+        if (!hasMatchingSize) return false;
+      }
+
+      // Color filter
+      if (selectedColors.length > 0) {
+        const hasMatchingColor = product.colors?.some((color: string) => 
+          selectedColors.includes(color)
+        );
+        if (!hasMatchingColor) return false;
+      }
+
+      return true;
+    });
+
+    // Apply sorting
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'price-asc':
+          return a.price - b.price;
+        case 'price-desc':
+          return b.price - a.price;
+        case 'name-asc':
+          return (locale === 'el' ? a.name_el : a.name_en).localeCompare(
+            locale === 'el' ? b.name_el : b.name_en
+          );
+        case 'name-desc':
+          return (locale === 'el' ? b.name_el : b.name_en).localeCompare(
+            locale === 'el' ? a.name_el : a.name_en
+          );
+        case 'newest':
+        default:
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      }
+    });
+
+    return sorted;
+  }, [products, priceRange, selectedSizes, selectedColors, sortBy, locale]);
+
+  const handleClearAllFilters = () => {
+    setPriceRange([minPrice, maxPrice]);
+    setSelectedSizes([]);
+    setSelectedColors([]);
+  };
+
+  const getSortLabel = (option: SortOption) => {
+    const labels: Record<SortOption, { el: string; en: string }> = {
+      newest: { el: 'Νεότερα Πρώτα', en: 'Newest First' },
+      'price-asc': { el: 'Τιμή: Χαμηλή σε Υψηλή', en: 'Price: Low to High' },
+      'price-desc': { el: 'Τιμή: Υψηλή σε Χαμηλή', en: 'Price: High to Low' },
+      'name-asc': { el: 'Όνομα: Α-Ω', en: 'Name: A-Z' },
+      'name-desc': { el: 'Όνομα: Ω-Α', en: 'Name: Z-A' },
+    };
+    return locale === 'el' ? labels[option].el : labels[option].en;
+  };
 
   // Get active filter title
   const getActiveFilterTitle = () => {
@@ -54,11 +176,11 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
             </h1>
             
             {/* Product Count */}
-            {products && (
+            {filteredAndSortedProducts && (
               <p className="text-sm md:text-base text-sage-700/80 font-light">
                 {locale === 'el' 
-                  ? `${products.length} ${products.length === 1 ? 'προϊόν' : 'προϊόντα'} διαθέσιμα` 
-                  : `${products.length} ${products.length === 1 ? 'product' : 'products'} available`
+                  ? `${filteredAndSortedProducts.length} ${filteredAndSortedProducts.length === 1 ? 'προϊόν' : 'προϊόντα'} ${products.length !== filteredAndSortedProducts.length ? `από ${products.length}` : 'διαθέσιμα'}` 
+                  : `${filteredAndSortedProducts.length} ${filteredAndSortedProducts.length === 1 ? 'product' : 'products'} ${products.length !== filteredAndSortedProducts.length ? `of ${products.length}` : 'available'}`
                 }
               </p>
             )}
@@ -122,12 +244,60 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
         </section>
       )}
 
-      {/* Premium Products Grid */}
+      {/* Products Section with Filters */}
       <section className="py-12 md:py-16 bg-gradient-to-b from-background to-sage-50/10">
         <div className="container mx-auto px-4">
-          {products && products.length > 0 ? (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-              {products.map((product, index) => (
+          <div className="flex gap-8">
+            {/* Desktop Sidebar Filters */}
+            <aside className="hidden lg:block w-72 flex-shrink-0">
+              <div className="sticky top-32 bg-white rounded-2xl shadow-lg p-6 border border-sage-100">
+                <ProductFilters
+                  locale={locale}
+                  minPrice={minPrice}
+                  maxPrice={maxPrice}
+                  availableSizes={availableSizes}
+                  availableColors={availableColors}
+                  selectedPriceRange={priceRange}
+                  selectedSizes={selectedSizes}
+                  selectedColors={selectedColors}
+                  onPriceChange={setPriceRange}
+                  onSizeChange={setSelectedSizes}
+                  onColorChange={setSelectedColors}
+                  onClearAll={handleClearAllFilters}
+                />
+              </div>
+            </aside>
+
+            {/* Main Content */}
+            <div className="flex-1">
+              {/* Sorting Bar */}
+              <div className="flex items-center justify-between mb-6 pb-4 border-b border-sage-200">
+                <p className="text-sm text-sage-600 font-light">
+                  {locale === 'el' 
+                    ? `${filteredAndSortedProducts.length} προϊόντα` 
+                    : `${filteredAndSortedProducts.length} products`
+                  }
+                </p>
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="h-4 w-4 text-sage-500" />
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value as SortOption)}
+                    className="text-sm border border-sage-200 rounded-lg px-3 py-2 bg-white text-sage-700 focus:outline-none focus:ring-2 focus:ring-magenta-500 focus:border-transparent font-light"
+                  >
+                    <option value="newest">{getSortLabel('newest')}</option>
+                    <option value="price-asc">{getSortLabel('price-asc')}</option>
+                    <option value="price-desc">{getSortLabel('price-desc')}</option>
+                    <option value="name-asc">{getSortLabel('name-asc')}</option>
+                    <option value="name-desc">{getSortLabel('name-desc')}</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Products Grid */}
+              {filteredAndSortedProducts && filteredAndSortedProducts.length > 0 ? (
+                <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6">
+                  {filteredAndSortedProducts.map((product, index) => (
                 <Link 
                   key={product.id} 
                   href={`/product/${product.id}`}
@@ -196,16 +366,34 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
                   ? 'Δοκιμάστε να αλλάξετε τα φίλτρα αναζήτησης' 
                   : 'Try changing your search filters'}
               </p>
-              <Link 
-                href="/shop"
-                className="inline-flex items-center px-6 py-3 bg-magenta-600 text-white rounded-full hover:bg-magenta-700 transition-colors duration-300 font-light"
+              <Button
+                onClick={handleClearAllFilters}
+                className="bg-magenta-600 hover:bg-magenta-700 text-white"
               >
-                {locale === 'el' ? 'Προβολή Όλων' : 'View All'}
-              </Link>
+                {locale === 'el' ? 'Καθαρισμός Φίλτρων' : 'Clear Filters'}
+              </Button>
             </div>
           )}
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* Mobile Filter Drawer */}
+      <MobileFilterDrawer
+        locale={locale}
+        minPrice={minPrice}
+        maxPrice={maxPrice}
+        availableSizes={availableSizes}
+        availableColors={availableColors}
+        selectedPriceRange={priceRange}
+        selectedSizes={selectedSizes}
+        selectedColors={selectedColors}
+        onPriceChange={setPriceRange}
+        onSizeChange={setSelectedSizes}
+        onColorChange={setSelectedColors}
+        onClearAll={handleClearAllFilters}
+      />
     </div>
   );
 }

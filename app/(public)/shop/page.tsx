@@ -1,6 +1,24 @@
 import { getLocale } from 'next-intl/server';
 import { createClient } from '@/lib/supabase/server';
 import { ShopClient } from './shop-client';
+import type { Metadata } from 'next';
+
+export async function generateMetadata(): Promise<Metadata> {
+  const locale = await getLocale();
+  
+  return {
+    title: locale === 'el' ? 'Κατάστημα - Παιδικά & Εφηβικά Ρούχα και Παπούτσια' : 'Shop - Kids & Teen Clothing and Shoes',
+    description: locale === 'el' 
+      ? 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά ρούχα, παπούτσια και αξεσουάρ. Βαπτιστικά ρούχα, casual ρούχα και παπούτσια για κάθε περίσταση.'
+      : 'Discover our unique collection of kids clothing, shoes and accessories. Baptism outfits, casual wear and shoes for every occasion.',
+    openGraph: {
+      title: locale === 'el' ? 'Κατάστημα | Τινκερμπελ' : 'Shop | Tinkerbell',
+      description: locale === 'el' 
+        ? 'Ανακαλύψτε τη μοναδική μας συλλογή από παιδικά ρούχα, παπούτσια και αξεσουάρ.'
+        : 'Discover our unique collection of kids clothing, shoes and accessories.',
+    },
+  };
+}
 
 export default async function ShopPage({
   searchParams,
