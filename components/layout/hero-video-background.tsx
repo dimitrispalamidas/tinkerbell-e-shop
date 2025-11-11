@@ -10,15 +10,14 @@ export function HeroVideoBackground() {
     const video = videoRef.current;
     if (!video) return;
 
-    // Δοκιμάζουμε να παίξει το video μόνο ΜΙΑ ΦΟΡΑ όταν είναι έτοιμο
-    const tryAutoplay = () => {
-      video.play().catch(() => {
-        // Αν αποτύχει, δείχνουμε το invisible tap layer
+    const tryAutoplay = async () => {
+      try {
+        await video.play();
+      } catch {
         setShowTapHint(true);
-      });
+      }
     };
 
-    // Όταν το video είναι έτοιμο, προσπαθούμε autoplay
     if (video.readyState >= 2) {
       tryAutoplay();
     } else {
@@ -30,32 +29,33 @@ export function HeroVideoBackground() {
     };
   }, []);
 
-  // Χειροκίνητο play αν χρειαστεί
   const handleTap = () => {
     const video = videoRef.current;
-    if (video) {
-      video.play().then(() => {
-        setShowTapHint(false);
-      });
-    }
+    if (!video) return;
+    video.play().then(() => setShowTapHint(false));
   };
 
   return (
     <div className="absolute inset-0 overflow-hidden">
       {/* 
-        ΟΛΑ τα attributes πρέπει να είναι ΕΔΩ στο JSX - όχι μέσα στο useEffect!
-        Έτσι το Safari iOS τα βλέπει από την αρχή και επιτρέπει autoplay
+        ΚΡΙΣΙΜΟ για iOS Safari:
+        - Όλα τα attributes στο HTML (όχι σε useEffect)
+        - webkit-playsinline="true" για παλιότερα iOS
+        - x-webkit-airplay="deny" για να μην εμφανίζεται AirPlay
+        - Video ΧΩΡΙΣ ήχο (mute track) στο αρχείο
       */}
       <video
         ref={videoRef}
-        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
         autoPlay
         loop
         muted
         playsInline
         preload="auto"
+        webkit-playsinline="true"
+        x-webkit-airplay="deny"
         disablePictureInPicture
         disableRemotePlayback
+        className="absolute inset-0 w-full h-full object-cover z-0"
         style={{ objectFit: 'cover' }}
       >
         <source src="/heroVideo.mp4" type="video/mp4" />
