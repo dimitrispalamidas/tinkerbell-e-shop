@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCartStore } from '@/lib/store/cart';
 import { toast } from 'sonner';
 import type { Product, ProductVariant } from '@/lib/types/database';
 import { ShoppingCart, Minus, Plus } from 'lucide-react';
+import { useFlyToCart } from '@/lib/hooks/use-fly-to-cart';
 
 interface ProductClientProps {
   product: Product;
@@ -21,6 +22,8 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
   const [isAddingToCart, setIsAddingToCart] = useState(false);
   const addItem = useCartStore((state) => state.addItem);
   const cartItems = useCartStore((state) => state.items);
+  const addToCartButtonRef = useRef<HTMLButtonElement>(null);
+  const { flyToCart } = useFlyToCart();
 
   // Get quantity already in cart for specific variant
   const getCartQuantity = (size: string, color: string): number => {
@@ -110,7 +113,13 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
         stock: availableStock, // Pass current stock for validation
       });
 
-      toast.success(locale === 'el' ? 'Προστέθηκε στο καλάθι!' : 'Added to cart!');
+      // Trigger flying animation
+      if (addToCartButtonRef.current && product.images[0]) {
+        flyToCart({
+          imageUrl: product.images[0],
+          sourceElement: addToCartButtonRef.current,
+        });
+      }
     } finally {
       // Reset loading state after a short delay to prevent rapid clicking
       setTimeout(() => {
@@ -293,6 +302,7 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
 
       {/* Add to Cart Button */}
       <Button
+        ref={addToCartButtonRef}
         size="lg"
         className="w-full bg-magenta-600 hover:bg-magenta-700 text-white py-6 rounded-full text-base md:text-lg font-light tracking-wide shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 group disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
         onClick={handleAddToCart}

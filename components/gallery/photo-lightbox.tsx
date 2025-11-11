@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Image from 'next/image';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,13 +13,66 @@ interface PhotoLightboxProps {
 
 export function PhotoLightbox({ images, initialIndex, onClose }: PhotoLightboxProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [imageTransition, setImageTransition] = useState(false);
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+
+  // Minimum swipe distance (in px)
+  const minSwipeDistance = 50;
 
   const goToPrevious = () => {
-    setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+    setImageTransition(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+      setImageTransition(false);
+    }, 150);
   };
 
   const goToNext = () => {
-    setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+    setImageTransition(true);
+    setTimeout(() => {
+      setCurrentIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+      setImageTransition(false);
+    }, 150);
+  };
+
+  // Touch handlers for swipe
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    const currentTouch = e.targetTouches[0].clientX;
+    setTouchEnd(currentTouch);
+    
+    // Calculate and update visual offset during swipe
+    if (touchStart !== null) {
+      const diff = currentTouch - touchStart;
+      // Limit the offset to prevent excessive drag
+      setSwipeOffset(Math.max(-150, Math.min(150, diff * 0.5)));
+    }
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      goToNext();
+    } else if (isRightSwipe) {
+      goToPrevious();
+    }
+
+    // Reset
+    setTouchStart(null);
+    setTouchEnd(null);
+    setSwipeOffset(0);
   };
 
   useEffect(() => {
@@ -89,8 +142,22 @@ export function PhotoLightbox({ images, initialIndex, onClose }: PhotoLightboxPr
       )}
 
       {/* Main Image */}
-      <div className="relative w-full h-full flex items-center justify-center p-4 md:p-8">
-        <div className="relative max-w-7xl max-h-full w-full h-full">
+      <div 
+        ref={imageContainerRef}
+        className="relative w-full h-full flex items-center justify-center p-4 md:p-8 touch-pan-y"
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+      >
+        <div 
+          className={`relative max-w-7xl max-h-full w-full h-full transition-all duration-200 ${
+            imageTransition ? 'opacity-50 scale-95' : 'opacity-100 scale-100'
+          }`}
+          style={{ 
+            transform: `translateX(${swipeOffset}px)`,
+            transition: swipeOffset === 0 ? 'all 0.3s ease-out' : 'transform 0.1s'
+          }}
+        >
           <Image
             src={images[currentIndex]}
             alt={`Image ${currentIndex + 1}`}
@@ -129,8 +196,8 @@ export function PhotoLightbox({ images, initialIndex, onClose }: PhotoLightboxPr
 
       {/* Touch Swipe Hint (Mobile) */}
       {images.length > 1 && (
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 md:hidden text-white/70 text-xs">
-          Swipe or use arrows to navigate
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-50 md:hidden text-white/70 text-xs backdrop-blur-sm bg-black/30 px-3 py-1.5 rounded-full">
+          ← Swipe για πλοήγηση →
         </div>
       )}
     </div>

@@ -179,9 +179,9 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gradient-to-b from-cream-50 via-white to-cream-50/30">
       {/* Premium Hero Section */}
-      <section className="relative bg-gradient-to-br from-sage-50 via-cream-50/30 to-mint-50/20 py-16 md:py-24">
+      <section className="relative py-16 md:py-24">
         <div className="container mx-auto px-4">
           <div className={`text-center max-w-4xl mx-auto transition-all duration-1000 ${
             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'

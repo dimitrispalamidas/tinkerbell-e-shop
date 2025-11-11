@@ -182,6 +182,7 @@ export function Header() {
             className="relative text-sage-700 hover:text-sage-900 hover:bg-sage-50 transition-all duration-300"
             onClick={() => setIsCartOpen(true)}
             title={locale === 'el' ? 'Καλάθι' : 'Cart'}
+            data-cart-icon
           >
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
@@ -200,6 +201,7 @@ export function Header() {
             className="relative text-sage-700 hover:text-sage-900 hover:bg-sage-50"
             onClick={() => setIsCartOpen(true)}
             title={locale === 'el' ? 'Καλάθι' : 'Cart'}
+            data-cart-icon
           >
             <ShoppingCart className="h-5 w-5" />
             {itemCount > 0 && (
