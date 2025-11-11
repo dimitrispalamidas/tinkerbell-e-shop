@@ -7,7 +7,11 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "email:dev": "email dev --dir emails"
+    "email:dev": "email dev --dir emails",
+    "populate-images": "tsx scripts/populate-images-simple.ts",
+    "populate-images:unsplash": "tsx scripts/populate-product-images.ts",
+    "populate-images:pexels": "tsx scripts/populate-images-pexels.ts",
+    "sync-images": "tsx scripts/sync-images-to-database.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
