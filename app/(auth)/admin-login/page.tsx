@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const locale = useLocale();
   
   const [email, setEmail] = useState('');
@@ -26,8 +27,18 @@ export default function AdminLoginPage() {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        // User is already logged in, redirect to admin
-        router.push('/admin');
+        const { data: adminRecord } = await supabase
+          .from('admin_users')
+          .select('id')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (adminRecord) {
+          router.push('/admin');
+          return;
+        }
+
+        await supabase.auth.signOut();
       } else {
         // Load saved email if remember me was checked
         const savedEmail = localStorage.getItem('tinkerbell_admin_email');
@@ -37,9 +48,9 @@ export default function AdminLoginPage() {
           setEmail(savedEmail);
           setRememberMe(true);
         }
-        
-        setIsChecking(false);
       }
+
+      setIsChecking(false);
     };
 
     checkAuth();
@@ -78,6 +89,29 @@ export default function AdminLoginPage() {
         localStorage.removeItem('tinkerbell_remember_me');
       }
 
+      const userId = data.user?.id;
+      if (!userId) {
+        await supabase.auth.signOut();
+        toast.error(locale === 'el' ? 'Αποτυχία σύνδεσης' : 'Login failed');
+        return;
+      }
+
+      const { data: adminRecord } = await supabase
+        .from('admin_users')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (!adminRecord) {
+        await supabase.auth.signOut();
+        toast.error(
+          locale === 'el'
+            ? 'Ο λογαριασμός δεν έχει δικαιώματα διαχειριστή'
+            : 'This account is not authorized for admin access'
+        );
+        return;
+      }
+
       toast.success(locale === 'el' ? 'Επιτυχής σύνδεση!' : 'Login successful!');
       router.push('/admin');
     } catch {
@@ -86,6 +120,17 @@ export default function AdminLoginPage() {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    const unauthorized = searchParams.get('unauthorized');
+    if (unauthorized) {
+      toast.error(
+        locale === 'el'
+          ? 'Δεν έχετε δικαιώματα πρόσβασης στο admin.'
+          : 'You are not authorized to access the admin panel.'
+      );
+    }
+  }, [searchParams, locale]);
 
   // Show loading state while checking authentication
   if (isChecking) {
