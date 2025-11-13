@@ -27,7 +27,25 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
   
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const priceBounds = useMemo<[number, number]>(() => {
+    if (!products || products.length === 0) {
+      return [0, 0];
+    }
+
+    const prices = products
+      .map((product) => Number(product.price))
+      .filter((price) => Number.isFinite(price));
+
+    if (prices.length === 0) {
+      return [0, 0];
+    }
+
+    const minPrice = Math.min(...prices);
+    const maxPrice = Math.max(...prices);
+
+    return [Math.floor(minPrice), Math.ceil(maxPrice)];
+  }, [products]);
+  const [priceRange, setPriceRange] = useState<[number, number]>(priceBounds);
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [selectedColors, setSelectedColors] = useState<string[]>([]);
 
@@ -36,14 +54,25 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
     return () => clearTimeout(timer);
   }, []);
 
-  // Static price range
-  const minPrice = 0;
-  const maxPrice = 100;
-
-  // Initialize price range on mount
   useEffect(() => {
-    setPriceRange([minPrice, maxPrice]);
-  }, []);
+    setPriceRange((previousRange) => {
+      const [minBound, maxBound] = priceBounds;
+
+      const isInitial = previousRange[0] === previousRange[1] && previousRange[0] === 0;
+      if (isInitial && (minBound !== 0 || maxBound !== 0)) {
+        return [minBound, maxBound];
+      }
+
+      const clampedMin = Math.min(Math.max(previousRange[0], minBound), maxBound);
+      const clampedMax = Math.max(clampedMin, Math.min(previousRange[1], maxBound));
+
+      if (clampedMin === previousRange[0] && clampedMax === previousRange[1]) {
+        return previousRange;
+      }
+
+      return [clampedMin, clampedMax];
+    });
+  }, [priceBounds]);
 
   // Get all available sizes from products
   const availableSizes = useMemo(() => {
@@ -80,6 +109,8 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
   const filteredAndSortedProducts = useMemo(() => {
     if (!products) return [];
 
+    const [selectedMinPrice, selectedMaxPrice] = priceRange;
+
     // Apply filters
     let filtered = products.filter(product => {
       // Search filter
@@ -102,7 +133,7 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
       }
 
       // Price filter
-      if (product.price < priceRange[0] || product.price > priceRange[1]) {
+      if (product.price < selectedMinPrice || product.price > selectedMaxPrice) {
         return false;
       }
 
@@ -151,7 +182,7 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
 
   const handleClearAllFilters = () => {
     setSearchQuery('');
-    setPriceRange([minPrice, maxPrice]);
+    setPriceRange([priceBounds[0], priceBounds[1]]);
     setSelectedSizes([]);
     setSelectedColors([]);
   };
@@ -275,8 +306,8 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
               <div className="sticky top-32 max-h-[calc(100vh-10rem)] overflow-y-auto scrollbar-thin scrollbar-thumb-sage-300 scrollbar-track-sage-50 hover:scrollbar-thumb-sage-400 bg-white/80 backdrop-blur-sm border-r border-sage-200 pr-6">
                 <ProductFilters
                   locale={locale}
-                  minPrice={minPrice}
-                  maxPrice={maxPrice}
+                minPrice={priceBounds[0]}
+                maxPrice={priceBounds[1]}
                   availableSizes={availableSizes}
                   availableColors={availableColors}
                   selectedPriceRange={priceRange}
@@ -414,8 +445,8 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
       {/* Mobile Filter Drawer */}
       <MobileFilterDrawer
         locale={locale}
-        minPrice={minPrice}
-        maxPrice={maxPrice}
+        minPrice={priceBounds[0]}
+        maxPrice={priceBounds[1]}
         availableSizes={availableSizes}
         availableColors={availableColors}
         selectedPriceRange={priceRange}

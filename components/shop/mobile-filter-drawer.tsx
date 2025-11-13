@@ -46,7 +46,8 @@ export function MobileFilterDrawer({
   // If no sizes, colors, it means no products exist
   const hasAvailableFilters = 
     availableSizes.length > 0 || 
-    availableColors.length > 0;
+    availableColors.length > 0 ||
+    minPrice !== maxPrice;
 
   // Don't show mobile filter button if there are no available filters
   if (!hasAvailableFilters) {

@@ -46,6 +46,7 @@ export function ProductFilters({
   const [minInputValue, setMinInputValue] = useState(selectedPriceRange[0].toString());
   const [maxInputValue, setMaxInputValue] = useState(selectedPriceRange[1].toString());
   const [colorsFromDB, setColorsFromDB] = useState<Color[]>([]);
+  const isPriceFilterDisabled = minPrice === maxPrice;
 
   useEffect(() => {
     setLocalPriceRange(selectedPriceRange);
@@ -102,10 +103,10 @@ export function ProductFilters({
     selectedPriceRange[1] !== maxPrice;
 
   // Check if there are any available filters
-  // If no sizes, colors, AND the price range is default (0-100), it means no products exist
   const hasAvailableFilters = 
     availableSizes.length > 0 || 
-    availableColors.length > 0;
+    availableColors.length > 0 ||
+    minPrice !== maxPrice;
 
   // Translate size labels
   const getSizeLabel = (size: string) => {
@@ -306,6 +307,7 @@ export function ProductFilters({
                 value={localPriceRange}
                 onValueChange={handlePriceSliderChange}
                 onValueCommit={handlePriceSliderCommit}
+                disabled={isPriceFilterDisabled}
                 className="w-full"
               />
             </div>
@@ -339,6 +341,7 @@ export function ProductFilters({
                       setMinInputValue(validMin.toString());
                       handlePriceSliderCommit();
                     }}
+                    disabled={isPriceFilterDisabled}
                     className="w-full px-3 py-2 pr-8 text-sm border border-sage-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-magenta-500 focus:border-transparent"
                     placeholder="0"
                   />
@@ -375,8 +378,9 @@ export function ProductFilters({
                       setMaxInputValue(validMax.toString());
                       handlePriceSliderCommit();
                     }}
+                    disabled={isPriceFilterDisabled}
                     className="w-full px-3 py-2 pr-8 text-sm border border-sage-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-magenta-500 focus:border-transparent"
-                    placeholder="100"
+                    placeholder={maxPrice.toString()}
                   />
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-sage-400">€</span>
                 </div>
