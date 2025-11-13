@@ -70,7 +70,6 @@ async function downloadImage(url: string, filepath: string): Promise<void> {
  */
 async function fetchUnsplashImages(query: string, count: number = 3): Promise<string[]> {
   if (!UNSPLASH_ACCESS_KEY) {
-    console.log('⚠️  No Unsplash API key found, using Lorem Picsum instead');
     return Array.from({ length: count }, (_, i) => 
       `https://picsum.photos/800/1000?random=${Date.now()}_${i}`
     );
@@ -93,8 +92,6 @@ async function fetchUnsplashImages(query: string, count: number = 3): Promise<st
     const data = await response.json();
     return data.results.map((photo: any) => photo.urls.regular);
   } catch (error: any) {
-    console.log('⚠️  Unsplash API failed:', error.message);
-    console.log('   Falling back to Lorem Picsum');
     return Array.from({ length: count }, (_, i) => 
       `https://picsum.photos/800/1000?random=${Date.now()}_${i}`
     );
@@ -175,8 +172,6 @@ function cleanup() {
 }
 
 async function main() {
-  console.log('🚀 Ξεκινά το αυτόματο γέμισμα εικόνων προϊόντων...\n');
-
   try {
     // Πάρε όλα τα προϊόντα από τη βάση
     const { data: products, error: productsError } = await supabase
@@ -187,34 +182,21 @@ async function main() {
     if (productsError) throw productsError;
 
     if (!products || products.length === 0) {
-      console.log('⚠️  Δεν βρέθηκαν προϊόντα στη βάση');
       return;
     }
 
-    console.log(`📦 Βρέθηκαν ${products.length} προϊόντα\n`);
-
-    let processed = 0;
-    let skipped = 0;
-    let failed = 0;
-
     for (const product of products) {
-      console.log(`\n📸 Επεξεργασία: ${product.name_el} (${product.sku})`);
-
       // Αν έχει ήδη εικόνες, παράλειψε (optional)
       if (product.images && product.images.length > 0) {
-        console.log('   ⏭️  Έχει ήδη εικόνες, παράλειψη...');
-        skipped++;
         continue;
       }
 
       try {
         // Βρες το κατάλληλο search term
         const searchTerm = getSearchTerm(product, product.categories);
-        console.log(`   🔍 Αναζήτηση: "${searchTerm}"`);
 
         // Πάρε 3 εικόνες
         const imageUrls = await fetchUnsplashImages(searchTerm, 3);
-        console.log(`   📥 Κατέβασμα ${imageUrls.length} εικόνων...`);
 
         // Ανέβασε στο Supabase
         const uploadedUrls: string[] = [];
@@ -224,7 +206,6 @@ async function main() {
           
           if (publicUrl) {
             uploadedUrls.push(publicUrl);
-            console.log(`   ✅ Ανέβηκε ${i + 1}/${imageUrls.length}`);
           }
         }
 
@@ -240,24 +221,13 @@ async function main() {
 
         if (updateError) throw updateError;
 
-        console.log(`   🎉 Επιτυχία! Προστέθηκαν ${uploadedUrls.length} εικόνες`);
-        processed++;
-
         // Delay για να μην χτυπήσουμε rate limits
         await new Promise(resolve => setTimeout(resolve, 1000));
 
       } catch (error: any) {
         console.error(`   ❌ Αποτυχία: ${error.message}`);
-        failed++;
       }
     }
-
-    console.log('\n\n═══════════════════════════════════════');
-    console.log('✨ Ολοκληρώθηκε!');
-    console.log(`   ✅ Επεξεργάστηκαν: ${processed}`);
-    console.log(`   ⏭️  Παραλείφθηκαν: ${skipped}`);
-    console.log(`   ❌ Αποτυχίες: ${failed}`);
-    console.log('═══════════════════════════════════════\n');
 
   } catch (error: any) {
     console.error('\n❌ Σφάλμα:', error.message);

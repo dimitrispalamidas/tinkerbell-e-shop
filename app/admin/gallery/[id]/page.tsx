@@ -65,7 +65,6 @@ export default function EditGalleryItemPage() {
 
       if (updates.length > 0) {
         await Promise.all(updates);
-        console.log(`✅ Renumbered ${updates.length} items in ${category}`);
       }
     } catch (error) {
       console.error('Failed to renumber display order:', error);

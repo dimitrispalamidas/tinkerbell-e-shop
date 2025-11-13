@@ -18,9 +18,9 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 if (!supabaseUrl || !supabaseKey) {
   console.error('❌ Λείπουν τα Supabase credentials στο .env.local');
-  console.log('   Πρόσθεσε:');
-  console.log('   NEXT_PUBLIC_SUPABASE_URL=your-url');
-  console.log('   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-key');
+  console.error('   Πρόσθεσε:');
+  console.error('   NEXT_PUBLIC_SUPABASE_URL=your-url');
+  console.error('   NEXT_PUBLIC_SUPABASE_ANON_KEY=your-key');
   process.exit(1);
 }
 
@@ -105,10 +105,6 @@ async function uploadToSupabase(
 }
 
 async function main() {
-  console.log('╔═══════════════════════════════════════════════════════╗');
-  console.log('║   📸 ΑΥΤΟΜΑΤΟ ΓΕΜΙΣΜΑ ΕΙΚΟΝΩΝ ΠΡΟΪΟΝΤΩΝ           ║');
-  console.log('╚═══════════════════════════════════════════════════════╝\n');
-
   const tempDir = path.join(process.cwd(), 'temp-images');
   
   try {
@@ -118,7 +114,6 @@ async function main() {
     }
 
     // Πάρε όλα τα προϊόντα
-    console.log('📦 Φόρτωση προϊόντων από τη βάση...');
     const { data: products, error: productsError } = await supabase
       .from('products')
       .select('id, sku, name_el, name_en, images')
@@ -127,35 +122,19 @@ async function main() {
     if (productsError) throw productsError;
 
     if (!products || products.length === 0) {
-      console.log('\n⚠️  Δεν βρέθηκαν προϊόντα στη βάση');
-      console.log('   Τρέξε πρώτα το seed script για να προσθέσεις δείγματα προϊόντων');
+      console.error('\n⚠️  Δεν βρέθηκαν προϊόντα στη βάση');
+      console.error('   Τρέξε πρώτα το seed script για να προσθέσεις δείγματα προϊόντων');
       return;
     }
-
-    console.log(`✅ Βρέθηκαν ${products.length} προϊόντα\n`);
 
     // Ρώτα τον χρήστη αν θέλει να αντικαταστήσει τις υπάρχουσες
     const productsWithImages = products.filter(p => p.images && p.images.length > 0);
     const productsWithoutImages = products.filter(p => !p.images || p.images.length === 0);
 
-    if (productsWithImages.length > 0) {
-      console.log(`ℹ️  ${productsWithImages.length} προϊόντα έχουν ήδη εικόνες`);
-      console.log(`ℹ️  ${productsWithoutImages.length} προϊόντα δεν έχουν εικόνες\n`);
-    }
-
-    let processed = 0;
-    let skipped = 0;
-    let failed = 0;
-
     // Επεξεργασία κάθε προϊόντος
     for (const product of products) {
-      console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-      console.log(`📸 ${product.name_el} (${product.sku})`);
-
       // Αν έχει ήδη εικόνες, παράλειψε
       if (product.images && product.images.length > 0) {
-        console.log(`   ⏭️  Παραλείφθηκε (έχει ήδη ${product.images.length} εικόνες)`);
-        skipped++;
         continue;
       }
 
@@ -167,14 +146,10 @@ async function main() {
           const imageUrl = `https://picsum.photos/800/1000?random=${Date.now()}_${product.sku}_${i}`;
           const fileName = `${product.sku.toLowerCase()}_${i + 1}_${Date.now()}.jpg`;
 
-          console.log(`   📥 Κατέβασμα εικόνας ${i + 1}/3...`);
           const publicUrl = await uploadToSupabase(imageUrl, fileName, tempDir);
 
           if (publicUrl) {
             uploadedUrls.push(publicUrl);
-            console.log(`   ✅ Ανέβηκε ${i + 1}/3`);
-          } else {
-            console.log(`   ⚠️  Αποτυχία ${i + 1}/3`);
           }
 
           // Μικρό delay ανάμεσα στα downloads
@@ -193,27 +168,9 @@ async function main() {
 
         if (updateError) throw updateError;
 
-        console.log(`   🎉 Επιτυχία! Προστέθηκαν ${uploadedUrls.length} εικόνες`);
-        processed++;
-
       } catch (error: any) {
         console.error(`   ❌ Αποτυχία: ${error.message}`);
-        failed++;
       }
-    }
-
-    // Αποτελέσματα
-    console.log('\n\n╔═══════════════════════════════════════════════════════╗');
-    console.log('║                  📊 ΑΠΟΤΕΛΕΣΜΑΤΑ                    ║');
-    console.log('╠═══════════════════════════════════════════════════════╣');
-    console.log(`║  ✅ Επεξεργάστηκαν:  ${processed.toString().padEnd(31)}║`);
-    console.log(`║  ⏭️  Παραλείφθηκαν:  ${skipped.toString().padEnd(31)}║`);
-    console.log(`║  ❌ Αποτυχίες:       ${failed.toString().padEnd(31)}║`);
-    console.log('╚═══════════════════════════════════════════════════════╝\n');
-
-    if (processed > 0) {
-      console.log('💡 Οι εικόνες ενημερώθηκαν αυτόματα στη βάση!');
-      console.log('   Μπορείς να τις δεις στο admin panel: /admin/products\n');
     }
 
   } catch (error: any) {
@@ -231,7 +188,7 @@ async function main() {
 
 // Χειρισμός interruption
 process.on('SIGINT', () => {
-  console.log('\n\n⚠️  Διακόπηκε από τον χρήστη');
+  console.error('\n\n⚠️  Διακόπηκε από τον χρήστη');
   const tempDir = path.join(process.cwd(), 'temp-images');
   if (fs.existsSync(tempDir)) {
     fs.rmSync(tempDir, { recursive: true, force: true });

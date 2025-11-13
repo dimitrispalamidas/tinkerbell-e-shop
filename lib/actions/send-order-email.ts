@@ -23,8 +23,6 @@ const getSupabaseAdmin = () => {
 
 export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
   try {
-    console.log('📧 [Email] Sending order confirmation for:', vivaOrderCode);
-
     // Fetch order with items from database
     const supabase = getSupabaseAdmin();
     const { data: order, error: orderError } = await supabase
@@ -46,9 +44,6 @@ export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
       console.error('❌ [Email] Order not found:', orderError);
       throw new Error('Order not found');
     }
-
-    console.log('✅ [Email] Order found:', order.id);
-    console.log('📦 [Email] Order items:', order.order_items?.length || 0);
 
     // Calculate subtotal and shipping cost
     const subtotal = order.order_items?.reduce((sum: number, item: any) => 
@@ -106,9 +101,6 @@ export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
       console.error('❌ [Email] Failed to send:', error);
       throw new Error(`Failed to send email: ${error.message}`);
     }
-
-    console.log('✅ [Email] Successfully sent to:', order.customer_email);
-    console.log('📧 [Email] Message ID:', data?.id);
 
     return { success: true, messageId: data?.id };
   } catch (error) {

@@ -72,7 +72,6 @@ async function main() {
   const products = ['BS-009', 'BS-010'];
   
   for (const sku of products) {
-    console.log(`\n📸 Fixing ${sku}...`);
     const imageUrls = await fetchPexelsImages();
     const uploadedUrls: string[] = [];
 
@@ -81,17 +80,14 @@ async function main() {
       const publicUrl = await uploadToSupabase(imageUrls[i], fileName, tempDir);
       if (publicUrl) {
         uploadedUrls.push(publicUrl);
-        console.log(`   ✅ ${i + 1}/3`);
       }
       await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     await supabase.from('products').update({ images: uploadedUrls }).eq('sku', sku);
-    console.log(`   🎉 Done!`);
   }
 
   fs.rmSync(tempDir, { recursive: true, force: true });
-  console.log('\n✅ All fixed!');
 }
 
 main().catch(console.error);

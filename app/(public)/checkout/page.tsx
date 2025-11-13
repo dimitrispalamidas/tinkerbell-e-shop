@@ -241,7 +241,6 @@ export default function CheckoutPage() {
       setIsProcessing(true);
 
       // STEP 1: Validate cart stock before payment
-      console.log('🔐 [Security] Validating cart stock...');
       const { validateCartStock } = await import('@/lib/actions/validate-cart');
       
       const validation = await validateCartStock(items.map(item => ({
@@ -295,8 +294,6 @@ export default function CheckoutPage() {
         return;
       }
 
-      console.log('✅ [Security] Cart validation passed');
-
       // STEP 2: Continue with payment if validation passed
       // Import the Viva Wallet actions dynamically
       const { createVivaPaymentOrder, createOrder } = await import('@/lib/actions/viva-wallet');
@@ -344,13 +341,10 @@ export default function CheckoutPage() {
       });
 
       // Create order in database
-      const order = await createOrder({
+      await createOrder({
         ...orderData,
         viva_order_code: orderCode,
       });
-
-      console.log('✅ Order created:', order.id);
-      console.log('💳 Viva Order Code:', orderCode);
 
       // Clear localStorage after successful order creation
       localStorage.removeItem(CHECKOUT_STORAGE_KEY);

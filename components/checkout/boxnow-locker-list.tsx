@@ -146,7 +146,7 @@ export function BoxnowLockerList({ selectedLockerId, onSelectLocker, locale }: B
             }
           }
         } catch {
-          console.log('API not available, using mock data');
+          // API not available, fallback to mock data
         }
       }
       

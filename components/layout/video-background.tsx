@@ -25,11 +25,9 @@ export function VideoBackground() {
     const tryPlay = (attempt: number) => {
       video.play()
         .then(() => {
-          console.log('✅ Video playing successfully');
           setIsPlaying(true);
         })
-        .catch((error) => {
-          console.log(`⚠️ Play attempt ${attempt} failed:`, error.message);
+        .catch(() => {
           if (attempt < retries) {
             setTimeout(() => tryPlay(attempt + 1), 200 * attempt);
           }
@@ -134,7 +132,6 @@ export function VideoBackground() {
       
       const video = activeVideo === 1 ? video1Ref.current : video2Ref.current;
       if (video && video.paused) {
-        console.log('🎮 User interacted, forcing play');
         attemptPlay(video);
       }
     };

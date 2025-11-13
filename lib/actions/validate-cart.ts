@@ -51,17 +51,7 @@ export async function validateCartStock(
   const supabase = getSupabaseAdmin();
   const errors: ValidationError[] = [];
 
-  console.log('🔍 [Validation] Starting cart validation for', cartItems.length, 'items');
-
   for (const item of cartItems) {
-    console.log('🔍 [Validation] Checking:', {
-      id: item.id,
-      name: item.name,
-      size: item.size,
-      color: item.color,
-      quantity: item.quantity,
-    });
-
     // 1. Check if product exists
     const { data: product, error: productError } = await supabase
       .from('products')
@@ -142,14 +132,6 @@ export async function validateCartStock(
           availableStock: variant.stock,
           issue: 'insufficient_stock',
         });
-      } else {
-        console.log('✅ [Validation] Stock OK:', {
-          product: item.name,
-          size: item.size,
-          color: item.color,
-          requested: item.quantity,
-          available: variant.stock,
-        });
       }
     }
   }
@@ -163,7 +145,6 @@ export async function validateCartStock(
     };
   }
 
-  console.log('✅ [Validation] Cart validation successful!');
   return {
     valid: true,
     errors: [],

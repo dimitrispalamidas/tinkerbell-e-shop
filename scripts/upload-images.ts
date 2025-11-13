@@ -38,8 +38,6 @@ async function uploadImage(bucket: string, filePath: string, fileName: string) {
     if (error) throw error;
 
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/${bucket}/${fileName}`;
-    console.log(`✅ Uploaded: ${fileName} -> ${publicUrl}`);
-    
     return publicUrl;
   } catch (error: any) {
     console.error(`❌ Failed to upload ${fileName}:`, error.message);
@@ -61,8 +59,6 @@ function getMimeType(fileName: string): string {
 
 async function uploadDirectory(bucket: string, directory: string) {
   if (!fs.existsSync(directory)) {
-    console.log(`⚠️  Directory not found: ${directory}`);
-    console.log(`   Create it and add some images!`);
     return [];
   }
 
@@ -71,12 +67,9 @@ async function uploadDirectory(bucket: string, directory: string) {
   );
 
   if (files.length === 0) {
-    console.log(`⚠️  No images found in ${directory}`);
     return [];
   }
 
-  console.log(`\n📁 Uploading ${files.length} images to '${bucket}' bucket...`);
-  
   const urls: string[] = [];
   for (const file of files) {
     const filePath = path.join(directory, file);
@@ -88,31 +81,17 @@ async function uploadDirectory(bucket: string, directory: string) {
 }
 
 async function main() {
-  console.log('🚀 Starting image upload...\n');
-
   // Upload product images
-  const productUrls = await uploadDirectory(
+  await uploadDirectory(
     'products',
     path.join(process.cwd(), 'public/sample-images/products')
   );
 
   // Upload gallery images
-  const galleryUrls = await uploadDirectory(
+  await uploadDirectory(
     'gallery',
     path.join(process.cwd(), 'public/sample-images/gallery')
   );
-
-  console.log('\n✨ Upload complete!');
-  console.log(`   Products: ${productUrls.length} images`);
-  console.log(`   Gallery: ${galleryUrls.length} images`);
-  
-  if (productUrls.length > 0) {
-    console.log('\n💡 Next steps:');
-    console.log('   1. Update product images in Supabase:');
-    console.log('      UPDATE products SET images = ARRAY[\'url1\', \'url2\'] WHERE sku = \'SKU-001\';');
-    console.log('   2. Update gallery images:');
-    console.log('      UPDATE gallery_items SET image_url = \'url\' WHERE id = \'...\';');
-  }
 }
 
 main().catch(console.error);

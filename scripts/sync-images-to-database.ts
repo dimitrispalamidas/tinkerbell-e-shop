@@ -16,8 +16,6 @@ if (!supabaseUrl || !supabaseKey) {
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function main() {
-  console.log('🔄 Συγχρονισμός εικόνων από Storage στη βάση...\n');
-
   // Πάρε όλες τις εικόνες από το Storage
   const { data: files, error: storageError } = await supabase.storage
     .from('products')
@@ -27,8 +25,6 @@ async function main() {
     console.error('❌ Storage error:', storageError);
     return;
   }
-
-  console.log(`📦 Βρέθηκαν ${files.length} εικόνες στο Storage\n`);
 
   // Ομαδοποίηση εικόνων ανά SKU
   const imagesBySKU: Record<string, string[]> = {};
@@ -44,12 +40,7 @@ async function main() {
     imagesBySKU[sku].push(publicUrl);
   });
 
-  console.log(`📊 Ομαδοποιήθηκαν σε ${Object.keys(imagesBySKU).length} SKUs\n`);
-
   // Ενημέρωση κάθε προϊόντος
-  let updated = 0;
-  let failed = 0;
-
   for (const [sku, urls] of Object.entries(imagesBySKU)) {
     try {
       const { error } = await supabase
@@ -58,21 +49,10 @@ async function main() {
         .eq('sku', sku);
 
       if (error) throw error;
-
-      console.log(`✅ ${sku}: ${urls.length} εικόνες`);
-      updated++;
     } catch (error: any) {
       console.error(`❌ ${sku}: ${error.message}`);
-      failed++;
     }
   }
-
-  console.log('\n╔═══════════════════════════════════════════╗');
-  console.log('║           📊 ΑΠΟΤΕΛΕΣΜΑΤΑ              ║');
-  console.log('╠═══════════════════════════════════════════╣');
-  console.log(`║  ✅ Ενημερώθηκαν: ${updated.toString().padEnd(23)}║`);
-  console.log(`║  ❌ Αποτυχίες:    ${failed.toString().padEnd(23)}║`);
-  console.log('╚═══════════════════════════════════════════╝\n');
 }
 
 main().catch(console.error);

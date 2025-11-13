@@ -65,13 +65,8 @@ export async function createVivaPaymentOrder(orderData: {
   customerPhone?: string;
 }) {
   try {
-    console.log('🔑 Creating Viva payment order for:', orderData.orderId);
-    
     const accessToken = await getAccessToken();
-    
-    // Get base URL for success/failure redirects
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    
+
     const paymentOrderData = {
       amount: Math.round(orderData.amount * 100), // Convert to cents
       customerTrns: `Παραγγελία Tinkerbell #${orderData.orderId}`,
@@ -100,8 +95,6 @@ export async function createVivaPaymentOrder(orderData: {
       ]
     };
 
-    console.log('📍 Payment order data:', JSON.stringify(paymentOrderData, null, 2));
-
     const response = await fetch(`${VIVA_API_URL}/checkout/v2/orders`, {
       method: 'POST',
       headers: {
@@ -118,8 +111,7 @@ export async function createVivaPaymentOrder(orderData: {
     }
 
     const data = await response.json();
-    console.log('✅ Payment order created:', data.orderCode);
-    
+
     // Determine checkout URL based on environment
     const checkoutBaseUrl = VIVA_API_URL.includes('demo') 
       ? 'https://demo.vivapayments.com' 
@@ -210,15 +202,9 @@ export async function updateOrderPaymentStatus(
   transactionId: string,
   status: 'paid' | 'failed' | 'refunded'
 ) {
-  console.log('📋 updateOrderPaymentStatus called');
-  console.log('📋 Viva Order Code:', vivaOrderCode);
-  console.log('📋 Transaction ID:', transactionId);
-  console.log('📋 Status:', status);
-
   const supabase = getSupabaseAdmin();
 
   // Get the order
-  console.log('🔍 Fetching order from database...');
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .select('*, order_items(*)')
@@ -235,9 +221,6 @@ export async function updateOrderPaymentStatus(
     throw new Error('Order not found');
   }
 
-  console.log('✅ Order found:', order.id);
-  console.log('📦 Order items count:', order.order_items?.length || 0);
-
   // Determine order status based on payment status
   let orderStatus: string;
   if (status === 'paid') {
@@ -251,7 +234,6 @@ export async function updateOrderPaymentStatus(
   }
 
   // Update order status
-  console.log('🔄 Updating order status to:', status);
   const { error } = await supabase
     .from('orders')
     .update({
@@ -266,12 +248,8 @@ export async function updateOrderPaymentStatus(
     throw new Error('Failed to update order payment status');
   }
 
-  console.log('✅ Order status updated successfully!');
-
   // If payment succeeded, create BOXNOW delivery request if applicable
   if (status === 'paid' && order.boxnow_locker_id) {
-    console.log('📦 Creating BOXNOW delivery request for locker:', order.boxnow_locker_id);
-    
     try {
       const shipmentResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/boxnow/shipments`, {
         method: 'POST',
@@ -290,11 +268,6 @@ export async function updateOrderPaymentStatus(
 
       if (shipmentResponse.ok) {
         const shipmentData = await shipmentResponse.json();
-        console.log('✅ BOXNOW delivery request created');
-        console.log('📦 Parcel ID:', shipmentData.parcelId);
-        console.log('🔢 Tracking Number:', shipmentData.trackingNumber);
-        
-        // Update order with tracking information
         if (shipmentData.trackingNumber || shipmentData.parcelId) {
           await supabase
             .from('orders')
@@ -303,8 +276,6 @@ export async function updateOrderPaymentStatus(
               status: 'processing',
             })
             .eq('id', order.id);
-          
-          console.log('✅ Order updated with tracking number');
         }
       } else {
         const errorData = await shipmentResponse.json();
@@ -318,91 +289,54 @@ export async function updateOrderPaymentStatus(
 
   // If payment succeeded, decrease variant stock
   if (status === 'paid' && order.order_items) {
-    console.log('📉 Starting stock decrease for', order.order_items.length, 'items');
-    
     for (const item of order.order_items) {
-      console.log('📦 Processing item:', {
-        product_id: item.product_id,
-        size: item.size,
-        color: item.color,
-        quantity: item.quantity,
+      if (!item.size || !item.color) {
+        continue;
+      }
+
+      const { error: rpcError } = await supabase.rpc('decrease_variant_stock', {
+        p_product_id: item.product_id,
+        p_size: item.size,
+        p_color: item.color,
+        p_quantity: item.quantity,
       });
 
-      if (item.size && item.color) {
-        console.log('🔄 Calling decrease_variant_stock RPC...');
-        
-        const { data, error: rpcError } = await supabase.rpc('decrease_variant_stock', {
-          p_product_id: item.product_id,
-          p_size: item.size,
-          p_color: item.color,
-          p_quantity: item.quantity,
-        });
-
-        if (rpcError) {
-          console.error('❌ Error decreasing stock:', rpcError);
-          console.error('❌ RPC Error details:', JSON.stringify(rpcError, null, 2));
-        } else {
-          console.log('✅ Stock decreased successfully for:', item.size, item.color);
-          console.log('📊 RPC result:', data);
-        }
-      } else {
-        console.log('⚠️ Item missing size or color, skipping stock decrease');
+      if (rpcError) {
+        console.error('❌ Error decreasing stock:', rpcError);
+        console.error('❌ RPC Error details:', JSON.stringify(rpcError, null, 2));
       }
     }
-    
-    console.log('✅ All stock updates completed!');
   } 
   // If payment was refunded, restore variant stock
   else if (status === 'refunded' && order.order_items) {
-    console.log('📈 Starting stock restoration for refund -', order.order_items.length, 'items');
-    
     for (const item of order.order_items) {
-      console.log('📦 Processing refund for item:', {
-        product_id: item.product_id,
-        size: item.size,
-        color: item.color,
-        quantity: item.quantity,
-      });
+      if (!item.size || !item.color) {
+        continue;
+      }
 
-      if (item.size && item.color) {
-        console.log('🔄 Restoring stock by calling increase_variant_stock RPC...');
-        
-        // Get the current variant
-        const { data: variant, error: variantError } = await supabase
+      const { data: variant, error: variantError } = await supabase
+        .from('product_variants')
+        .select('stock')
+        .eq('product_id', item.product_id)
+        .eq('size', item.size)
+        .eq('color', item.color)
+        .single();
+
+      if (!variantError && variant) {
+        const { error: updateError } = await supabase
           .from('product_variants')
-          .select('stock')
+          .update({ stock: variant.stock + item.quantity })
           .eq('product_id', item.product_id)
           .eq('size', item.size)
-          .eq('color', item.color)
-          .single();
+          .eq('color', item.color);
 
-        if (!variantError && variant) {
-          // Increase stock
-          const { error: updateError } = await supabase
-            .from('product_variants')
-            .update({ stock: variant.stock + item.quantity })
-            .eq('product_id', item.product_id)
-            .eq('size', item.size)
-            .eq('color', item.color);
-
-          if (updateError) {
-            console.error('❌ Error restoring stock:', updateError);
-          } else {
-            console.log('✅ Stock restored successfully for:', item.size, item.color, '(+' + item.quantity + ')');
-          }
-        } else {
-          console.error('❌ Could not find variant to restore stock:', variantError);
+        if (updateError) {
+          console.error('❌ Error restoring stock:', updateError);
         }
       } else {
-        console.log('⚠️ Item missing size or color, skipping stock restoration');
+        console.error('❌ Could not find variant to restore stock:', variantError);
       }
     }
-    
-    console.log('✅ All stock restorations completed!');
-  } else {
-    console.log('ℹ️ Not updating stock (status is not paid/refunded or no items)');
   }
-
-  console.log('📋 updateOrderPaymentStatus completed');
 }
 

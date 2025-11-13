@@ -40,8 +40,6 @@ export type OrderData = {
 
 export async function getOrderByVivaCode(vivaOrderCode: string): Promise<OrderData | null> {
   try {
-    console.log('🔍 [Server] Fetching order by Viva order code:', vivaOrderCode);
-    
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from('orders')
@@ -64,7 +62,6 @@ export async function getOrderByVivaCode(vivaOrderCode: string): Promise<OrderDa
       console.error('❌ [Server] Error fetching order items:', itemsError);
     }
 
-    console.log('✅ [Server] Order found:', data?.id);
     return { ...data, items: items || [] } as OrderData;
   } catch (error) {
     console.error('❌ [Server] Exception fetching order:', error);
@@ -74,8 +71,6 @@ export async function getOrderByVivaCode(vivaOrderCode: string): Promise<OrderDa
 
 export async function getOrderByTransactionId(transactionId: string): Promise<OrderData | null> {
   try {
-    console.log('🔍 [Server] Fetching order by transaction ID:', transactionId);
-    
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from('orders')
@@ -98,7 +93,6 @@ export async function getOrderByTransactionId(transactionId: string): Promise<Or
       console.error('❌ [Server] Error fetching order items:', itemsError);
     }
 
-    console.log('✅ [Server] Order found:', data?.id);
     return { ...data, items: items || [] } as OrderData;
   } catch (error) {
     console.error('❌ [Server] Exception fetching order:', error);
@@ -108,8 +102,6 @@ export async function getOrderByTransactionId(transactionId: string): Promise<Or
 
 export async function getLatestPaidOrder(): Promise<OrderData | null> {
   try {
-    console.log('🔍 [Server] Fetching latest paid order');
-    
     const supabase = getSupabaseAdmin();
     const { data, error } = await supabase
       .from('orders')
@@ -134,7 +126,6 @@ export async function getLatestPaidOrder(): Promise<OrderData | null> {
       console.error('❌ [Server] Error fetching order items:', itemsError);
     }
 
-    console.log('✅ [Server] Latest order found:', data?.id);
     return { ...data, items: items || [] } as OrderData;
   } catch (error) {
     console.error('❌ [Server] Exception fetching latest order:', error);

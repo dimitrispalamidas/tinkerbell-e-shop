@@ -25,8 +25,8 @@ if (!supabaseUrl || !supabaseKey) {
 
 if (!PEXELS_API_KEY) {
   console.error('❌ Λείπει το PEXELS_API_KEY');
-  console.log('\n📝 Πάρε δωρεάν API key από: https://www.pexels.com/api/');
-  console.log('   Πρόσθεσε στο .env.local: PEXELS_API_KEY=your_key_here\n');
+  console.error('\n📝 Πάρε δωρεάν API key από: https://www.pexels.com/api/');
+  console.error('   Πρόσθεσε στο .env.local: PEXELS_API_KEY=your_key_here\n');
   process.exit(1);
 }
 
@@ -173,10 +173,6 @@ function getSearchTerm(product: any, category: any, productIndex: number): strin
 }
 
 async function main() {
-  console.log('╔═══════════════════════════════════════════════════════╗');
-  console.log('║   📸 ΓΕΜΙΣΜΑ ΕΙΚΟΝΩΝ ΜΕ PEXELS API               ║');
-  console.log('╚═══════════════════════════════════════════════════════╝\n');
-
   const tempDir = path.join(process.cwd(), 'temp-pexels');
 
   try {
@@ -184,7 +180,6 @@ async function main() {
       fs.mkdirSync(tempDir, { recursive: true });
     }
 
-    console.log('📦 Φόρτωση προϊόντων...');
     const { data: products, error: productsError } = await supabase
       .from('products')
       .select('*, categories(*)')
@@ -192,34 +187,22 @@ async function main() {
 
     if (productsError) throw productsError;
     if (!products || products.length === 0) {
-      console.log('⚠️  Δεν βρέθηκαν προϊόντα');
+      console.error('⚠️  Δεν βρέθηκαν προϊόντα');
       return;
     }
 
-    console.log(`✅ Βρέθηκαν ${products.length} προϊόντα\n`);
-
-    let processed = 0;
-    let skipped = 0;
-    let failed = 0;
     let productIndex = 0;
 
     for (const product of products) {
-      console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-      console.log(`📸 ${product.name_el} (${product.sku})`);
-
       // Παράλειψη αν έχει ήδη εικόνες
       if (product.images && product.images.length > 0) {
-        console.log(`   ⏭️  Έχει ήδη ${product.images.length} εικόνες`);
-        skipped++;
         continue;
       }
 
       try {
         const searchTerm = getSearchTerm(product, product.categories, productIndex);
-        console.log(`   🔍 Αναζήτηση: "${searchTerm}"`);
 
         const imageUrls = await fetchPexelsImages(searchTerm, 3, productIndex);
-        console.log(`   📥 Βρέθηκαν ${imageUrls.length} εικόνες`);
 
         const uploadedUrls: string[] = [];
         for (let i = 0; i < imageUrls.length; i++) {
@@ -229,10 +212,9 @@ async function main() {
             const publicUrl = await uploadToSupabase(imageUrls[i], fileName, tempDir);
             if (publicUrl) {
               uploadedUrls.push(publicUrl);
-              console.log(`   ✅ Ανέβηκε ${i + 1}/${imageUrls.length}`);
             }
           } catch (err: any) {
-            console.log(`   ⚠️  Σφάλμα ${i + 1}: ${err.message}`);
+            console.error(`   ⚠️  Σφάλμα ${i + 1}: ${err.message}`);
           }
 
           await new Promise(resolve => setTimeout(resolve, 300));
@@ -249,28 +231,13 @@ async function main() {
 
         if (updateError) throw updateError;
 
-        console.log(`   🎉 Επιτυχία! ${uploadedUrls.length} εικόνες`);
-        processed++;
         productIndex++;
 
         await new Promise(resolve => setTimeout(resolve, 1000));
 
       } catch (error: any) {
         console.error(`   ❌ Αποτυχία: ${error.message}`);
-        failed++;
       }
-    }
-
-    console.log('\n\n╔═══════════════════════════════════════════════════════╗');
-    console.log('║                  📊 ΑΠΟΤΕΛΕΣΜΑΤΑ                    ║');
-    console.log('╠═══════════════════════════════════════════════════════╣');
-    console.log(`║  ✅ Επιτυχείς:       ${processed.toString().padEnd(31)}║`);
-    console.log(`║  ⏭️  Παραλείφθηκαν:  ${skipped.toString().padEnd(31)}║`);
-    console.log(`║  ❌ Αποτυχίες:       ${failed.toString().padEnd(31)}║`);
-    console.log('╚═══════════════════════════════════════════════════════╝\n');
-
-    if (processed > 0) {
-      console.log('💡 Δες τις εικόνες στο: /admin/products\n');
     }
 
   } catch (error: any) {

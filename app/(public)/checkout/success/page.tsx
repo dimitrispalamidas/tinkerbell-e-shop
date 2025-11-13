@@ -28,19 +28,9 @@ export default function CheckoutSuccess() {
     async function fetchLatestOrder() {
       try {
         // Get all possible parameters from URL
-        const s = searchParams.get('s'); // Status
         const t = searchParams.get('t'); // Transaction ID
         const orderRef = searchParams.get('orderCode') || searchParams.get('OrderCode'); // Order Code
-        const eventId = searchParams.get('eventId');
-        
-        console.log('🔍 Success page URL parameters:', {
-          s,
-          t,
-          orderRef,
-          eventId,
-          allParams: Object.fromEntries(searchParams.entries())
-        });
-        
+
         // Always clear cart when user reaches success page
         clearCart();
         
@@ -49,29 +39,24 @@ export default function CheckoutSuccess() {
         
         // Method 1: Try to find by Viva order code from URL
         if (orderRef) {
-          console.log('🔍 Searching for order by orderCode:', orderRef);
           order = await getOrderByVivaCode(orderRef);
         }
         
         // Method 2: Try to find by transaction ID
         if (!order && t) {
-          console.log('🔍 Searching for order by transaction ID:', t);
           order = await getOrderByTransactionId(t);
         }
         
         // Method 3: Get the latest paid order (fallback)
         if (!order) {
-          console.log('🔍 Fetching latest paid order as fallback');
           order = await getLatestPaidOrder();
         }
         
         if (order) {
-          console.log('✅ Order found:', order.id);
           setOrderData(order);
           // Trigger confetti after a short delay
           setTimeout(() => setShowConfetti(true), 300);
         } else {
-          console.log('❌ No order found');
           setError(true);
         }
       } catch (err) {

@@ -83,7 +83,6 @@ async function createOGImage() {
       .jpeg({ quality: 90 })
       .toFile(outputImage);
 
-    console.log('✅ OG image created successfully at:', outputImage);
   } catch (error) {
     console.error('❌ Error creating OG image:', error);
   }

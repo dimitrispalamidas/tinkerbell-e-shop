@@ -74,7 +74,6 @@ class BoxnowService {
         expires_at: Date.now() + (data.expires_in || 3600) * 1000 - 60000, // Expire 1 min early
       };
 
-      console.log('✅ BOXNOW OAuth token obtained successfully');
       return this.accessToken.access_token;
     } catch (error) {
       console.error('❌ Error getting BOXNOW OAuth token:', error);
@@ -120,11 +119,6 @@ class BoxnowService {
         throw new Error('BOXNOW API credentials not configured');
       }
 
-      console.log('📦 Creating BOXNOW delivery request...', {
-        orderId: params.orderId,
-        lockerId: params.lockerId,
-      });
-
       const requestBody = {
         typeOfService: 'standard', // or 'same-day' if available
         orderNumber: params.orderId,
@@ -163,8 +157,6 @@ class BoxnowService {
 
       const result = await response.json();
       
-      console.log('✅ BOXNOW delivery request created:', result);
-
       return {
         success: true,
         parcelId: result.id || result.parcelId,

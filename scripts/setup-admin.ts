@@ -27,8 +27,6 @@ async function createAdmin(email: string, password: string) {
       return;
     }
 
-    console.log('User created:', authData.user.id);
-
     // Add to admin_users table
     const { error: adminError } = await supabase.from('admin_users').insert({
       user_id: authData.user.id,
@@ -41,9 +39,6 @@ async function createAdmin(email: string, password: string) {
       return;
     }
 
-    console.log('✅ Admin user created successfully!');
-    console.log('Email:', email);
-    console.log('You can now login at /admin/login');
   } catch (error) {
     console.error('Unexpected error:', error);
   }
@@ -53,8 +48,8 @@ const email = process.argv[2];
 const password = process.argv[3];
 
 if (!email || !password) {
-  console.log('Usage: npx tsx scripts/setup-admin.ts <email> <password>');
-  console.log('Example: npx tsx scripts/setup-admin.ts admin@tinkerbell.gr MySecurePassword123');
+    console.error('Usage: npx tsx scripts/setup-admin.ts <email> <password>');
+    console.error('Example: npx tsx scripts/setup-admin.ts admin@tinkerbell.gr MySecurePassword123');
   process.exit(1);
 }
 
