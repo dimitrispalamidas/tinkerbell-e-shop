@@ -63,7 +63,7 @@ export function BaptismGalleryClient({ locale, photos }: BaptismGalleryClientPro
               >
                 <a href="mailto:tinkerbellkalamatas@gmail.com">
                   <Mail className="h-4 w-4" />
-                  Email
+                  tinkerbellkalamatas@gmail.com
                 </a>
               </Button>
               <Button 
