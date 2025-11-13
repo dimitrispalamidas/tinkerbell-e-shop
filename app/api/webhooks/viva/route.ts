@@ -4,9 +4,30 @@ import { sendOrderConfirmationEmail } from '@/lib/actions/send-order-email';
 
 // Viva Wallet Webhook Verification Key
 const VIVA_WEBHOOK_KEY = process.env.VIVA_WEBHOOK_KEY!;
+const VIVA_WEBHOOK_VERIFY_SECRET = process.env.VIVA_WEBHOOK_VERIFY_SECRET;
+
+if (!VIVA_WEBHOOK_KEY) {
+  throw new Error('VIVA_WEBHOOK_KEY is not defined');
+}
 
 // GET handler for webhook verification
 export async function GET(req: Request) {
+  if (!VIVA_WEBHOOK_VERIFY_SECRET) {
+    return NextResponse.json(
+      { error: 'Webhook verification secret not configured' },
+      { status: 500 }
+    );
+  }
+
+  const url = new URL(req.url);
+  const token =
+    req.headers.get('x-viva-webhook-verification') ??
+    url.searchParams.get('token');
+
+  if (token !== VIVA_WEBHOOK_VERIFY_SECRET) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   // Viva sends a GET request to verify the endpoint
   // We need to return the verification key in JSON format
   return NextResponse.json({ 
