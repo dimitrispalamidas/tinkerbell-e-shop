@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { updateOrderPaymentStatus } from '@/lib/actions/viva-wallet';
+import { updateOrderPaymentStatus, validateVivaTransactionAgainstOrder } from '@/lib/actions/viva-wallet';
 import { sendOrderConfirmationEmail } from '@/lib/actions/send-order-email';
 
 // Viva Wallet Webhook Verification Key
@@ -10,62 +10,61 @@ if (!VIVA_WEBHOOK_KEY) {
   throw new Error('VIVA_WEBHOOK_KEY is not defined');
 }
 
-// GET handler for webhook verification
-export async function GET(req: Request) {
-  if (!VIVA_WEBHOOK_VERIFY_SECRET) {
-    return NextResponse.json(
-      { error: 'Webhook verification secret not configured' },
-      { status: 500 }
-    );
+function resolveProvidedValue(req: Request) {
+  const url = new URL(req.url);
+  const authorizationHeader = req.headers.get('authorization');
+  const verificationHeader = req.headers.get('x-viva-webhook-verification');
+  const urlToken = url.searchParams.get('token');
+  const urlKey = url.searchParams.get('key');
+
+  let provided: string | null =
+    verificationHeader ?? urlToken ?? urlKey ?? null;
+
+  if (!provided && authorizationHeader) {
+    const [scheme, credential] = authorizationHeader.trim().split(/\s+/, 2);
+
+    if (credential && /^bearer$/i.test(scheme)) {
+      provided = credential;
+    } else if (!credential) {
+      provided = scheme;
+    }
   }
 
-  const url = new URL(req.url);
-  const token =
-    req.headers.get('x-viva-webhook-verification') ??
-    url.searchParams.get('token');
+  return provided;
+}
 
-  if (token !== VIVA_WEBHOOK_VERIFY_SECRET) {
+function verifyRequest(req: Request) {
+  const providedValue = resolveProvidedValue(req);
+
+  if (VIVA_WEBHOOK_VERIFY_SECRET) {
+    return providedValue === VIVA_WEBHOOK_VERIFY_SECRET;
+  }
+
+  return providedValue === VIVA_WEBHOOK_KEY;
+}
+
+// GET handler for webhook verification
+export async function GET(req: Request) {
+  if (!verifyRequest(req)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   // Viva sends a GET request to verify the endpoint
   // We need to return the verification key in JSON format
-  return NextResponse.json({ 
-    Key: VIVA_WEBHOOK_KEY 
-  }, { 
-    status: 200 
-  });
+  return NextResponse.json(
+    {
+      Key: VIVA_WEBHOOK_KEY,
+    },
+    {
+      status: 200,
+    }
+  );
 }
 
 // POST handler for actual webhook events
 export async function POST(req: Request) {
   try {
-    if (!VIVA_WEBHOOK_VERIFY_SECRET) {
-      console.error('❌ Webhook verification secret not configured for POST handler');
-      return NextResponse.json({ error: 'Webhook verification secret not configured' }, { status: 500 });
-    }
-
-    const authorizationHeader = req.headers.get('authorization');
-    const verificationHeader = req.headers.get('x-viva-webhook-verification');
-    const url = new URL(req.url);
-    const verificationQueryParam = url.searchParams.get('token');
-
-    let providedVerification: string | null = verificationHeader;
-
-    if (!providedVerification && authorizationHeader) {
-      const [scheme, credential] = authorizationHeader.trim().split(/\s+/, 2);
-      if (credential && /^bearer$/i.test(scheme)) {
-        providedVerification = credential;
-      } else if (!credential) {
-        providedVerification = scheme;
-      }
-    }
-
-    if (!providedVerification && verificationQueryParam) {
-      providedVerification = verificationQueryParam;
-    }
-
-    if (!providedVerification || providedVerification !== VIVA_WEBHOOK_VERIFY_SECRET) {
+    if (!verifyRequest(req)) {
       console.warn('⚠️ Viva webhook verification failed');
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
@@ -87,20 +86,32 @@ export async function POST(req: Request) {
 
       if (!orderCode || !transactionId) {
         console.error('❌ Missing orderCode or transactionId');
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Missing required fields' },
+          { status: 400 }
+        );
       }
 
       // StatusId: 'F' = Success/Completed
       if (statusId === 'F') {
+        try {
+          await validateVivaTransactionAgainstOrder(orderCode, transactionId);
+        } catch (validationError) {
+          console.error('❌ Viva transaction validation failed:', validationError);
+          return NextResponse.json({ error: 'Transaction validation failed' }, { status: 400 });
+        }
+
         await updateOrderPaymentStatus(orderCode, transactionId, 'paid');
-        
+
         // Send order confirmation email
         try {
           const emailResult = await sendOrderConfirmationEmail(orderCode);
-          
-          if (emailResult.success) {
-          } else {
-            console.error('⚠️ Failed to send order confirmation email:', emailResult.error);
+
+          if (!emailResult.success) {
+            console.error(
+              '⚠️ Failed to send order confirmation email:',
+              emailResult.error
+            );
           }
         } catch (emailError) {
           // Don't fail the webhook if email sending fails

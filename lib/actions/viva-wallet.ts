@@ -9,6 +9,17 @@ const VIVA_CLIENT_ID = process.env.VIVA_CLIENT_ID!;
 const VIVA_CLIENT_SECRET = process.env.VIVA_CLIENT_SECRET!;
 const VIVA_SOURCE_CODE = process.env.VIVA_SOURCE_CODE!;
 
+type VivaTransactionDetails = {
+  OrderCode?: string;
+  orderCode?: string;
+  Amount?: number | string;
+  amount?: number | string;
+  StatusId?: string;
+  statusId?: string;
+  CurrencyCode?: string;
+  currencyCode?: string;
+};
+
 // Create Supabase admin client for server-side operations
 const getSupabaseAdmin = () => {
   return createServiceClient(
@@ -329,5 +340,88 @@ export async function updateOrderPaymentStatus(
       }
     }
   }
+}
+
+// Retrieve transaction details from Viva to validate webhook payloads
+async function getVivaTransactionDetails(transactionId: string) {
+  try {
+    const accessToken = await getAccessToken();
+
+    const response = await fetch(`${VIVA_API_URL}/checkout/v2/transactions/${transactionId}`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('❌ Error retrieving Viva transaction:', errorText);
+      throw new Error('Failed to retrieve Viva transaction');
+    }
+
+    return (await response.json()) as VivaTransactionDetails;
+  } catch (error) {
+    console.error('❌ Exception retrieving Viva transaction:', error);
+    throw error;
+  }
+}
+
+export async function validateVivaTransactionAgainstOrder(orderCode: string, transactionId: string) {
+  const supabase = getSupabaseAdmin();
+
+  const [{ data: order, error: orderError }, transactionDetails] = await Promise.all([
+    supabase
+      .from('orders')
+      .select('id, total, payment_status')
+      .eq('viva_order_code', orderCode)
+      .maybeSingle(),
+    getVivaTransactionDetails(transactionId),
+  ]);
+
+  if (orderError) {
+    console.error('❌ Error retrieving order for validation:', orderError);
+    throw new Error('Failed to load order for transaction validation');
+  }
+
+  if (!order) {
+    throw new Error(`Order not found for orderCode ${orderCode}`);
+  }
+
+  const resolvedOrderCode = transactionDetails.OrderCode ?? transactionDetails.orderCode;
+  const resolvedStatusId = transactionDetails.StatusId ?? transactionDetails.statusId;
+  const resolvedAmount = transactionDetails.Amount ?? transactionDetails.amount;
+  const amountNumber = typeof resolvedAmount === 'string' ? Number(resolvedAmount) : resolvedAmount;
+
+  if (!resolvedOrderCode) {
+    throw new Error('Transaction details missing order code');
+  }
+
+  if (String(resolvedOrderCode) !== String(orderCode)) {
+    throw new Error('Transaction order code mismatch');
+  }
+
+  if (resolvedStatusId !== 'F') {
+    throw new Error(`Unexpected transaction status: ${resolvedStatusId}`);
+  }
+
+  if (typeof amountNumber !== 'number' || Number.isNaN(amountNumber)) {
+    throw new Error('Transaction amount is invalid');
+  }
+
+  const orderTotal = typeof order.total === 'number' ? order.total : Number(order.total);
+  if (!Number.isFinite(orderTotal)) {
+    throw new Error('Order total is invalid');
+  }
+
+  const transactionAmountCents = Math.round(amountNumber * 100);
+  const orderAmountCents = Math.round(orderTotal * 100);
+
+  if (transactionAmountCents !== orderAmountCents) {
+    throw new Error(
+      `Transaction amount mismatch. Viva: ${transactionAmountCents}, Order: ${orderAmountCents}`
+    );
+  }
+
+  return { orderId: order.id };
 }
 
