@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocale } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,24 +15,23 @@ export default function CheckoutSuccess() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const clearCart = useCartStore((state) => state.clearCart);
-  
-  const [showConfetti, setShowConfetti] = useState(false);
-  const [orderCode, setOrderCode] = useState<string | null>(null);
-  const [transactionId, setTransactionId] = useState<string | null>(null);
   const { width, height } = useWindowSize();
+
+  const transactionId = useMemo(() => {
+    return searchParams.get('t');
+  }, [searchParams]);
+
+  const orderCode = useMemo(() => {
+    return searchParams.get('orderCode') || searchParams.get('OrderCode');
+  }, [searchParams]);
+
+  const showConfetti = useMemo(() => Boolean(transactionId || orderCode), [orderCode, transactionId]);
 
   useEffect(() => {
     // Always clear cart when user reaches success page
     clearCart();
 
-    const tParam = searchParams.get('t');
-    const orderRef = searchParams.get('orderCode') || searchParams.get('OrderCode');
-    setTransactionId(tParam);
-    setOrderCode(orderRef);
-
-    const timer = setTimeout(() => setShowConfetti(true), 300);
-    return () => clearTimeout(timer);
-  }, [searchParams, clearCart]);
+  }, [clearCart]);
 
   return (
     <>

@@ -5,7 +5,6 @@ import { createVivaPaymentOrder, createOrder } from '@/lib/actions/viva-wallet'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
 declare global {
-  // eslint-disable-next-line no-var
   var __CHECKOUT_RATE_LIMIT: Map<string, { count: number; expiresAt: number }> | undefined
 }
 

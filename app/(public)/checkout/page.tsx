@@ -18,46 +18,76 @@ import { parsePhoneNumber, isValidPhoneNumber } from 'libphonenumber-js';
 const CHECKOUT_STORAGE_KEY = 'tinkerbell_checkout_data';
 const HOME_DELIVERY_COST = 3.50; // €3.50 for home delivery
 
+type CheckoutFormData = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  deliveryMethod: 'boxnow' | 'home';
+  address: string;
+  city: string;
+  region: string;
+  postalCode: string;
+  boxnowLockerId: string;
+  boxnowLockerAddress: string;
+  boxnowLockerPostalCode: string;
+};
+
+const defaultFormData: CheckoutFormData = {
+  firstName: '',
+  lastName: '',
+  email: '',
+  phone: '',
+  deliveryMethod: 'boxnow',
+  address: '',
+  city: '',
+  region: '',
+  postalCode: '',
+  boxnowLockerId: '',
+  boxnowLockerAddress: '',
+  boxnowLockerPostalCode: '',
+};
+
+const getInitialFormData = (): CheckoutFormData => {
+  if (typeof window === 'undefined') {
+    return defaultFormData;
+  }
+
+  try {
+    const saved = sessionStorage.getItem(CHECKOUT_STORAGE_KEY);
+
+    if (!saved) {
+      return defaultFormData;
+    }
+
+    const parsed = JSON.parse(saved) as Partial<CheckoutFormData>;
+
+    return { ...defaultFormData, ...parsed };
+  } catch (error) {
+    console.error('Failed to parse checkout data:', error);
+    return defaultFormData;
+  }
+};
+
+const getInitialStep = (): number => {
+  if (typeof window === 'undefined') {
+    return 1;
+  }
+
+  const urlParams = new URLSearchParams(window.location.search);
+
+  return urlParams.get('cancel') === 'true' ? 3 : 1;
+};
+
 export default function CheckoutPage() {
   const router = useRouter();
   const locale = useLocale();
   
   const { items, getTotal } = useCartStore();
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState<number>(() => getInitialStep());
   const [isProcessing, setIsProcessing] = useState(false);
   const [errors, setErrors] = useState<Record<string, boolean>>({});
-  
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    deliveryMethod: 'boxnow' as 'boxnow' | 'home',
-    address: '',
-    city: '',
-    region: '',
-    postalCode: '',
-    boxnowLockerId: '',
-    boxnowLockerAddress: '',
-    boxnowLockerPostalCode: '',
-  });
-
-  // Load from sessionStorage on mount
-  useEffect(() => {
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    try {
-      const saved = sessionStorage.getItem(CHECKOUT_STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setFormData(prev => ({ ...prev, ...parsed }));
-      }
-    } catch (error) {
-      console.error('Failed to parse checkout data:', error);
-    }
-  }, []);
+  const [formData, setFormData] = useState<CheckoutFormData>(() => getInitialFormData());
 
   // Save to sessionStorage whenever formData changes
   useEffect(() => {
@@ -81,17 +111,18 @@ export default function CheckoutPage() {
 
   // Handle cancel from Viva Wallet
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
+
     if (urlParams.get('cancel') === 'true') {
-      toast.info(
-        locale === 'el' 
-          ? 'Η πληρωμή ακυρώθηκε. Μπορείτε να δοκιμάσετε ξανά.' 
-          : 'Payment was cancelled. You can try again.'
-      );
-      // Remove cancel parameter from URL
+      toast.info(locale === 'el'
+        ? 'Η πληρωμή ακυρώθηκε. Μπορείτε να δοκιμάσετε ξανά.'
+        : 'Payment was cancelled. You can try again.');
+
       window.history.replaceState({}, '', window.location.pathname);
-      // Stay on step 3 so user can try payment again
-      setStep(3);
     }
   }, [locale]);
 
