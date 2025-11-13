@@ -1,20 +1,6 @@
 "use server"
 
-import { createClient as createServiceClient } from '@supabase/supabase-js';
-
-// Create Supabase admin client for server-side operations
-const getSupabaseAdmin = () => {
-  return createServiceClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false
-      }
-    }
-  );
-};
+import { createClient } from '@/lib/supabase/server';
 
 export type OrderItem = {
   product_name: string;
@@ -38,9 +24,34 @@ export type OrderData = {
   items?: OrderItem[];
 };
 
+const getAuthorizedAdminClient = async () => {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error('Unauthorized');
+  }
+
+  const { data: adminRecord, error: adminError } = await supabase
+    .from('admin_users')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  if (adminError || !adminRecord) {
+    throw new Error('Forbidden');
+  }
+
+  return supabase;
+};
+
 export async function getOrderByVivaCode(vivaOrderCode: string): Promise<OrderData | null> {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = await getAuthorizedAdminClient();
     const { data, error } = await supabase
       .from('orders')
       .select('*')
@@ -71,7 +82,7 @@ export async function getOrderByVivaCode(vivaOrderCode: string): Promise<OrderDa
 
 export async function getOrderByTransactionId(transactionId: string): Promise<OrderData | null> {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = await getAuthorizedAdminClient();
     const { data, error } = await supabase
       .from('orders')
       .select('*')
@@ -102,7 +113,7 @@ export async function getOrderByTransactionId(transactionId: string): Promise<Or
 
 export async function getLatestPaidOrder(): Promise<OrderData | null> {
   try {
-    const supabase = getSupabaseAdmin();
+    const supabase = await getAuthorizedAdminClient();
     const { data, error } = await supabase
       .from('orders')
       .select('*')

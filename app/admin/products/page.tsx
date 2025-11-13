@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useLocale } from 'next-intl';
-import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -44,15 +43,19 @@ export default function AdminProductsPage() {
   }, []);
 
   const fetchProducts = async () => {
+    setIsLoading(true);
     try {
-      const supabase = createClient();
-      const { data, error } = await supabase
-        .from('products')
-        .select('*, categories(*), product_variants(*)')
-        .order('created_at', { ascending: false });
+      const response = await fetch('/api/admin/products', {
+        method: 'GET',
+        credentials: 'include',
+      });
 
-      if (error) throw error;
-      setProducts(data || []);
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+
+      const data = await response.json();
+      setProducts(data.products || []);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error(locale === 'el' ? 'Αποτυχία φόρτωσης προϊόντος' : 'Failed to fetch product');
@@ -65,17 +68,22 @@ export default function AdminProductsPage() {
     if (!confirm(locale === 'el' ? 'Είστε σίγουροι ότι θέλετε να αρχειοθετήσετε αυτό το προϊόν;' : 'Are you sure you want to archive this product?')) return;
     
     try {
-      const supabase = createClient();
-      const { error } = await supabase
-        .from('products')
-        .update({ 
-          status: 'archived',
-          archived_at: new Date().toISOString(),
-          is_active: false
-        })
-        .eq('id', productId);
+      const response = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'archive',
+          productId,
+        }),
+      });
 
-      if (error) throw error;
+      if (!response.ok) {
+        throw new Error('Failed to archive product');
+      }
+
       toast.success(locale === 'el' ? 'Το προϊόν αρχειοθετήθηκε' : 'Product archived');
       fetchProducts();
     } catch (error) {
@@ -88,27 +96,22 @@ export default function AdminProductsPage() {
     if (!confirm(locale === 'el' ? 'Είστε σίγουροι ότι θέλετε να επαναφέρετε αυτό το προϊόν;' : 'Are you sure you want to restore this product?')) return;
     
     try {
-      const supabase = createClient();
-      
-      // Check if product has stock
-      const { data: variants } = await supabase
-        .from('product_variants')
-        .select('stock')
-        .eq('product_id', productId);
+      const response = await fetch('/api/admin/products', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          action: 'restore',
+          productId,
+        }),
+      });
 
-      const totalStock = variants?.reduce((sum, v) => sum + v.stock, 0) || 0;
-      const newStatus = totalStock > 0 ? 'active' : 'sold_out';
+      if (!response.ok) {
+        throw new Error('Failed to restore product');
+      }
 
-      const { error } = await supabase
-        .from('products')
-        .update({ 
-          status: newStatus,
-          is_active: newStatus === 'active',
-          archived_at: null
-        })
-        .eq('id', productId);
-
-      if (error) throw error;
       toast.success(locale === 'el' ? 'Το προϊόν επαναφέρθηκε' : 'Product restored');
       fetchProducts();
     } catch (error) {

@@ -42,22 +42,34 @@ export default function CheckoutPage() {
     boxnowLockerPostalCode: '',
   });
 
-  // Load from localStorage on mount
+  // Load from sessionStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem(CHECKOUT_STORAGE_KEY);
-    if (saved) {
-      try {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      const saved = sessionStorage.getItem(CHECKOUT_STORAGE_KEY);
+      if (saved) {
         const parsed = JSON.parse(saved);
         setFormData(prev => ({ ...prev, ...parsed }));
-      } catch (error) {
-        console.error('Failed to parse checkout data:', error);
       }
+    } catch (error) {
+      console.error('Failed to parse checkout data:', error);
     }
   }, []);
 
-  // Save to localStorage whenever formData changes
+  // Save to sessionStorage whenever formData changes
   useEffect(() => {
-    localStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(formData));
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    try {
+      sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify(formData));
+    } catch (error) {
+      console.error('Failed to persist checkout data:', error);
+    }
   }, [formData]);
 
   // Redirect if cart is empty
@@ -311,7 +323,9 @@ export default function CheckoutPage() {
 
       const data = await response.json();
 
-      localStorage.removeItem(CHECKOUT_STORAGE_KEY);
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(CHECKOUT_STORAGE_KEY);
+      }
       window.location.href = data.checkoutUrl;
     } catch (error) {
       console.error('❌ Payment error:', error);

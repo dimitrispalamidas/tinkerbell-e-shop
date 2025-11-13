@@ -1,0 +1,22 @@
+Ζητήματα & Προτάσεις
+Πλαστογράφηση webhook (κρίσιμο)
+Το endpoint POST /api/webhooks/viva δέχεται οποιοδήποτε JSON χωρίς έλεγχο υπογραφής/μυστικού. Ένας επιτιθέμενος μπορεί να στείλει ψεύτικο order code και να μαρκάρει παραγγελία ως paid/refunded/failed.
+Τι να κάνεις: Ενεργοποίησε επαλήθευση HMAC/υπογραφής που παρέχει η Viva ή έλεγξε το verification token σε κάθε POST, όχι μόνο στο GET.
+Διαρροή στοιχείων παραγγελιών (κρίσιμο)
+Τα server actions getOrderByVivaCode, getOrderByTransactionId, getLatestPaidOrder τρέχουν με service role και επιστρέφουν πλήρη δεδομένα (όνομα, email, διεύθυνση) ακόμα και σε ανώνυμους χρήστες μέσω του checkout success page.
+Τι να κάνεις: Μετέφερε τη λογική σε ασφαλές API που απαιτεί authenticated session του ίδιου πελάτη ή χρήση one-time token ανά παραγγελία.
+Ανεξέλεγκτη πρόσβαση Supabase (υψηλό)
+Οι admin σελίδες (/admin, /admin/products, κ.ά.) καλούν Supabase από τον browser με το public anon key. Αν δεν υπάρχουν αυστηρές Row Level Security (RLS) πολιτικές, κάποιος με οποιοδήποτε Supabase session μπορεί να διαβάσει/γράψει προϊόντα και παραγγελίες.
+Τι να κάνεις: Έλεγξε όλες τις RLS πολιτικές για products, orders, order_items κ.λπ. Ιδανικά, βάλε τις κρίσιμες εγγραφές πίσω από server routes που επαληθεύουν ότι ο χρήστης είναι στον πίνακα admin_users.
+Διανομή source maps (μεσαίο)
+Το productionBrowserSourceMaps: true στην next.config.ts επιτρέπει σε οποιονδήποτε να κατεβάσει τον πηγαίο κώδικα της παραγωγής.
+Τι να κάνεις: Απενεργοποίησέ το στην παραγωγή ή σέρβιρέ το μόνο σε εσωτερικούς χρήστες/admins.
+Αποθήκευση προσωπικών δεδομένων στο localStorage (μεσαίο)
+Η φόρμα checkout αποθηκεύει ονόματα, τηλέφωνα και διευθύνσεις σε localStorage, που είναι προσβάσιμο από scripts/επεκτάσεις.
+Τι να κάνεις: Μετάφερε τα δεδομένα σε sessionStorage, κρυπτογράφησέ τα ή ζήτα ρητή συναίνεση χρήστη με ξεκάθαρη πολιτική διατήρησης.
+Πολλαπλά queries στο validation (μεσαίο)
+Η validateCartStock τρέχει δύο queries ανά προϊόν/variant (N+1). Σε μεγαλύτερα καλάθια θα δεις καθυστέρηση και αυξημένο load.
+Τι να κάνεις: Μάζεψε IDs και χρησιμοποίησε in queries ή δημιούργησε ένα RPC που χειρίζεται όλη την επικύρωση σε μία κλήση.
+Λοιπές βελτιώσεις
+Εφάρμοσε rate limiting σε /api/checkout/create-order και παρόμοια endpoints για αποφυγή brute force/DoS.
+Αφαίρεσε από τον δημόσιο φάκελο αρχεία όπως public/ffmpeg.exe ώστε να μην είναι διαθέσιμα για download.

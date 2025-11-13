@@ -40,6 +40,36 @@ export async function GET(req: Request) {
 // POST handler for actual webhook events
 export async function POST(req: Request) {
   try {
+    if (!VIVA_WEBHOOK_VERIFY_SECRET) {
+      console.error('❌ Webhook verification secret not configured for POST handler');
+      return NextResponse.json({ error: 'Webhook verification secret not configured' }, { status: 500 });
+    }
+
+    const authorizationHeader = req.headers.get('authorization');
+    const verificationHeader = req.headers.get('x-viva-webhook-verification');
+    const url = new URL(req.url);
+    const verificationQueryParam = url.searchParams.get('token');
+
+    let providedVerification: string | null = verificationHeader;
+
+    if (!providedVerification && authorizationHeader) {
+      const [scheme, credential] = authorizationHeader.trim().split(/\s+/, 2);
+      if (credential && /^bearer$/i.test(scheme)) {
+        providedVerification = credential;
+      } else if (!credential) {
+        providedVerification = scheme;
+      }
+    }
+
+    if (!providedVerification && verificationQueryParam) {
+      providedVerification = verificationQueryParam;
+    }
+
+    if (!providedVerification || providedVerification !== VIVA_WEBHOOK_VERIFY_SECRET) {
+      console.warn('⚠️ Viva webhook verification failed');
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const body = await req.json();
 
     // Viva Wallet sends different event types

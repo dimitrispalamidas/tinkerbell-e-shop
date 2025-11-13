@@ -26,8 +26,8 @@ const nextConfig: NextConfig = {
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
-  // Source maps for production debugging
-  productionBrowserSourceMaps: true,
+  // Source maps for production debugging (disable in production builds)
+  productionBrowserSourceMaps: false,
   // Experimental features for bundle optimization
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', '@radix-ui/react-dialog', '@radix-ui/react-slot'],

@@ -5,10 +5,8 @@ import { useLocale } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, ArrowRight, Loader2, Mail, Phone } from 'lucide-react';
+import { CheckCircle, ArrowRight, Mail, Phone } from 'lucide-react';
 import { useCartStore } from '@/lib/store/cart';
-import { getOrderByVivaCode, getOrderByTransactionId, getLatestPaidOrder, type OrderData } from '@/lib/actions/get-order';
-import { formatPrice } from '@/lib/utils';
 import Confetti from 'react-confetti';
 import { useWindowSize } from '@/hooks/use-window-size';
 
@@ -18,112 +16,23 @@ export default function CheckoutSuccess() {
   const searchParams = useSearchParams();
   const clearCart = useCartStore((state) => state.clearCart);
   
-  const [orderData, setOrderData] = useState<OrderData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [orderCode, setOrderCode] = useState<string | null>(null);
+  const [transactionId, setTransactionId] = useState<string | null>(null);
   const { width, height } = useWindowSize();
 
   useEffect(() => {
-    async function fetchLatestOrder() {
-      try {
-        // Get all possible parameters from URL
-        const t = searchParams.get('t'); // Transaction ID
-        const orderRef = searchParams.get('orderCode') || searchParams.get('OrderCode'); // Order Code
+    // Always clear cart when user reaches success page
+    clearCart();
 
-        // Always clear cart when user reaches success page
-        clearCart();
-        
-        // Try to find order by different methods using server actions
-        let order: OrderData | null = null;
-        
-        // Method 1: Try to find by Viva order code from URL
-        if (orderRef) {
-          order = await getOrderByVivaCode(orderRef);
-        }
-        
-        // Method 2: Try to find by transaction ID
-        if (!order && t) {
-          order = await getOrderByTransactionId(t);
-        }
-        
-        // Method 3: Get the latest paid order (fallback)
-        if (!order) {
-          order = await getLatestPaidOrder();
-        }
-        
-        if (order) {
-          setOrderData(order);
-          // Trigger confetti after a short delay
-          setTimeout(() => setShowConfetti(true), 300);
-        } else {
-          setError(true);
-        }
-      } catch (err) {
-        console.error('❌ Error fetching order:', err);
-        setError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    
-    fetchLatestOrder();
+    const tParam = searchParams.get('t');
+    const orderRef = searchParams.get('orderCode') || searchParams.get('OrderCode');
+    setTransactionId(tParam);
+    setOrderCode(orderRef);
+
+    const timer = setTimeout(() => setShowConfetti(true), 300);
+    return () => clearTimeout(timer);
   }, [searchParams, clearCart]);
-
-  if (isLoading) {
-    return (
-      <div className="container max-w-2xl mx-auto px-4 py-20 md:py-32">
-        <div className="flex flex-col items-center justify-center gap-6">
-          <div className="relative">
-            <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center">
-              <Loader2 className="w-10 h-10 text-primary animate-spin" />
-            </div>
-            <div className="absolute inset-0 rounded-full bg-primary/20 animate-ping" />
-          </div>
-          <div className="text-center space-y-2">
-            <p className="text-lg font-semibold text-foreground">
-              {locale === 'el' ? 'Φόρτωση πληροφοριών παραγγελίας...' : 'Loading order information...'}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {locale === 'el' ? 'Παρακαλώ περιμένετε' : 'Please wait'}
-            </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !orderData) {
-    return (
-      <div className="container max-w-2xl mx-auto px-4 py-16">
-        <Card className="border-2 shadow-lg">
-          <CardContent className="p-8 md:p-12">
-            <div className="text-center space-y-6">
-              <div className="mx-auto w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                <Mail className="w-8 h-8 text-muted-foreground" />
-              </div>
-              <div className="space-y-3">
-                <h2 className="text-xl font-bold">{locale === 'el' ? 'Παραγγελία Καταχωρημένη' : 'Order Recorded'}</h2>
-                <p className="text-muted-foreground leading-relaxed">
-                  {locale === 'el' 
-                    ? 'Δεν βρέθηκαν πληροφορίες παραγγελίας. Αν ολοκληρώσατε την πληρωμή, θα λάβετε email επιβεβαίωσης.' 
-                    : 'Order information not found. If you completed the payment, you will receive a confirmation email.'}
-                </p>
-              </div>
-              <Button 
-                onClick={() => router.push('/shop')} 
-                size="lg"
-                className="shadow-sm hover:shadow-md transition-all group"
-              >
-                {locale === 'el' ? 'Επιστροφή στο Κατάστημα' : 'Back to Shop'}
-                <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -150,9 +59,9 @@ export default function CheckoutSuccess() {
             {locale === 'el' ? 'Επιτυχής Παραγγελία!' : 'Order Successful!'}
           </h1>
           <p className="text-lg md:text-xl text-foreground mb-2">
-            {locale === 'el' 
-              ? <>Ευχαριστούμε <span className="font-bold text-primary">{orderData.customer_name}</span> για την παραγγελία σας!</>
-              : <>Thank you <span className="font-bold text-primary">{orderData.customer_name}</span> for your order!</>}
+            {locale === 'el'
+              ? 'Ευχαριστούμε για την παραγγελία σας!'
+              : 'Thank you for your order!'}
           </p>
           <p className="text-sm text-muted-foreground">
             {locale === 'el' 
@@ -172,90 +81,45 @@ export default function CheckoutSuccess() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-5 md:p-7 space-y-5">
-          <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
-            <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
-              <span className="text-lg font-bold text-primary">#</span>
+          {orderCode ? (
+            <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
+                <span className="text-lg font-bold text-primary">#</span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">
+                  {locale === 'el' ? 'Κωδικός Παραγγελίας' : 'Order Code'}
+                </p>
+                <p className="text-base md:text-lg font-mono font-semibold text-foreground break-all">
+                  {orderCode}
+                </p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">
-                {locale === 'el' ? 'Κωδικός Παραγγελίας' : 'Order Code'}
-              </p>
-              <p className="text-base md:text-lg font-mono font-semibold text-foreground break-all">
-                {orderData.viva_order_code}
-              </p>
+          ) : null}
+
+          {transactionId ? (
+            <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
+              <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
+                <Mail className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">
+                  {locale === 'el' ? 'Κωδικός Συναλλαγής' : 'Transaction ID'}
+                </p>
+                <p className="text-base md:text-lg font-mono font-semibold text-foreground break-all">
+                  {transactionId}
+                </p>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
-            <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
-              <Mail className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">Email</p>
-              <a 
-                href={`mailto:${orderData.customer_email}`} 
-                className="text-base md:text-lg font-semibold text-primary hover:text-primary/80 break-all transition-colors"
-              >
-                {orderData.customer_email}
-              </a>
-            </div>
-          </div>
+          ) : null}
+
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {locale === 'el'
+              ? 'Ένα email επιβεβαίωσης με τα στοιχεία της παραγγελίας στάλθηκε στο inbox σας. Κρατήστε τον κωδικό παραγγελίας για το ιστορικό σας.'
+              : 'A confirmation email with your order details has been sent to your inbox. Keep the order code for your records.'}
+          </p>
         </CardContent>
       </Card>
-
-      {/* Order Items */}
-      {orderData.items && orderData.items.length > 0 && (
-        <Card className="mb-6 border-2 shadow-sm">
-          <CardHeader className="p-5 md:p-7 bg-muted/30 border-b">
-            <CardTitle className="text-xl md:text-2xl flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
-                <CheckCircle className="h-5 w-5 text-primary" />
-              </div>
-              {locale === 'el' ? 'Προϊόντα Παραγγελίας' : 'Order Products'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-5 md:p-7 space-y-4">
-            <div className="space-y-3">
-              {orderData.items.map((item: any, index: number) => (
-                <div key={index} className="flex justify-between items-start gap-4 p-3 bg-muted/30 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm md:text-base text-foreground mb-2">{item.product_name}</p>
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      {item.size && (
-                        <span className="px-2 py-0.5 bg-background rounded font-medium">
-                          {locale === 'el' ? 'Μέγεθος' : 'Size'}: {item.size}
-                        </span>
-                      )}
-                      {item.color && (
-                        <span className="px-2 py-0.5 bg-background rounded font-medium">
-                          {locale === 'el' ? 'Χρώμα' : 'Color'}: {item.color}
-                        </span>
-                      )}
-                      <span className="px-2 py-0.5 bg-background rounded font-medium">
-                        {locale === 'el' ? 'Ποσότητα' : 'Qty'}: {item.quantity}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="font-bold text-sm md:text-base text-foreground whitespace-nowrap">
-                    {formatPrice(item.price * item.quantity, locale)}
-                  </p>
-                </div>
-              ))}
-            </div>
-            
-            <div className="border-t-2 pt-4 mt-2">
-              <div className="flex justify-between items-center p-3 bg-primary/5 rounded-lg">
-                <span className="font-bold text-lg md:text-xl text-foreground">
-                  {locale === 'el' ? 'Σύνολο' : 'Total'}
-                </span>
-                <span className="font-bold text-xl md:text-2xl text-primary">
-                  {formatPrice(orderData.total, locale)}
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Next Steps */}
       <Card className="mb-6 border-2 shadow-sm bg-gradient-to-r from-blue-50 to-blue-50/50">

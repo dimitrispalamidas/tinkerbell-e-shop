@@ -4,6 +4,17 @@ import { validateCartStock } from '@/lib/actions/validate-cart'
 import { createVivaPaymentOrder, createOrder } from '@/lib/actions/viva-wallet'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
 
+declare global {
+  // eslint-disable-next-line no-var
+  var __CHECKOUT_RATE_LIMIT: Map<string, { count: number; expiresAt: number }> | undefined
+}
+
+const MAX_REQUESTS_PER_WINDOW = 3
+const WINDOW_MS = 60_000
+const rateLimitMap =
+  globalThis.__CHECKOUT_RATE_LIMIT ?? new Map<string, { count: number; expiresAt: number }>()
+globalThis.__CHECKOUT_RATE_LIMIT = rateLimitMap
+
 const HOME_DELIVERY_COST = 3.5
 
 const checkoutSchema = z.object({
@@ -66,6 +77,32 @@ const getSupabaseAdmin = () => {
 
 export async function POST(request: Request) {
   try {
+    const identifier =
+      request.headers.get('cf-connecting-ip') ??
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      request.headers.get('x-real-ip') ??
+      'anonymous'
+
+    const now = Date.now()
+    const entry = rateLimitMap.get(identifier)
+
+    if (!entry || now > entry.expiresAt) {
+      rateLimitMap.set(identifier, { count: 1, expiresAt: now + WINDOW_MS })
+    } else if (entry.count >= MAX_REQUESTS_PER_WINDOW) {
+      const retryAfter = Math.max(0, Math.ceil((entry.expiresAt - now) / 1000))
+      return NextResponse.json(
+        { message: 'Too many requests. Please try again later.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': retryAfter.toString(),
+          },
+        }
+      )
+    } else {
+      entry.count += 1
+    }
+
     const payload = await request.json()
     const parsed = checkoutSchema.safeParse(payload)
 

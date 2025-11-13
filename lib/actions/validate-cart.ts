@@ -51,15 +51,59 @@ export async function validateCartStock(
   const supabase = getSupabaseAdmin();
   const errors: ValidationError[] = [];
 
-  for (const item of cartItems) {
-    // 1. Check if product exists
-    const { data: product, error: productError } = await supabase
-      .from('products')
-      .select('id, name_el, name_en')
-      .eq('id', item.id)
-      .single();
+  if (cartItems.length === 0) {
+    return { valid: true, errors: [] };
+  }
 
-    if (productError || !product) {
+  const productIds = Array.from(new Set(cartItems.map((item) => item.id)));
+  const { data: products, error: productsError } = await supabase
+    .from('products')
+    .select('id, name_el, name_en')
+    .in('id', productIds);
+
+  if (productsError) {
+    console.error('❌ [Validation] Failed to load products:', productsError);
+    return {
+      valid: false,
+      errors: [],
+      message: 'Αποτυχία ελέγχου αποθέματος',
+    };
+  }
+
+  const productMap = new Map(products?.map((product) => [product.id, product]));
+
+  const variantItems = cartItems.filter((item) => item.size && item.color);
+  const variantProductIds = Array.from(new Set(variantItems.map((item) => item.id)));
+
+  let variantMap = new Map<string, { stock: number }>();
+
+  if (variantItems.length > 0 && variantProductIds.length > 0) {
+    const { data: variants, error: variantsError } = await supabase
+      .from('product_variants')
+      .select('product_id, size, color, stock')
+      .in('product_id', variantProductIds);
+
+    if (variantsError) {
+      console.error('❌ [Validation] Failed to load product variants:', variantsError);
+      return {
+        valid: false,
+        errors: [],
+        message: 'Αποτυχία ελέγχου αποθέματος',
+      };
+    }
+
+    variantMap = new Map(
+      (variants ?? []).map((variant) => [
+        `${variant.product_id}::${variant.size}::${variant.color}`,
+        { stock: variant.stock },
+      ])
+    );
+  }
+
+  for (const item of cartItems) {
+    const product = productMap.get(item.id);
+
+    if (!product) {
       console.error('❌ [Validation] Product not found:', item.id);
       errors.push({
         productId: item.id,
@@ -71,17 +115,11 @@ export async function validateCartStock(
       continue;
     }
 
-    // 2. Check variant stock if size and color are specified
     if (item.size && item.color) {
-      const { data: variant, error: variantError } = await supabase
-        .from('product_variants')
-        .select('stock, size, color')
-        .eq('product_id', item.id)
-        .eq('size', item.size)
-        .eq('color', item.color)
-        .single();
+      const variantKey = `${item.id}::${item.size}::${item.color}`;
+      const variant = variantMap.get(variantKey);
 
-      if (variantError || !variant) {
+      if (!variant) {
         console.error('❌ [Validation] Variant not found:', {
           product: item.id,
           size: item.size,
@@ -99,7 +137,6 @@ export async function validateCartStock(
         continue;
       }
 
-      // 3. Check if enough stock is available
       if (variant.stock === 0) {
         console.error('❌ [Validation] No stock available:', {
           product: item.name,
