@@ -17,15 +17,11 @@ export default function CheckoutSuccess() {
   const clearCart = useCartStore((state) => state.clearCart);
   const { width, height } = useWindowSize();
 
-  const transactionId = useMemo(() => {
-    return searchParams.get('t');
-  }, [searchParams]);
-
   const orderCode = useMemo(() => {
     return searchParams.get('orderCode') || searchParams.get('OrderCode');
   }, [searchParams]);
 
-  const showConfetti = useMemo(() => Boolean(transactionId || orderCode), [orderCode, transactionId]);
+  const showConfetti = useMemo(() => Boolean(orderCode), [orderCode]);
 
   useEffect(() => {
     // Always clear cart when user reaches success page
@@ -62,10 +58,10 @@ export default function CheckoutSuccess() {
               ? 'Ευχαριστούμε για την παραγγελία σας!'
               : 'Thank you for your order!'}
           </p>
-          <p className="text-sm text-muted-foreground">
-            {locale === 'el' 
-              ? 'Η παραγγελία σας καταχωρήθηκε και θα λάβετε email επιβεβαίωσης σύντομα.' 
-              : 'Your order has been placed and you will receive a confirmation email shortly.'}
+          <p className="text-sm text-muted-foreground max-w-2xl mx-auto">
+            {locale === 'el'
+              ? 'Η παραγγελία σας καταχωρήθηκε επιτυχώς. Θα σας στείλουμε ένα email με όλες τις λεπτομέρειες πολύ σύντομα.'
+              : 'Your order has been placed successfully. We will email you all the details shortly.'}
           </p>
         </div>
 
@@ -76,7 +72,6 @@ export default function CheckoutSuccess() {
             <div className="w-10 h-10 rounded-full bg-primary/15 flex items-center justify-center">
               <CheckCircle className="h-5 w-5 text-primary" />
             </div>
-            {locale === 'el' ? 'Στοιχεία Παραγγελίας' : 'Order Details'}
           </CardTitle>
         </CardHeader>
         <CardContent className="p-5 md:p-7 space-y-5">
@@ -87,7 +82,7 @@ export default function CheckoutSuccess() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">
-                  {locale === 'el' ? 'Κωδικός Παραγγελίας' : 'Order Code'}
+                  {locale === 'el' ? 'Αριθμός Παραγγελίας' : 'Order Number'}
                 </p>
                 <p className="text-base md:text-lg font-mono font-semibold text-foreground break-all">
                   {orderCode}
@@ -96,27 +91,6 @@ export default function CheckoutSuccess() {
             </div>
           ) : null}
 
-          {transactionId ? (
-            <div className="flex items-start gap-4 p-4 bg-muted/50 rounded-lg">
-              <div className="w-10 h-10 rounded-lg bg-background flex items-center justify-center flex-shrink-0">
-                <Mail className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-muted-foreground uppercase mb-1.5">
-                  {locale === 'el' ? 'Κωδικός Συναλλαγής' : 'Transaction ID'}
-                </p>
-                <p className="text-base md:text-lg font-mono font-semibold text-foreground break-all">
-                  {transactionId}
-                </p>
-              </div>
-            </div>
-          ) : null}
-
-          <p className="text-sm text-muted-foreground leading-relaxed">
-            {locale === 'el'
-              ? 'Ένα email επιβεβαίωσης με τα στοιχεία της παραγγελίας στάλθηκε στο inbox σας. Κρατήστε τον κωδικό παραγγελίας για το ιστορικό σας.'
-              : 'A confirmation email with your order details has been sent to your inbox. Keep the order code for your records.'}
-          </p>
         </CardContent>
       </Card>
 
