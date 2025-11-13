@@ -1,6 +1,7 @@
 "use server"
 
 import { createClient as createServiceClient } from '@supabase/supabase-js';
+import { boxnowService } from '@/lib/services/boxnow';
 
 // Viva Wallet API Configuration
 const VIVA_API_URL = process.env.VIVA_API_URL || 'https://demo-api.vivapayments.com';
@@ -251,35 +252,25 @@ export async function updateOrderPaymentStatus(
   // If payment succeeded, create BOXNOW delivery request if applicable
   if (status === 'paid' && order.boxnow_locker_id) {
     try {
-      const shipmentResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/boxnow/shipments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          lockerId: order.boxnow_locker_id,
-          orderId: order.id,
-          customerName: order.customer_name,
-          customerPhone: order.customer_phone || '',
-          customerEmail: order.customer_email,
-          compartmentSize: 2, // 1=small, 2=medium, 3=large
-        }),
+      const shipmentResult = await boxnowService.createDeliveryRequest({
+        lockerId: order.boxnow_locker_id,
+        orderId: order.id,
+        customerName: order.customer_name,
+        customerPhone: order.customer_phone || '',
+        customerEmail: order.customer_email,
+        compartmentSize: 2, // 1=small, 2=medium, 3=large
       });
 
-      if (shipmentResponse.ok) {
-        const shipmentData = await shipmentResponse.json();
-        if (shipmentData.trackingNumber || shipmentData.parcelId) {
-          await supabase
-            .from('orders')
-            .update({
-              boxnow_tracking_code: shipmentData.trackingNumber || shipmentData.parcelId,
-              status: 'processing',
-            })
-            .eq('id', order.id);
-        }
-      } else {
-        const errorData = await shipmentResponse.json();
-        console.error('❌ Failed to create BOXNOW delivery request:', errorData);
+      if (shipmentResult.success && (shipmentResult.trackingNumber || shipmentResult.parcelId)) {
+        await supabase
+          .from('orders')
+          .update({
+            boxnow_tracking_code: shipmentResult.trackingNumber || shipmentResult.parcelId,
+            status: 'processing',
+          })
+          .eq('id', order.id);
+      } else if (!shipmentResult.success && shipmentResult.error) {
+        console.error('❌ Failed to create BOXNOW delivery request:', shipmentResult.error);
       }
     } catch (shipmentError) {
       console.error('❌ Error creating BOXNOW delivery request:', shipmentError);

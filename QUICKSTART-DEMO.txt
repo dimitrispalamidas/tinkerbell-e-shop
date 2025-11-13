@@ -133,11 +133,8 @@ FILES ΠΟΥ ΠΡΟΣΤΕΘΗΚΑΝ
 ✅ lib/services/boxnow.ts
    BOXNOW Partner API service
 
-✅ app/api/boxnow/shipments/route.ts
-   Internal API route για delivery requests
-
 ✅ lib/actions/viva-wallet.ts
-   Viva Wallet API integration
+   Viva Wallet API integration & BOXNOW delivery trigger
 
 ✅ app/api/webhooks/viva/route.ts
    Webhook handler για payment events

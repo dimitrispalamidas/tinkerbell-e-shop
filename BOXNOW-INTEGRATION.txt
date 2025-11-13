@@ -61,14 +61,13 @@ Your app now has full BOXNOW locker integration!
 │         BACKEND (Server Actions)            │
 │                                             │
 │  ┌──────────────────────────────────────┐  │
-│  │   POST /api/boxnow/shipments         │  │
-│  │   (Internal API Route)               │  │
+│  │  Viva Wallet payment success action  │  │
+│  │  (lib/actions/viva-wallet.ts)        │  │
 │  └──────────────────────────────────────┘  │
 │                    ↓                        │
 │  ┌──────────────────────────────────────┐  │
 │  │  boxnowService.createDeliveryRequest │  │
 │  │  (lib/services/boxnow.ts)            │  │
-│  └──────────────────────────────────────┘  │
 │                    ↓                        │
 │         OAuth2 Authentication                │
 │                    ↓                        │
@@ -204,13 +203,9 @@ BACKEND (API Integration):
      ├─ listParcels() - Λίστα δεμάτων
      └─ cancelParcel() - Ακύρωση δέματος
 
-/app/api/boxnow/shipments/route.ts
-  └─ POST endpoint για delivery requests
-  └─ Καλεί boxnowService.createDeliveryRequest()
-
 Payment Integration (TBD):
   └─ Όταν payment succeeds:
-     ├─ Καλεί /api/boxnow/shipments
+     ├─ Καλεί boxnowService.createDeliveryRequest() μέσα από το viva-wallet action
      └─ Αποθηκεύει tracking number
 
 =====================================
