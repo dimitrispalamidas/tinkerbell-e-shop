@@ -14,22 +14,23 @@ export function CookieConsentBanner() {
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    // Check if user has already given consent
-    const consent = localStorage.getItem(COOKIE_CONSENT_KEY);
-    if (!consent) {
-      // Show banner after a small delay for better UX
+    const consentCookie = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith(`${COOKIE_CONSENT_KEY}=`));
+
+    if (!consentCookie) {
       const timer = setTimeout(() => setShowBanner(true), 1000);
       return () => clearTimeout(timer);
     }
   }, []);
 
   const handleAccept = () => {
-    localStorage.setItem(COOKIE_CONSENT_KEY, 'accepted');
+    document.cookie = `${COOKIE_CONSENT_KEY}=accepted; path=/; max-age=31536000; SameSite=Lax`;
     setShowBanner(false);
   };
 
   const handleReject = () => {
-    localStorage.setItem(COOKIE_CONSENT_KEY, 'rejected');
+    document.cookie = `${COOKIE_CONSENT_KEY}=rejected; path=/; max-age=31536000; SameSite=Lax`;
     setShowBanner(false);
   };
 
@@ -63,13 +64,13 @@ export function CookieConsentBanner() {
           <div className="space-y-3 text-sm leading-relaxed text-muted-foreground">
             <p>
               {locale === 'el'
-                ? 'Χρησιμοποιούμε απαραίτητα cookies και τοπική αποθήκευση (localStorage) μόνο για τη βασική λειτουργία της ιστοσελίδας: καλάθι αγορών, γλώσσα, διατήρηση φόρμας checkout. ΔΕΝ χρησιμοποιούμε cookies παρακολούθησης, analytics ή διαφήμισης.'
-                : 'We use essential cookies and local storage (localStorage) solely for basic website functionality: shopping cart, language, checkout form persistence. We do NOT use tracking, analytics, or advertising cookies.'}
+                ? 'Χρησιμοποιούμε μόνο τα απολύτως απαραίτητα cookies ώστε το κατάστημα να λειτουργεί ομαλά.'
+                : 'We only use essential cookies so the shop works smoothly.'}
             </p>
             <p className="text-xs text-muted-foreground/80">
               {locale === 'el'
-                ? 'Χωρίς αυτά, το καλάθι και άλλες βασικές λειτουργίες δεν θα λειτουργούν όπως πρέπει.'
-                : 'Without them, the cart and other core features will not work as expected.'}
+                ? 'Δεν τοποθετούμε cookies analytics, διαφήμισης ή άλλης παρακολούθησης.'
+                : 'We do not set analytics, advertising, or tracking cookies.'}
             </p>
             <Link
               href="/privacy-policy"
