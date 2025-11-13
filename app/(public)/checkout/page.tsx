@@ -240,117 +240,79 @@ export default function CheckoutPage() {
     try {
       setIsProcessing(true);
 
-      // STEP 1: Validate cart stock before payment
-      const { validateCartStock } = await import('@/lib/actions/validate-cart');
-      
-      const validation = await validateCartStock(items.map(item => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        size: item.size,
-        color: item.color,
-        price: item.price,
-      })));
+      const response = await fetch('/api/checkout/create-order', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          locale,
+          cartItems: items.map((item) => ({
+            id: item.id,
+            quantity: item.quantity,
+            size: item.size,
+            color: item.color,
+          })),
+          formData,
+        }),
+      });
 
-      if (!validation.valid) {
-        console.error('❌ [Security] Cart validation failed:', validation.errors);
-        
-        // Show detailed error messages to user
-        const errorMessages = validation.errors.map(err => {
-          const itemInfo = `${err.productName}${err.size ? ` (${err.size}${err.color ? `, ${err.color}` : ''})` : ''}`;
-          
-          if (err.issue === 'product_not_found') {
-            return locale === 'el' 
-              ? `❌ ${itemInfo}: Το προϊόν δεν υπάρχει πλέον`
-              : `❌ ${itemInfo}: Product no longer exists`;
-          } else if (err.issue === 'variant_not_found') {
-            return locale === 'el'
-              ? `❌ ${itemInfo}: Αυτή η παραλλαγή δεν είναι διαθέσιμη`
-              : `❌ ${itemInfo}: This variant is not available`;
-          } else if (err.issue === 'no_stock') {
-            return locale === 'el'
-              ? `❌ ${itemInfo}: Εξαντλήθηκε`
-              : `❌ ${itemInfo}: Out of stock`;
-          } else if (err.issue === 'insufficient_stock') {
-            return locale === 'el'
-              ? `⚠️ ${itemInfo}: Ζητήθηκαν ${err.requestedQuantity}, διαθέσιμα ${err.availableStock}`
-              : `⚠️ ${itemInfo}: Requested ${err.requestedQuantity}, available ${err.availableStock}`;
-          }
-          return '';
-        }).filter(Boolean);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
 
-        // Show all errors
-        errorMessages.forEach(msg => toast.error(msg, { duration: 6000 }));
-        
-        // Main error message
-        toast.error(
-          locale === 'el'
-            ? 'Παρακαλώ ενημερώστε το καλάθι σας και δοκιμάστε ξανά'
-            : 'Please update your cart and try again',
-          { duration: 8000 }
-        );
-        
+        if (data?.validationErrors) {
+          data.validationErrors.forEach((err: any) => {
+            const itemInfo = err.productName
+              ? `${err.productName}${err.size ? ` (${err.size}${err.color ? `, ${err.color}` : ''})` : ''}`
+              : '';
+
+            const message = (() => {
+              switch (err.issue) {
+                case 'product_not_found':
+                  return locale === 'el'
+                    ? `❌ ${itemInfo}: Το προϊόν δεν υπάρχει πλέον`
+                    : `❌ ${itemInfo}: Product no longer exists`;
+                case 'variant_not_found':
+                  return locale === 'el'
+                    ? `❌ ${itemInfo}: Αυτή η παραλλαγή δεν είναι διαθέσιμη`
+                    : `❌ ${itemInfo}: This variant is not available`;
+                case 'no_stock':
+                  return locale === 'el'
+                    ? `❌ ${itemInfo}: Εξαντλήθηκε`
+                    : `❌ ${itemInfo}: Out of stock`;
+                case 'insufficient_stock':
+                  return locale === 'el'
+                    ? `⚠️ ${itemInfo}: Ζητήθηκαν ${err.requestedQuantity}, διαθέσιμα ${err.availableStock}`
+                    : `⚠️ ${itemInfo}: Requested ${err.requestedQuantity}, available ${err.availableStock}`;
+                default:
+                  return null;
+              }
+            })();
+
+            if (message) {
+              toast.error(message, { duration: 6000 });
+            }
+          });
+        }
+
+        if (data?.message) {
+          toast.error(data.message, { duration: 6000 });
+        } else {
+          toast.error(
+            locale === 'el'
+              ? 'Η παραγγελία δεν ολοκληρώθηκε. Δοκιμάστε ξανά.'
+              : 'Order could not be completed. Please try again.'
+          );
+        }
+
         setIsProcessing(false);
         return;
       }
 
-      // STEP 2: Continue with payment if validation passed
-      // Import the Viva Wallet actions dynamically
-      const { createVivaPaymentOrder, createOrder } = await import('@/lib/actions/viva-wallet');
+      const data = await response.json();
 
-      const subtotal = getTotal();
-      const shippingCost = formData.deliveryMethod === 'home' ? HOME_DELIVERY_COST : 0;
-      const total = subtotal + shippingCost;
-
-      const customerName = `${formData.firstName} ${formData.lastName}`;
-
-      const orderData = {
-        items: items.map(item => ({
-          product_id: item.id,
-          quantity: item.quantity,
-          price: item.price,
-          size: item.size,
-          color: item.color,
-          product_name: item.name,
-        })),
-        total: total,
-        customer_email: formData.email,
-        customer_name: customerName,
-        customer_phone: formData.phone,
-        shipping_address: {
-          name: customerName,
-          address: formData.deliveryMethod === 'home' ? formData.address : '',
-          city: formData.deliveryMethod === 'home' ? formData.city : '',
-          postal_code: formData.deliveryMethod === 'home' ? formData.postalCode : formData.boxnowLockerPostalCode,
-          region: formData.deliveryMethod === 'home' ? formData.region : '',
-          country: 'GR',
-          phone: formData.phone,
-          delivery_method: formData.deliveryMethod,
-          boxnow_locker_address: formData.deliveryMethod === 'boxnow' ? formData.boxnowLockerAddress : undefined,
-        },
-        boxnow_locker_id: formData.deliveryMethod === 'boxnow' ? formData.boxnowLockerId : undefined,
-      };
-
-      // Create Viva payment order
-      const { orderCode, checkoutUrl } = await createVivaPaymentOrder({
-        amount: total,
-        orderId: `TMP-${Date.now()}`,
-        customerEmail: formData.email,
-        customerName: customerName,
-        customerPhone: formData.phone,
-      });
-
-      // Create order in database
-      await createOrder({
-        ...orderData,
-        viva_order_code: orderCode,
-      });
-
-      // Clear localStorage after successful order creation
       localStorage.removeItem(CHECKOUT_STORAGE_KEY);
-
-      // Redirect to Viva checkout
-      window.location.href = checkoutUrl;
+      window.location.href = data.checkoutUrl;
     } catch (error) {
       console.error('❌ Payment error:', error);
       toast.error(locale === 'el' ? 'Σφάλμα κατά τη δημιουργία πληρωμής' : 'Error creating payment');
