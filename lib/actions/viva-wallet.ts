@@ -413,14 +413,39 @@ export async function validateVivaTransactionAgainstOrder(orderCode: string, tra
     throw new Error('Order total is invalid');
   }
 
-  const transactionAmountCents = Math.round(amountNumber * 100);
+  const candidateTransactionAmounts = new Set<number>();
+  candidateTransactionAmounts.add(Math.round(amountNumber));
+  candidateTransactionAmounts.add(Math.round(amountNumber * 100));
   const orderAmountCents = Math.round(orderTotal * 100);
 
-  if (transactionAmountCents !== orderAmountCents) {
+  if (!candidateTransactionAmounts.has(orderAmountCents)) {
+    console.error('❌ Transaction amount mismatch details:', {
+      orderCode,
+      transactionId,
+      resolvedOrderCode,
+      resolvedStatusId,
+      resolvedAmount,
+      amountNumber,
+      candidateTransactionAmounts: Array.from(candidateTransactionAmounts),
+      orderAmountCents,
+    });
+
     throw new Error(
-      `Transaction amount mismatch. Viva: ${transactionAmountCents}, Order: ${orderAmountCents}`
+      `Transaction amount mismatch. Viva candidates: ${Array.from(candidateTransactionAmounts).join(
+        ', '
+      )}, Order: ${orderAmountCents}`
     );
   }
+
+  console.log('✅ Viva transaction validated', {
+    orderCode,
+    transactionId,
+    resolvedOrderCode,
+    resolvedStatusId,
+    resolvedAmount,
+    amountNumber,
+    orderAmountCents,
+  });
 
   return { orderId: order.id };
 }
