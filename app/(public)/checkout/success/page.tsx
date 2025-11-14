@@ -18,7 +18,12 @@ export default function CheckoutSuccess() {
   const { width, height } = useWindowSize();
 
   const orderCode = useMemo(() => {
-    return searchParams.get('orderCode') || searchParams.get('OrderCode');
+    return (
+      searchParams.get('orderCode') ||
+      searchParams.get('OrderCode') ||
+      searchParams.get('s') ||
+      searchParams.get('S')
+    );
   }, [searchParams]);
 
   const showConfetti = useMemo(() => Boolean(orderCode), [orderCode]);
