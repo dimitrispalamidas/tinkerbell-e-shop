@@ -1,5 +1,6 @@
 import { getLocale } from 'next-intl/server';
-import { createClient } from '@/lib/supabase/server';
+import { getRequestBaseUrl } from '@/lib/utils/base-url';
+import type { CatalogProduct, CatalogCategory } from '@/lib/types/catalog';
 import { ShopClient } from './shop-client';
 import type { Metadata } from 'next';
 
@@ -20,6 +21,56 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+async function fetchCategories() {
+  try {
+    const baseUrl = getRequestBaseUrl();
+    const response = await fetch(`${baseUrl}/api/catalog/categories`, {
+      next: { revalidate: 300 },
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch categories', await response.text());
+      return [];
+    }
+
+    const payload = (await response.json()) as {
+      categories?: CatalogCategory[];
+    };
+
+    return payload.categories ?? [];
+  } catch (error) {
+    console.error('Catalog categories fetch error', error);
+    return [];
+  }
+}
+
+async function fetchProducts(params: { type?: string; category?: string }) {
+  try {
+    const baseUrl = getRequestBaseUrl();
+    const search = new URLSearchParams();
+    if (params.type) search.set('type', params.type);
+    if (params.category) search.set('category', params.category);
+
+    const query = search.toString();
+    const url = query
+      ? `${baseUrl}/api/catalog/products?${query}`
+      : `${baseUrl}/api/catalog/products`;
+
+    const response = await fetch(url, { next: { revalidate: 120 } });
+
+    if (!response.ok) {
+      console.error('Failed to fetch products', await response.text());
+      return [];
+    }
+
+    const payload = (await response.json()) as { products?: CatalogProduct[] };
+    return payload.products ?? [];
+  } catch (error) {
+    console.error('Catalog products fetch error', error);
+    return [];
+  }
+}
+
 export default async function ShopPage({
   searchParams,
 }: {
@@ -28,43 +79,16 @@ export default async function ShopPage({
   const locale = await getLocale();
   const { type, category } = await searchParams;
 
-  const supabase = await createClient();
-  
-  // Fetch all categories for filters
-  const { data: allCategories } = await supabase
-    .from('categories')
-    .select('*')
-    .order('type', { ascending: true })
-    .order('name_el', { ascending: true });
-  
-  let query = supabase
-    .from('products')
-    .select('*, categories(*), product_variants(*)')
-    .eq('status', 'active');
-
-  if (type) {
-    const { data: categories } = await supabase
-      .from('categories')
-      .select('id')
-      .eq('type', type);
-    
-    if (categories && categories.length > 0) {
-      const categoryIds = categories.map(c => c.id);
-      query = query.in('category_id', categoryIds);
-    }
-  }
-
-  if (category) {
-    query = query.eq('category_id', category);
-  }
-
-  const { data: products } = await query.order('created_at', { ascending: false });
+  const [allCategories, products] = await Promise.all([
+    fetchCategories(),
+    fetchProducts({ type, category }),
+  ]);
 
   return (
     <ShopClient
       locale={locale}
-      products={products || []}
-      allCategories={allCategories || []}
+      products={products}
+      allCategories={allCategories}
       type={type}
       category={category}
     />

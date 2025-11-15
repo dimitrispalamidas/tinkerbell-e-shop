@@ -1,12 +1,42 @@
 import { notFound } from 'next/navigation';
 import { getLocale } from 'next-intl/server';
-import { createClient } from '@/lib/supabase/server';
 import { formatPrice } from '@/lib/utils';
+import { getRequestBaseUrl } from '@/lib/utils/base-url';
 import { ProductClient } from './product-client';
 import { ProductGallery } from './product-gallery';
-import type { Product } from '@/lib/types/database';
+import type { Product, ProductVariant } from '@/lib/types/database';
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import type { CatalogProduct } from '@/lib/types/catalog';
+
+interface ProductDetailPayload {
+  product: CatalogProduct;
+  variants: ProductVariant[];
+}
+
+async function fetchProductDetail(id: string) {
+  try {
+    const baseUrl = getRequestBaseUrl();
+    const response = await fetch(`${baseUrl}/api/catalog/products/${id}`, {
+      next: { revalidate: 120 },
+    });
+
+    if (response.status === 404) {
+      return null;
+    }
+
+    if (!response.ok) {
+      console.error('Failed to fetch product detail', await response.text());
+      return null;
+    }
+
+    const payload = (await response.json()) as ProductDetailPayload;
+    return payload;
+  } catch (error) {
+    console.error('Product detail fetch error', error);
+    return null;
+  }
+}
 
 export async function generateMetadata({
   params,
@@ -15,14 +45,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const locale = await getLocale();
   const { id } = await params;
-  
-  const supabase = await createClient();
-  const { data: product } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .eq('is_active', true)
-    .single();
+
+  const detail = await fetchProductDetail(id);
+  const product = detail?.product;
 
   if (!product) {
     return {
@@ -67,26 +92,19 @@ export default async function ProductPage({
   const locale = await getLocale();
   const { id } = await params;
 
-  const supabase = await createClient();
-  
-  const { data: product } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', id)
-    .eq('is_active', true)
-    .single();
+  const detail = await fetchProductDetail(id);
 
-  if (!product) {
+  if (!detail?.product) {
     notFound();
   }
 
-  // Fetch product variants
-  const { data: variants } = await supabase
-    .from('product_variants')
-    .select('*')
-    .eq('product_id', id)
-    .order('size')
-    .order('color');
+  const product = detail.product;
+  const variants = detail.variants ?? [];
+  const totalStock = variants.reduce(
+    (sum, variant) => sum + (variant?.stock ?? 0),
+    0
+  );
+  const isAvailable = product.status !== 'sold_out' && totalStock > 0;
 
   // Prepare structured data for SEO
   const productName = locale === 'el' ? product.name_el : product.name_en;
@@ -109,7 +127,9 @@ export default async function ProductPage({
       "url": `${baseUrl}/product/${id}`,
       "priceCurrency": "EUR",
       "price": product.price,
-      "availability": product.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      "availability": isAvailable
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
       "seller": {
         "@type": "Organization",
         "name": "Τινκερμπελ"
@@ -180,7 +200,7 @@ export default async function ProductPage({
             {/* Product Selection */}
             <ProductClient
               product={product as Product}
-              variants={variants || []}
+              variants={variants}
               locale={locale}
             />
           </div>

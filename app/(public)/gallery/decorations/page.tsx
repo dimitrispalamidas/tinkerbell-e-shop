@@ -1,5 +1,5 @@
 import { getLocale } from 'next-intl/server';
-import { createClient } from '@/lib/supabase/server';
+import { getRequestBaseUrl } from '@/lib/utils/base-url';
 import { DecorationsGalleryClient } from './decorations-client';
 import type { Metadata } from 'next';
 
@@ -20,18 +20,29 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+async function fetchGalleryPhotos(category: 'decoration') {
+  try {
+    const baseUrl = getRequestBaseUrl();
+    const response = await fetch(`${baseUrl}/api/catalog/gallery/${category}`, {
+      next: { revalidate: 600 },
+    });
+
+    if (!response.ok) {
+      console.error('Failed to fetch gallery photos', await response.text());
+      return [];
+    }
+
+    const payload = (await response.json()) as { photos?: string[] };
+    return payload.photos ?? [];
+  } catch (error) {
+    console.error('Gallery fetch error', error);
+    return [];
+  }
+}
+
 export default async function DecorationsGalleryPage() {
   const locale = await getLocale();
-  const supabase = await createClient();
-  
-  const { data: items } = await supabase
-    .from('gallery_items')
-    .select('*')
-    .eq('category', 'decoration')
-    .eq('is_active', true)
-    .order('display_order', { ascending: true });
+  const photos = await fetchGalleryPhotos('decoration');
 
-  const allPhotos = items ? items.map((item) => item.image).filter(Boolean) : [];
-
-  return <DecorationsGalleryClient locale={locale} photos={allPhotos} />;
+  return <DecorationsGalleryClient locale={locale} photos={photos} />;
 }

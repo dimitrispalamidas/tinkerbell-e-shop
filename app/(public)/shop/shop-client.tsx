@@ -10,11 +10,12 @@ import { ShoppingBag, Sparkles, ArrowUpDown } from 'lucide-react';
 import { ProductFilters } from '@/components/shop/product-filters';
 import { MobileFilterDrawer } from '@/components/shop/mobile-filter-drawer';
 import { SearchInput } from '@/components/ui/search-input';
+import type { CatalogCategory, CatalogProduct } from '@/lib/types/catalog';
 
 interface ShopClientProps {
   locale: string;
-  products: any[];
-  allCategories: any[];
+  products: CatalogProduct[];
+  allCategories: CatalogCategory[];
   type?: string;
   category?: string;
 }
@@ -28,7 +29,7 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
   const priceBounds = useMemo<[number, number]>(() => {
-    if (!products || products.length === 0) {
+    if (products.length === 0) {
       return [0, 0];
     }
 
@@ -77,7 +78,7 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
   // Get all available sizes from products
   const availableSizes = useMemo(() => {
     const sizes = new Set<string>();
-    products?.forEach(product => {
+    products.forEach(product => {
       product.sizes?.forEach((size: string) => sizes.add(size));
     });
     return Array.from(sizes).sort((a, b) => {
@@ -99,7 +100,7 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
   // Get all available colors from products
   const availableColors = useMemo(() => {
     const colors = new Set<string>();
-    products?.forEach(product => {
+    products.forEach(product => {
       product.colors?.forEach((color: string) => colors.add(color));
     });
     return Array.from(colors).sort();
@@ -107,8 +108,6 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
 
   // Filter and sort products
   const filteredAndSortedProducts = useMemo(() => {
-    if (!products) return [];
-
     const [selectedMinPrice, selectedMaxPrice] = priceRange;
 
     // Apply filters
@@ -279,7 +278,7 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
               >
                 {locale === 'el' ? 'Παπούτσια' : 'Shoes'}
               </Link>
-              {allCategories.map((cat: any) => (
+              {allCategories.map((cat) => (
                 <Link
                   key={cat.id}
                   href={`/shop?category=${cat.id}`}

@@ -1,5 +1,6 @@
 import { getLocale } from 'next-intl/server';
-import { createClient } from '@/lib/supabase/server';
+import { getRequestBaseUrl } from '@/lib/utils/base-url';
+import type { CatalogProduct } from '@/lib/types/catalog';
 import { HeroVideoBackground } from '@/components/layout/hero-video-background';
 import { PremiumHero } from '@/components/home/premium-hero';
 import { PremiumCategories } from '@/components/home/premium-categories';
@@ -28,17 +29,32 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+async function fetchFeaturedProducts(): Promise<CatalogProduct[]> {
+  try {
+    const baseUrl = getRequestBaseUrl();
+    const response = await fetch(
+      `${baseUrl}/api/catalog/products?limit=15`,
+      {
+        next: { revalidate: 120 },
+      }
+    );
+
+    if (!response.ok) {
+      console.error('Failed to load featured products', await response.text());
+      return [];
+    }
+
+    const payload = (await response.json()) as { products?: CatalogProduct[] };
+    return payload.products ?? [];
+  } catch (error) {
+    console.error('Featured products fetch error', error);
+    return [];
+  }
+}
+
 export default async function HomePage() {
   const locale = await getLocale();
-
-  const supabase = await createClient();
-  
-  // Fetch featured products
-  const { data: products } = await supabase
-    .from('products')
-    .select('*')
-    .eq('is_active', true)
-    .limit(15);
+  const products = await fetchFeaturedProducts();
 
   return (
     <div className="flex flex-col">
