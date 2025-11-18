@@ -57,6 +57,7 @@ export async function sendAdminOrderNotificationPush(vivaOrderCode: string) {
     }
 
     // Get all admin users with OneSignal player IDs
+    // onesignal_player_id is now a JSONB array containing all device Player IDs
     const { data: adminUsers, error: adminError } = await supabase
       .from('admin_users')
       .select('user_id, onesignal_player_id')
@@ -67,14 +68,34 @@ export async function sendAdminOrderNotificationPush(vivaOrderCode: string) {
       return { success: false, error: 'No admin users with player IDs found' };
     }
 
-    const playerIds = adminUsers
-      .map(au => au.onesignal_player_id)
-      .filter((id): id is string => !!id);
+    // Extract all player IDs from JSONB arrays
+    // Each admin can have multiple devices (desktop, iOS, etc.)
+    const playerIds: string[] = [];
+    adminUsers.forEach(au => {
+      if (au.onesignal_player_id) {
+        // Handle both array format (new) and single string (legacy)
+        if (Array.isArray(au.onesignal_player_id)) {
+          playerIds.push(...au.onesignal_player_id.filter((id): id is string => typeof id === 'string' && !!id));
+        } else if (typeof au.onesignal_player_id === 'string') {
+          // Legacy format - single string
+          playerIds.push(au.onesignal_player_id);
+        }
+      }
+    });
 
     if (playerIds.length === 0) {
       console.warn('⚠️ [OneSignal] No valid player IDs found');
       return { success: false, error: 'No valid player IDs found' };
     }
+
+    // Get admin user IDs for external_user_ids
+    // This is the KEY: We use login() to set External User ID = user.id
+    // All devices with the same External User ID will receive notifications
+    const adminUserIds = adminUsers.map(au => au.user_id);
+
+    console.log(`📤 [OneSignal] Sending notification to ${adminUserIds.length} admin user(s)`);
+    console.log(`   External User IDs: ${adminUserIds.join(', ')}`);
+    console.log(`   Player IDs (backup): ${playerIds.length} device(s)`);
 
     // Initialize OneSignal client
     const client = getOneSignalClient();
@@ -85,7 +106,9 @@ export async function sendAdminOrderNotificationPush(vivaOrderCode: string) {
     ) || 0;
 
     // Prepare notification
-    const notification = {
+    // PRIMARY METHOD: Use include_external_user_ids (sends to ALL devices with same External User ID)
+    // FALLBACK: Also include player_ids for devices that might not have External User ID set
+    const notification: any = {
       contents: {
         en: `New order #${order.viva_order_code} - €${order.total.toFixed(2)}`,
         el: `Νέα παραγγελία #${order.viva_order_code} - €${order.total.toFixed(2)}`,
@@ -98,7 +121,11 @@ export async function sendAdminOrderNotificationPush(vivaOrderCode: string) {
         en: `${itemsCount} item${itemsCount !== 1 ? 's' : ''} from ${order.customer_name}`,
         el: `${itemsCount} προϊόν${itemsCount !== 1 ? 'τα' : ''} από ${order.customer_name}`,
       },
-      include_player_ids: playerIds,
+      // PRIMARY: Use external user IDs - sends to ALL devices (desktop, iOS, etc.)
+      // This works because we call login(user.id) which sets External User ID = user.id
+      include_external_user_ids: adminUserIds,
+      // FALLBACK: Also include player IDs for devices without External User ID
+      include_player_ids: playerIds.length > 0 ? playerIds : undefined,
       data: {
         type: 'new_order',
         orderCode: order.viva_order_code,
@@ -112,11 +139,13 @@ export async function sendAdminOrderNotificationPush(vivaOrderCode: string) {
       // Sound and priority
       sound: 'default',
       priority: 10,
-      // Badge count (optional - can be used to show unread orders)
-      // badge: { type: 'Increase', value: 1 },
+      // iOS-specific: ensure notification is delivered even when app is in background
+      ios_badgeType: 'Increase',
+      ios_badgeCount: 1,
     };
 
     // Send notification
+    console.log('📨 [OneSignal] Sending notification via OneSignal API...');
     const response = await client.createNotification(notification);
 
     if (response.body?.errors && response.body.errors.length > 0) {
@@ -124,7 +153,11 @@ export async function sendAdminOrderNotificationPush(vivaOrderCode: string) {
       return { success: false, error: response.body.errors.join(', ') };
     }
 
-    console.log(`✅ [OneSignal] Notification sent to ${playerIds.length} admin(s)`);
+    console.log(`✅ [OneSignal] Notification sent successfully`);
+    console.log(`   Notification ID: ${response.body?.id}`);
+    console.log(`   Recipients: ${playerIds.length} admin(s)`);
+    console.log(`   Response:`, JSON.stringify(response.body, null, 2));
+    
     return { 
       success: true, 
       recipients: playerIds.length,
@@ -138,38 +171,80 @@ export async function sendAdminOrderNotificationPush(vivaOrderCode: string) {
 
 export async function saveAdminPlayerId(userId: string, playerId: string) {
   try {
+    console.log(`💾 [OneSignal] Attempting to save player ID for user: ${userId}, player ID: ${playerId}`);
     const supabase = getSupabaseAdmin();
     
-    // Verify user is admin and check if they already have a player ID
+    // Verify user is admin and get current player IDs
     const { data: adminUser, error: checkError } = await supabase
       .from('admin_users')
       .select('id, onesignal_player_id')
       .eq('user_id', userId)
       .maybeSingle();
 
-    if (checkError || !adminUser) {
+    if (checkError) {
+      console.error('❌ [OneSignal] Error checking admin user:', checkError);
+      return { success: false, error: `Database error: ${checkError.message}` };
+    }
+
+    if (!adminUser) {
+      console.error('❌ [OneSignal] User is not an admin:', userId);
       return { success: false, error: 'User is not an admin' };
     }
 
-    // If player ID already exists and matches, no need to update
-    if (adminUser.onesignal_player_id === playerId) {
+    // Get current player IDs array (or create new array)
+    let currentPlayerIds: string[] = [];
+    
+    if (adminUser.onesignal_player_id) {
+      // Handle both array format (new) and single string (legacy)
+      if (Array.isArray(adminUser.onesignal_player_id)) {
+        currentPlayerIds = adminUser.onesignal_player_id.filter((id): id is string => typeof id === 'string' && !!id);
+      } else if (typeof adminUser.onesignal_player_id === 'string') {
+        // Legacy format - convert to array
+        currentPlayerIds = [adminUser.onesignal_player_id];
+      }
+    }
+
+    // Check if player ID already exists
+    if (currentPlayerIds.includes(playerId)) {
       console.log(`✅ [OneSignal] Player ID already exists for admin: ${userId}`);
       return { success: true, alreadyExists: true };
     }
 
-    // Update admin user with player ID (upsert - update if exists, create if not)
-    const { error: updateError } = await supabase
+    // Add new player ID to array (each device has its own Player ID)
+    const updatedPlayerIds = [...currentPlayerIds, playerId];
+    
+    console.log(`📱 [OneSignal] Adding player ID to device list for admin ${userId}:`);
+    console.log(`   Existing devices: ${currentPlayerIds.length}`);
+    console.log(`   New device Player ID: ${playerId}`);
+    console.log(`   Total devices: ${updatedPlayerIds.length}`);
+
+    // Update admin user with new player IDs array
+    const { data: updatedData, error: updateError } = await supabase
       .from('admin_users')
-      .update({ onesignal_player_id: playerId })
-      .eq('user_id', userId);
+      .update({ onesignal_player_id: updatedPlayerIds })
+      .eq('user_id', userId)
+      .select('onesignal_player_id');
 
     if (updateError) {
       console.error('❌ [OneSignal] Failed to save player ID:', updateError);
       return { success: false, error: updateError.message };
     }
 
-    console.log(`✅ [OneSignal] Player ID saved for admin: ${userId}`);
-    return { success: true };
+    // Verify the update was successful
+    if (updatedData && updatedData[0]?.onesignal_player_id) {
+      const savedIds = Array.isArray(updatedData[0].onesignal_player_id) 
+        ? updatedData[0].onesignal_player_id 
+        : [updatedData[0].onesignal_player_id];
+      
+      if (savedIds.includes(playerId)) {
+        console.log(`✅ [OneSignal] Player ID saved successfully for admin: ${userId}`);
+        console.log(`   Total devices registered: ${savedIds.length}`);
+        return { success: true };
+      }
+    }
+    
+    console.error('❌ [OneSignal] Player ID update verification failed');
+    return { success: false, error: 'Update verification failed' };
   } catch (error) {
     console.error('❌ [OneSignal] Error saving player ID:', error);
     return { success: false, error: String(error) };

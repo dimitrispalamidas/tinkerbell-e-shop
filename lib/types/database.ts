@@ -105,7 +105,7 @@ export type AdminUser = {
   user_id: string
   role: 'admin' | 'super_admin'
   permissions: string[]
-  onesignal_player_id: string | null
+  onesignal_player_id: string[] | string | null // JSONB array of Player IDs (one per device), or legacy single string
   created_at: string
   updated_at: string
 }

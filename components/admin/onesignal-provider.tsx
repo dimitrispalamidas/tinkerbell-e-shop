@@ -183,28 +183,31 @@ export function OneSignalProvider() {
           }
         }
 
-        // If we have a player ID, save it to database and set external ID
+        // If we have a player ID, set external ID FIRST, then save to database
         if (userId) {
-          // Set external ID to link admin user with OneSignal player (OneSignal best practice)
+          // IMPORTANT: Set external ID FIRST (before saving player ID)
+          // This links all devices (desktop, iOS, etc.) to the same user
+          // All devices with the same External User ID will receive notifications via include_external_user_ids
           try {
             if (window.OneSignal?.login) {
               await window.OneSignal.login(user.id);
-              console.log('✅ OneSignal external ID set for admin user');
+              console.log('✅ [OneSignal] External User ID set:', user.id);
+              console.log('   This links all devices to the same user');
             }
           } catch (loginError) {
-            console.log('Note: Could not set OneSignal external ID (may not be available in this SDK version)');
+            console.warn('⚠️ [OneSignal] Could not set external ID:', loginError);
           }
 
-          // Save player ID to database
+          // Save player ID to database (for backup/fallback)
           const result = await saveAdminPlayerId(user.id, userId);
           
           if (result.success) {
-            console.log('✅ OneSignal player ID registered:', userId);
+            console.log('✅ [OneSignal] Player ID registered:', userId);
           } else {
-            console.error('Failed to register OneSignal player ID:', result.error);
+            console.error('❌ [OneSignal] Failed to register player ID:', result.error);
           }
         } else {
-          console.log('ℹ️ OneSignal player ID not available - user may need to allow notifications in browser settings');
+          console.log('ℹ️ [OneSignal] Player ID not available - user may need to allow notifications');
         }
       } catch (error) {
         console.error('Error registering OneSignal player:', error);

@@ -74,8 +74,18 @@ export function NotificationPermissionButton() {
                 .eq('user_id', user.id)
                 .maybeSingle()
               
-              // If player ID is different or not saved, update it
-              if (!adminRecord?.onesignal_player_id || adminRecord.onesignal_player_id !== playerId) {
+              // Check if this player ID exists in the array
+              let playerIdExists = false
+              if (adminRecord?.onesignal_player_id) {
+                if (Array.isArray(adminRecord.onesignal_player_id)) {
+                  playerIdExists = adminRecord.onesignal_player_id.includes(playerId)
+                } else if (typeof adminRecord.onesignal_player_id === 'string') {
+                  playerIdExists = adminRecord.onesignal_player_id === playerId
+                }
+              }
+              
+              // If player ID is not saved, add it to the array
+              if (!playerIdExists) {
                 await saveAdminPlayerId(user.id, playerId)
               }
             }
@@ -173,49 +183,83 @@ export function NotificationPermissionButton() {
         return
       }
 
-      // Wait a bit for the permission to be processed
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      // Get player ID after permission
-      let playerId: string | null = null
-      
-      try {
-        if (window.OneSignal?.User?.PushSubscription?.id) {
-          playerId = await window.OneSignal.User.PushSubscription.id
-        } else if (window.OneSignal?.getUserId) {
-          playerId = await window.OneSignal.getUserId()
-        } else if (window.OneSignal?.userId) {
-          playerId = window.OneSignal.userId
-        }
-      } catch (error) {
-        console.log('Player ID not available yet')
-      }
-
-      // Set external ID (OneSignal best practice)
-      if (window.OneSignal?.login && playerId) {
+      // IMPORTANT: Set external ID FIRST (even before getting Player ID)
+      // This is CRITICAL for iOS - links the device to the user immediately
+      // All devices with the same External User ID will receive notifications via include_external_user_ids
+      if (window.OneSignal?.login) {
         try {
           await window.OneSignal.login(user.id)
+          console.log('✅ [OneSignal] External User ID set:', user.id)
+          console.log('   This links all devices to the same user')
+          console.log('   Notifications will work via include_external_user_ids even if Player ID is not saved')
         } catch (loginError) {
-          console.log('Could not set external ID')
+          console.warn('⚠️ [OneSignal] Could not set external ID:', loginError)
         }
+      } else {
+        console.warn('⚠️ [OneSignal] login() method not available')
       }
 
-      // Save player ID to database
-      if (playerId) {
-        const result = await saveAdminPlayerId(user.id, playerId)
-        if (result.success) {
-          setIsSubscribed(true)
-          toast.success(locale === 'el' ? 'Οι ειδοποιήσεις ενεργοποιήθηκαν!' : 'Notifications enabled!')
-        } else {
-          toast.error(locale === 'el' ? 'Σφάλμα κατά την αποθήκευση' : 'Error saving player ID')
+      // Wait a bit for the permission to be processed
+      // iOS may need more time to process the permission
+      await new Promise(resolve => setTimeout(resolve, 3000))
+
+      // Get player ID after permission - try multiple times for iOS
+      let playerId: string | null = null
+      let attempts = 0
+      const maxAttempts = 10  // Increased attempts for iOS
+      
+      while (!playerId && attempts < maxAttempts) {
+        try {
+          if (window.OneSignal?.User?.PushSubscription?.id) {
+            playerId = await window.OneSignal.User.PushSubscription.id
+          } else if (window.OneSignal?.getUserId) {
+            playerId = await window.OneSignal.getUserId()
+          } else if (window.OneSignal?.userId) {
+            playerId = window.OneSignal.userId
+          }
+          
+          if (playerId) {
+            console.log('✅ [OneSignal] Player ID obtained:', playerId)
+            break
+          }
+        } catch (error) {
+          console.log(`⚠️ [OneSignal] Attempt ${attempts + 1} to get player ID failed:`, error)
         }
-      } else if (permissionGranted) {
-        // Permission granted but player ID not available yet
-        toast.success(locale === 'el' ? 'Η άδεια δόθηκε. Οι ειδοποιήσεις θα ενεργοποιηθούν σύντομα.' : 'Permission granted. Notifications will be enabled shortly.')
-        // Re-check status after a delay
+        
+        if (!playerId && attempts < maxAttempts - 1) {
+          // Wait before retrying (longer wait for iOS)
+          await new Promise(resolve => setTimeout(resolve, 1500))
+        }
+        attempts++
+      }
+
+      // Even if Player ID is not available, notifications should work via External User ID
+      if (!playerId) {
+        console.warn('⚠️ [OneSignal] Could not get Player ID, but External User ID is set')
+        console.warn('   Notifications should still work via include_external_user_ids')
+        toast.success(locale === 'el' ? 'Οι ειδοποιήσεις ενεργοποιήθηκαν! (Player ID pending)' : 'Notifications enabled! (Player ID pending)')
+        setIsSubscribed(true)
+        setIsRequesting(false)
+        return
+      }
+
+      // Save player ID to database (for backup/fallback)
+      // But notifications should work via include_external_user_ids
+      console.log('💾 [OneSignal] Saving player ID to database (backup)...')
+      const result = await saveAdminPlayerId(user.id, playerId)
+      
+      if (result.success) {
+        console.log('✅ [OneSignal] Player ID saved successfully')
+        setIsSubscribed(true)
+        toast.success(locale === 'el' ? 'Οι ειδοποιήσεις ενεργοποιήθηκαν!' : 'Notifications enabled!')
+        
+        // Re-check status to ensure everything is synced
         setTimeout(() => {
           checkSubscriptionStatus()
-        }, 3000)
+        }, 1000)
+      } else {
+        console.error('❌ [OneSignal] Failed to save player ID:', result.error)
+        toast.error(locale === 'el' ? 'Σφάλμα κατά την αποθήκευση' : 'Error saving player ID')
       }
     } catch (error) {
       console.error('Error requesting notification permission:', error)
