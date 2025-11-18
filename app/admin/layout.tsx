@@ -62,6 +62,10 @@ export default async function AdminLayout({
                       enable: false,
                     },
                     allowLocalhostAsSecureOrigin: ${process.env.NODE_ENV === 'development' ? 'true' : 'false'},
+                    serviceWorkerParam: {
+                      scope: '/'
+                    },
+                    serviceWorkerPath: 'OneSignalSDKWorker.js'
                   });
                 });
               `,
