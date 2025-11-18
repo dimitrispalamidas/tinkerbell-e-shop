@@ -54,16 +54,18 @@ await window.OneSignal.login(user.id)
 ### Βήμα 2: Environment Variables
 
 ```env
-# Development
-ONESIGNAL_APP_ID_DEV=your_dev_app_id
-ONESIGNAL_REST_API_KEY_DEV=your_dev_rest_api_key
-NEXT_PUBLIC_ONESIGNAL_APP_ID_DEV=your_dev_app_id
-
-# Production
+# Production (χρησιμοποιείται και για development)
 ONESIGNAL_APP_ID_PROD=your_prod_app_id
 ONESIGNAL_REST_API_KEY_PROD=your_prod_rest_api_key
 NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD=your_prod_app_id
+
+# Fallback (αν δεν υπάρχει PROD)
+ONESIGNAL_APP_ID=your_app_id
+ONESIGNAL_REST_API_KEY=your_rest_api_key
+NEXT_PUBLIC_ONESIGNAL_APP_ID=your_app_id
 ```
+
+**Σημείωση:** Το production app ID χρησιμοποιείται και στο development. Αν θέλεις να χρησιμοποιήσεις διαφορετικό app ID για development, μπορείς να προσθέσεις `ONESIGNAL_APP_ID_DEV` και `NEXT_PUBLIC_ONESIGNAL_APP_ID_DEV` στο μέλλον.
 
 ### Βήμα 3: Database Setup
 
@@ -95,10 +97,15 @@ WHERE onesignal_player_id IS NOT NULL;
 
 Στο iOS, το permission **ΔΕΝ** γίνεται αυτόματα. Ο admin πρέπει:
 
-1. Να πατήσει το button **"Ενεργοποίηση Ειδοποιήσεων"**
+1. Να πατήσει το **toggle switch** για να ενεργοποιήσει τις ειδοποιήσεις
 2. Να επιτρέψει notifications στο browser prompt
 3. Το External User ID ορίζεται **αμέσως**
 4. Το Player ID μπορεί να καθυστερήσει (αλλά δεν πειράζει!)
+
+**Toggle Switch:**
+- ✅ **ON**: Ενεργοποιεί τις ειδοποιήσεις
+- ❌ **OFF**: Απενεργοποιεί τις ειδοποιήσεις (opt-out)
+- Το switch λειτουργεί σε όλες τις πλατφόρμες (iOS Safari, Chrome, Desktop)
 
 ### 3. Sending Notifications
 
@@ -124,11 +131,12 @@ ios_badgeCount: 1
 
 ### Βήμα 2: Enable Notifications
 
-1. **Βρείτε το button "Ενεργοποίηση Ειδοποιήσεων"**
-   - Συνήθως είναι στο admin dashboard
-   - Αν δεν το βλέπετε, ελέγξτε το `NotificationPermissionButton` component
+1. **Βρείτε το toggle switch για τις ειδοποιήσεις**
+   - Συνήθως είναι στο admin dashboard (πάνω δεξιά)
+   - Αν δεν το βλέπετε, ελέγξτε ότι το `NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD` είναι configured
+   - Το component δεν εμφανίζεται αν το OneSignal δεν είναι configured
 
-2. **Πατήστε το button**
+2. **Πατήστε το toggle switch για να το ενεργοποιήσετε (ON)**
    - Θα εμφανιστεί prompt από το Safari
    - Πατήστε **"Allow"**
 
@@ -136,6 +144,11 @@ ios_badgeCount: 1
    - Ανοίξτε Safari Developer Tools (αν είναι διαθέσιμο)
    - Ή ελέγξτε τα server logs
    - Θα δείτε: `✅ [OneSignal] External User ID set: [user_id]`
+
+4. **Για να απενεργοποιήσετε:**
+   - Πατήστε το toggle switch για να το απενεργοποιήσετε (OFF)
+   - Αυτό θα κάνει opt-out από το OneSignal και θα αφαιρέσει το Player ID από τη βάση
+   - **Ο χρήστης δεν διαγράφεται** - μόνο η εγγραφή push notifications
 
 ### Βήμα 3: Test Notification
 
@@ -242,7 +255,7 @@ await new Promise(resolve => setTimeout(resolve, 3000))  // ← Περίμενε
 }
 ```
 
-### 5. Explicit Button για iOS
+### 5. Toggle Switch για iOS (και όλες τις πλατφόρμες)
 
 **Μην προσπαθείς** αυτόματο prompt στο iOS. Χρησιμοποίησε:
 
@@ -251,10 +264,13 @@ await new Promise(resolve => setTimeout(resolve, 3000))  // ← Περίμενε
 ```
 
 Αυτό το component:
-- Εμφανίζει button μόνο αν δεν είναι subscribed
+- Εμφανίζει **toggle switch** (ON/OFF) αντί για button
+- Λειτουργεί σε όλες τις πλατφόρμες (iOS Safari, Chrome, Desktop)
 - Χειρίζεται iOS-specific permission flow
 - Ορίζει External User ID αμέσως
 - Κάνει retry για Player ID (αν χρειάζεται)
+- Υποστηρίζει opt-out (απενεργοποίηση ειδοποιήσεων)
+- **Δεν εμφανίζει error** αν το OneSignal δεν είναι configured - απλά δεν εμφανίζεται
 
 ## 📊 Architecture
 
@@ -274,9 +290,11 @@ await new Promise(resolve => setTimeout(resolve, 3000))  // ← Περίμενε
                      ▼
 ┌─────────────────────────────────────────────────────────┐
 │        NotificationPermissionButton Component            │
-│  - Εμφανίζει button για permission (iOS required)       │
-│  - Χειρίζεται iOS-specific flow                         │
+│  - Εμφανίζει toggle switch (ON/OFF)                     │
+│  - Λειτουργεί σε όλες τις πλατφόρμες (iOS, Chrome, etc) │
+│  - Χειρίζεται iOS-specific permission flow              │
 │  - Ορίζει External User ID (CRITICAL)                   │
+│  - Υποστηρίζει opt-out (απενεργοποίηση)                 │
 └────────────────────┬────────────────────────────────────┘
                      │
                      ▼
@@ -310,8 +328,8 @@ await new Promise(resolve => setTimeout(resolve, 3000))  // ← Περίμενε
    - Λειτουργεί αμέσως (χωρίς Player ID)
 
 2. **iOS ΔΕΝ υποστηρίζει auto-prompt**
-   - Χρειάζεται explicit button
-   - Χρησιμοποίησε `NotificationPermissionButton`
+   - Χρειάζεται explicit toggle switch
+   - Χρησιμοποίησε `NotificationPermissionButton` (toggle switch)
 
 3. **include_external_user_ids > include_player_ids**
    - Primary method: External User IDs
@@ -328,10 +346,23 @@ await new Promise(resolve => setTimeout(resolve, 3000))  // ← Περίμενε
 ## 📝 Files Reference
 
 - `components/admin/onesignal-provider.tsx` - Auto-initialization
-- `components/admin/notification-permission-button.tsx` - iOS permission button
-- `lib/actions/send-onesignal-notification.ts` - Send notifications
+- `components/admin/notification-permission-button.tsx` - Toggle switch για ενεργοποίηση/απενεργοποίηση ειδοποιήσεων
+- `components/ui/switch.tsx` - Switch component (Radix UI)
+- `lib/actions/send-onesignal-notification.ts` - Send notifications & remove player ID
 - `app/admin/layout.tsx` - OneSignal SDK loading
 - `public/OneSignalSDKWorker.js` - Service Worker
+
+## 🔄 Opt-Out (Απενεργοποίηση Ειδοποιήσεων)
+
+Ο admin μπορεί να απενεργοποιήσει τις ειδοποιήσεις:
+
+1. **Πατήστε το toggle switch** για να το βάλετε σε OFF
+2. Το OneSignal κάνει opt-out
+3. Το External User ID αφαιρείται (logout)
+4. Το Player ID αφαιρείται από τη βάση δεδομένων
+5. **Ο χρήστης δεν διαγράφεται** - μόνο η εγγραφή push notifications
+
+Μπορεί να ενεργοποιήσει ξανά τις ειδοποιήσεις οποιαδήποτε στιγμή πατώντας το toggle switch.
 
 ## ✅ Checklist για Νέα Setup
 
