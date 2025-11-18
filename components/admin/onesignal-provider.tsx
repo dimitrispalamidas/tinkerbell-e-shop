@@ -129,7 +129,9 @@ export function OneSignalProvider() {
           console.log('Checking subscription status...', error);
         }
 
-        // If not subscribed, prompt for permission
+        // If not subscribed, try to prompt for permission (works on desktop)
+        // NOTE: On iOS, this won't work due to user interaction requirement,
+        // but the NotificationPermissionButton component handles iOS via explicit button click
         if (!isSubscribed || !userId) {
           console.log('🔔 Requesting push notification permission...');
           
@@ -172,10 +174,11 @@ export function OneSignalProvider() {
             }
           } catch (error: any) {
             // Handle permission errors gracefully
+            // On iOS, this will fail silently (expected behavior)
             if (error?.message?.includes('permission') || error?.message?.includes('denied')) {
               console.log('⚠️ User denied notification permission or permission already handled');
             } else {
-              console.error('Error requesting permission:', error);
+              console.log('⚠️ Automatic prompt may not work on iOS - use the button instead');
             }
           }
         }

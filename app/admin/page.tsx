@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatPrice } from '@/lib/utils';
 import { Package, ShoppingCart, TrendingUp, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import { NotificationPermissionButton } from '@/components/admin/notification-permission-button';
 
 export default function AdminDashboard() {
   const locale = useLocale();
@@ -133,13 +134,16 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-4 md:space-y-8">
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold">
-          {locale === 'el' ? 'Πίνακας Ελέγχου' : 'Dashboard'}
-        </h1>
-        <p className="text-sm md:text-base text-muted-foreground">
-          {locale === 'el' ? 'Επισκόπηση του καταστήματος' : 'Store overview'}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold">
+            {locale === 'el' ? 'Πίνακας Ελέγχου' : 'Dashboard'}
+          </h1>
+          <p className="text-sm md:text-base text-muted-foreground">
+            {locale === 'el' ? 'Επισκόπηση του καταστήματος' : 'Store overview'}
+          </p>
+        </div>
+        <NotificationPermissionButton />
       </div>
 
       {/* Stats Cards */}
