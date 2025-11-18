@@ -31,7 +31,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 async function fetchFeaturedProducts(): Promise<CatalogProduct[]> {
   try {
-    const baseUrl = getRequestBaseUrl();
+    const baseUrl = await getRequestBaseUrl();
     const response = await fetch(
       `${baseUrl}/api/catalog/products?limit=15`,
       {

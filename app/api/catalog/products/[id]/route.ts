@@ -8,11 +8,12 @@ const CACHE_HEADER = 's-maxage=120, stale-while-revalidate=600'
 
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
+  const params = await context.params
   const url = request.nextUrl
   const fallbackId = url.pathname.split('/').pop() ?? ''
-  const id = context?.params?.id ?? fallbackId
+  const id = params?.id ?? fallbackId
 
   if (!id) {
     return NextResponse.json(

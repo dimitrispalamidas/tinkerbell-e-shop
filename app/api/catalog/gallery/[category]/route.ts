@@ -9,7 +9,7 @@ const ALLOWED_CATEGORIES = new Set(['baptism', 'decoration'])
 
 export async function GET(
   request: NextRequest,
-  context: { params: { category: string } }
+  context: { params: Promise<{ category: string }> }
 ) {
   const rateLimitResponse = enforceRateLimit(request, 'catalog_gallery', {
     maxRequests: 120,
@@ -20,8 +20,9 @@ export async function GET(
     return rateLimitResponse
   }
 
+  const params = await context.params
   const fallbackCategory = request.nextUrl.pathname.split('/').pop() ?? ''
-  const category = context?.params?.category ?? fallbackCategory
+  const category = params?.category ?? fallbackCategory
 
   if (!category) {
     return NextResponse.json({ error: 'Category is required' }, { status: 400 })

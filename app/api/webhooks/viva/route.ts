@@ -10,6 +10,18 @@ if (!VIVA_WEBHOOK_KEY) {
   throw new Error('VIVA_WEBHOOK_KEY is not defined');
 }
 
+// Rate limiting for webhook endpoint
+declare global {
+  var __WEBHOOK_RATE_LIMIT: Map<string, { count: number; expiresAt: number }> | undefined;
+}
+
+const WEBHOOK_RATE_LIMIT_MAP =
+  globalThis.__WEBHOOK_RATE_LIMIT ?? new Map<string, { count: number; expiresAt: number }>();
+globalThis.__WEBHOOK_RATE_LIMIT = WEBHOOK_RATE_LIMIT_MAP;
+
+const MAX_WEBHOOK_REQUESTS = 100; // Allow more for webhooks (legitimate traffic)
+const WEBHOOK_WINDOW_MS = 60_000; // 1 minute
+
 function resolveProvidedValue(req: Request) {
   const url = new URL(req.url);
   const authorizationHeader = req.headers.get('authorization');
@@ -64,8 +76,37 @@ export async function GET(req: Request) {
 // POST handler for actual webhook events
 export async function POST(req: Request) {
   try {
+    // Rate limiting
+    const clientIp =
+      req.headers.get('cf-connecting-ip') ??
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+      req.headers.get('x-real-ip') ??
+      'unknown';
+
+    const now = Date.now();
+    const rateLimitKey = `webhook:${clientIp}`;
+    const entry = WEBHOOK_RATE_LIMIT_MAP.get(rateLimitKey);
+
+    if (!entry || now > entry.expiresAt) {
+      WEBHOOK_RATE_LIMIT_MAP.set(rateLimitKey, { count: 1, expiresAt: now + WEBHOOK_WINDOW_MS });
+    } else if (entry.count >= MAX_WEBHOOK_REQUESTS) {
+      const retryAfter = Math.max(1, Math.ceil((entry.expiresAt - now) / 1000));
+      console.warn(`⚠️ Webhook rate limit exceeded for IP: ${clientIp}`);
+      return NextResponse.json(
+        { error: 'Too many requests' },
+        {
+          status: 429,
+          headers: { 'Retry-After': retryAfter.toString() },
+        }
+      );
+    } else {
+      entry.count += 1;
+      WEBHOOK_RATE_LIMIT_MAP.set(rateLimitKey, entry);
+    }
+
+    // Verify webhook request
     if (!verifyRequest(req)) {
-      console.warn('⚠️ Viva webhook verification failed');
+      console.warn('⚠️ Viva webhook verification failed', { ip: clientIp });
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

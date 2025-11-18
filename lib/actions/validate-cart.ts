@@ -55,14 +55,29 @@ export async function validateCartStock(
     return { valid: true, errors: [] };
   }
 
+  // Batch fetch all products in one query
   const productIds = Array.from(new Set(cartItems.map((item) => item.id)));
-  const { data: products, error: productsError } = await supabase
-    .from('products')
-    .select('id, name_el, name_en')
-    .in('id', productIds);
+  
+  // Batch fetch all variants in one query (optimized)
+  const variantItems = cartItems.filter((item) => item.size && item.color);
+  const variantProductIds = Array.from(new Set(variantItems.map((item) => item.id)));
 
-  if (productsError) {
-    console.error('❌ [Validation] Failed to load products:', productsError);
+  // Parallel queries for better performance
+  const [productsResult, variantsResult] = await Promise.all([
+    supabase
+      .from('products')
+      .select('id, name_el, name_en, is_active, status')
+      .in('id', productIds),
+    variantProductIds.length > 0
+      ? supabase
+          .from('product_variants')
+          .select('product_id, size, color, stock')
+          .in('product_id', variantProductIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (productsResult.error) {
+    console.error('❌ [Validation] Failed to load products:', productsResult.error);
     return {
       valid: false,
       errors: [],
@@ -70,41 +85,41 @@ export async function validateCartStock(
     };
   }
 
-  const productMap = new Map(products?.map((product) => [product.id, product]));
-
-  const variantItems = cartItems.filter((item) => item.size && item.color);
-  const variantProductIds = Array.from(new Set(variantItems.map((item) => item.id)));
-
-  let variantMap = new Map<string, { stock: number }>();
-
-  if (variantItems.length > 0 && variantProductIds.length > 0) {
-    const { data: variants, error: variantsError } = await supabase
-      .from('product_variants')
-      .select('product_id, size, color, stock')
-      .in('product_id', variantProductIds);
-
-    if (variantsError) {
-      console.error('❌ [Validation] Failed to load product variants:', variantsError);
-      return {
-        valid: false,
-        errors: [],
-        message: 'Αποτυχία ελέγχου αποθέματος',
-      };
-    }
-
-    variantMap = new Map(
-      (variants ?? []).map((variant) => [
-        `${variant.product_id}::${variant.size}::${variant.color}`,
-        { stock: variant.stock },
-      ])
-    );
+  if (variantsResult.error) {
+    console.error('❌ [Validation] Failed to load product variants:', variantsResult.error);
+    return {
+      valid: false,
+      errors: [],
+      message: 'Αποτυχία ελέγχου αποθέματος',
+    };
   }
+
+  const productMap = new Map(productsResult.data?.map((product) => [product.id, product]) ?? []);
+  
+  const variantMap = new Map(
+    (variantsResult.data ?? []).map((variant) => [
+      `${variant.product_id}::${variant.size}::${variant.color}`,
+      { stock: variant.stock },
+    ])
+  );
 
   for (const item of cartItems) {
     const product = productMap.get(item.id);
 
     if (!product) {
       console.error('❌ [Validation] Product not found:', item.id);
+      errors.push({
+        productId: item.id,
+        productName: item.name,
+        requestedQuantity: item.quantity,
+        availableStock: 0,
+        issue: 'product_not_found',
+      });
+      continue;
+    }
+
+    // Check if product is active and available
+    if (!product.is_active || product.status === 'archived') {
       errors.push({
         productId: item.id,
         productName: item.name,

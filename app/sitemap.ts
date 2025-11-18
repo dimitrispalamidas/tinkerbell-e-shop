@@ -1,9 +1,28 @@
 import { MetadataRoute } from 'next'
+import { createPublicRouteClient } from '@/lib/supabase/public-route-client'
 
-export default function sitemap(): MetadataRoute.Sitemap {
+type ProductForSitemap = {
+  id: string
+  updated_at: string | null
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.tinkerbell.gr'
+  const supabase = createPublicRouteClient()
 
-  return [
+  // Fetch active products for dynamic sitemap
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, updated_at')
+    .eq('is_active', true)
+    .in('status', ['active', 'sold_out'])
+    .order('updated_at', { ascending: false })
+    .limit(1000) // Limit to prevent sitemap from being too large
+
+  const typedProducts = (products ?? []) as ProductForSitemap[]
+
+  // Static pages
+  const staticPages: MetadataRoute.Sitemap = [
     {
       url: baseUrl,
       lastModified: new Date(),
@@ -113,5 +132,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
       },
     },
   ]
+
+  // Dynamic product pages
+  const productPages: MetadataRoute.Sitemap = typedProducts.map((product) => ({
+    url: `${baseUrl}/product/${product.id}`,
+    lastModified: product.updated_at ? new Date(product.updated_at) : new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.7,
+    alternates: {
+      languages: {
+        el: `${baseUrl}/el/product/${product.id}`,
+        en: `${baseUrl}/en/product/${product.id}`,
+      },
+    },
+  }))
+
+  return [...staticPages, ...productPages]
 }
 

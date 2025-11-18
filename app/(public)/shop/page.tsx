@@ -23,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 async function fetchCategories() {
   try {
-    const baseUrl = getRequestBaseUrl();
+    const baseUrl = await getRequestBaseUrl();
     const response = await fetch(`${baseUrl}/api/catalog/categories`, {
       next: { revalidate: 300 },
     });
@@ -46,7 +46,7 @@ async function fetchCategories() {
 
 async function fetchProducts(params: { type?: string; category?: string }) {
   try {
-    const baseUrl = getRequestBaseUrl();
+    const baseUrl = await getRequestBaseUrl();
     const search = new URLSearchParams();
     if (params.type) search.set('type', params.type);
     if (params.category) search.set('category', params.category);

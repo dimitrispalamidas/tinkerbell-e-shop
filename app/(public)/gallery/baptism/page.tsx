@@ -22,7 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 async function fetchGalleryPhotos(category: 'baptism') {
   try {
-    const baseUrl = getRequestBaseUrl();
+    const baseUrl = await getRequestBaseUrl();
     const response = await fetch(`${baseUrl}/api/catalog/gallery/${category}`, {
       next: { revalidate: 600 },
     });

@@ -16,7 +16,7 @@ interface ProductDetailPayload {
 
 async function fetchProductDetail(id: string) {
   try {
-    const baseUrl = getRequestBaseUrl();
+    const baseUrl = await getRequestBaseUrl();
     const response = await fetch(`${baseUrl}/api/catalog/products/${id}`, {
       next: { revalidate: 120 },
     });

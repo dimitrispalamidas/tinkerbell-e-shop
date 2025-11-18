@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 
 const FALLBACK_URL = 'http://localhost:3000'
 
-export function getRequestBaseUrl() {
+export async function getRequestBaseUrl() {
   const explicit =
     process.env.NEXT_PUBLIC_BASE_URL ||
     process.env.NEXT_PUBLIC_SITE_URL ||
@@ -12,7 +12,7 @@ export function getRequestBaseUrl() {
     return explicit.replace(/\/$/, '')
   }
 
-  const headerList = headers()
+  const headerList = await headers()
   const host = headerList.get('host')
 
   if (!host) {
