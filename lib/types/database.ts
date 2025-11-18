@@ -105,6 +105,7 @@ export type AdminUser = {
   user_id: string
   role: 'admin' | 'super_admin'
   permissions: string[]
+  onesignal_player_id: string | null
   created_at: string
   updated_at: string
 }

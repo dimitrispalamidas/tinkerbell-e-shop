@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { updateOrderPaymentStatus, validateVivaTransactionAgainstOrder } from '@/lib/actions/viva-wallet';
 import { sendOrderConfirmationEmail, sendAdminOrderNotificationEmail } from '@/lib/actions/send-order-email';
+import { sendAdminOrderNotificationPush } from '@/lib/actions/send-onesignal-notification';
 
 // Viva Wallet Webhook Verification Key
 const VIVA_WEBHOOK_KEY = process.env.VIVA_WEBHOOK_KEY!;
@@ -170,12 +171,30 @@ export async function POST(req: Request) {
               adminEmailResult.error
             );
           } else {
-            console.log('✅ Admin notification sent successfully');
+            console.log('✅ Admin email notification sent successfully');
           }
         } catch (adminEmailError) {
           // Don't fail the webhook if admin email sending fails
           console.error('⚠️ Error sending admin notification email:', adminEmailError);
           console.error('⚠️ Webhook continues despite admin email error');
+        }
+
+        // Send admin push notification (OneSignal)
+        try {
+          const pushResult = await sendAdminOrderNotificationPush(orderCode);
+
+          if (!pushResult.success) {
+            console.error(
+              '⚠️ Failed to send admin push notification:',
+              pushResult.error
+            );
+          } else {
+            console.log('✅ Admin push notification sent successfully');
+          }
+        } catch (pushError) {
+          // Don't fail the webhook if push notification fails
+          console.error('⚠️ Error sending admin push notification:', pushError);
+          console.error('⚠️ Webhook continues despite push notification error');
         }
       }
     } else if (eventTypeId === 1797) {

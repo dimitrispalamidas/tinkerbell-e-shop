@@ -1,0 +1,214 @@
+=====================================
+ONESIGNAL PUSH NOTIFICATIONS SETUP
+=====================================
+
+Η εφαρμογή σου τώρα έχει υποστήριξη για push notifications στον admin!
+Your app now has push notification support for admins!
+
+=====================================
+ΤΙ ΕΓΙΝΕ / WHAT WAS DONE
+=====================================
+
+✅ OneSignal Integration
+   - Server action για αποστολή push notifications
+   - Client component για registration του player ID
+   - Auto-registration όταν ο admin συνδέεται
+   - Integration στο webhook για αυτόματες ειδοποιήσεις
+
+✅ Database Migration
+   - Προσθήκη onesignal_player_id στον πίνακα admin_users
+   - Index για γρήγορα lookups
+
+✅ Webhook Integration
+   - Push notification στέλνεται αυτόματα όταν έρχεται νέα παραγγελία
+   - Παράλληλα με email notification
+
+=====================================
+SETUP INSTRUCTIONS
+=====================================
+
+1. CREATE ONESIGNAL ACCOUNT
+   -------------------------
+   - Πήγαινε στο https://app.onesignal.com
+   - Δημιούργησε νέο account (free tier είναι αρκετό)
+   - Δημιούργησε νέο Web Push app
+
+2. GET YOUR CREDENTIALS
+   ---------------------
+   - App ID: Settings → Keys & IDs → OneSignal App ID
+   - REST API Key: Settings → Keys & IDs → REST API Key
+   
+   Αν έχεις 2 apps (development + production):
+   - Development App ID & REST API Key
+   - Production App ID & REST API Key
+
+3. CONFIGURE ENVIRONMENT VARIABLES
+   ---------------------------------
+   
+   OPTION 1: Same app for dev and production (απλό)
+   Προσθέστε στο .env.local:
+   
+   ONESIGNAL_APP_ID=your_app_id_here
+   ONESIGNAL_REST_API_KEY=your_rest_api_key_here
+   NEXT_PUBLIC_ONESIGNAL_APP_ID=your_app_id_here
+   
+   OPTION 2: Separate apps (development + production)
+   Προσθέστε στο .env.local:
+   
+   # Development (localhost)
+   ONESIGNAL_APP_ID_DEV=your_dev_app_id_here
+   ONESIGNAL_REST_API_KEY_DEV=your_dev_rest_api_key_here
+   NEXT_PUBLIC_ONESIGNAL_APP_ID_DEV=your_dev_app_id_here
+   
+   # Production
+   ONESIGNAL_APP_ID_PROD=your_prod_app_id_here
+   ONESIGNAL_REST_API_KEY_PROD=your_prod_rest_api_key_here
+   NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD=your_prod_app_id_here
+   
+   Στο production (Vercel/Netlify), πρόσθεσε:
+   ONESIGNAL_APP_ID_PROD=your_prod_app_id_here
+   ONESIGNAL_REST_API_KEY_PROD=your_prod_rest_api_key_here
+   NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD=your_prod_app_id_here
+
+4. RUN DATABASE MIGRATION
+   -----------------------
+   - Άνοιξε το Supabase SQL Editor
+   - Τρέξε το αρχείο: database/add-onesignal-player-id.sql
+   
+   Ή τρέξε αυτό το SQL:
+   
+   ALTER TABLE admin_users
+   ADD COLUMN IF NOT EXISTS onesignal_player_id TEXT;
+   
+   CREATE INDEX IF NOT EXISTS idx_admin_users_onesignal_player_id
+   ON admin_users(onesignal_player_id)
+   WHERE onesignal_player_id IS NOT NULL;
+
+5. CONFIGURE ONESIGNAL WEB PUSH
+   ------------------------------
+   - Πήγαινε στο OneSignal dashboard: https://app.onesignal.com
+   - Επίλεξε το app σου (ή δημιούργησε νέο)
+   - Πάτα στο μενού: Settings (αριστερά)
+   - Πάτα στο: Platforms → Web Push
+   
+   Βήμα 1: Site Setup
+   -------------------
+   Στο "Site URL":
+   - Προσθέστε το production URL σας (π.χ. https://tinkerbell-e-shop.vercel.app)
+   
+   Βήμα 2: Upload Service Worker File
+   -----------------------------------
+   - Κάντε κλικ στο "Download Service Worker File" στο OneSignal dashboard
+   - Κατεβάστε το OneSignalSDKWorker.js file
+   - ΑΝΕΒΑΣΤΕ το στο public/ folder του project σας
+   - ✅ Έχουμε ήδη δημιουργήσει το file: public/OneSignalSDKWorker.js
+   - Το OneSignal θα το βρει αυτόματα στο: https://yoursite.com/OneSignalSDKWorker.js
+   
+   Βήμα 3: Add Code to Site
+   -------------------------
+   - ✅ Έχουμε ήδη προσθέσει το code στο app/admin/layout.tsx
+   - Το OneSignal SDK φορτώνει ΜΟΝΟ στις admin σελίδες (όταν ο χρήστης είναι admin)
+   - Χρησιμοποιεί το NEXT_PUBLIC_ONESIGNAL_APP_ID_DEV (development) ή NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD (production)
+   - Το prompt για notifications εμφανίζεται ΜΟΝΟ όταν ο admin κάνει login
+   
+   ΣΗΜΑΝΤΙΚΟ: 
+   - Το OneSignal SDK έχει ήδη allowLocalhostAsSecureOrigin: true στο code
+   - Για localhost, μπορεί να χρειάζεται να προσθέσεις το localhost στα "Allowed Domains"
+   - Αν δεν βρίσκεις "Allowed Domains", μπορεί να μην είναι διαθέσιμο στο free tier
+   - Σε αυτή την περίπτωση, το OneSignal θα λειτουργεί μόνο στο production
+
+7. TEST
+   -----
+   - Συνδέσου ως admin στο /admin (ή http://localhost:3000/admin για local)
+   - Άνοιξε το browser console
+   - Θα δεις "OneSignal player ID registered" όταν γίνει registration (μόνο πρώτη φορά)
+   - Αν έχεις ήδη OneSignal ID, θα δεις "Admin already has OneSignal player ID"
+   - Κάνε μια test παραγγελία και δες αν έρχεται notification
+
+=====================================
+HOW IT WORKS
+=====================================
+
+1. Admin Login:
+   - Ο OneSignalProvider component φορτώνει αυτόματα
+   - Ελέγχει αν ο admin έχει ήδη OneSignal ID στον πίνακα admin_users
+   - Αν έχει → skip (δεν κάνει query, δεν αποθηκεύει ξανά)
+   - Αν δεν έχει → Αρχικοποιεί το OneSignal SDK, παίρνει το player ID, και το αποθηκεύει
+   - Αυτόματη αυτοματοποίηση - δεν χρειάζεται manual sync!
+
+2. New Order:
+   - Όταν έρχεται webhook από Viva Wallet
+   - Στέλνεται email στον admin
+   - Στέλνεται push notification σε όλους τους admins με player ID
+   - Το notification περιέχει link προς την παραγγελία
+
+3. Notification Content:
+   - Title: "🔔 Νέα Παραγγελία"
+   - Message: "Νέα παραγγελία #ORDER_CODE - €TOTAL"
+   - Subtitle: "X προϊόντα από CUSTOMER_NAME"
+   - Deep link: /admin/orders/ORDER_ID
+
+=====================================
+TROUBLESHOOTING
+=====================================
+
+❌ "OneSignal not configured"
+   → Έλεγξε ότι έχεις βάλει NEXT_PUBLIC_ONESIGNAL_APP_ID στο .env.local
+
+❌ "Failed to register OneSignal player ID"
+   → Έλεγξε ότι έχεις τρέξει το database migration
+   → Έλεγξε ότι ο χρήστης είναι admin
+
+❌ "No admin users with player IDs found"
+   → Ο admin πρέπει να έχει συνδεθεί τουλάχιστον μια φορά
+   → Έλεγξε το browser console για errors
+
+❌ Notifications δεν έρχονται
+   → Έλεγξε ότι έχεις επιτρέψει notifications στο browser
+   → Έλεγξε ότι το OneSignal app είναι configured σωστά
+   → Έλεγξε τα logs στο OneSignal dashboard
+
+❌ "OneSignal not configured" στο localhost
+   → Έλεγξε ότι έχεις NEXT_PUBLIC_ONESIGNAL_APP_ID στο .env.local
+   → Έλεγξε ότι έχεις προσθέσει http://localhost:3000 στο OneSignal Allowed Origins
+
+❌ Player ID δεν αποθηκεύεται
+   → Έλεγξε ότι έχεις τρέξει το database migration
+   → Έλεγξε ότι ο χρήστης είναι admin
+   → Έλεγξε το browser console για errors
+
+=====================================
+NOTES
+=====================================
+
+- Το OneSignal free tier υποστηρίζει 10,000 subscribers
+- Οι notifications λειτουργούν σε desktop και mobile browsers
+- Για mobile apps, χρειάζεται native OneSignal SDK
+- Το player ID αποθηκεύεται αυτόματα όταν ο admin συνδέεται
+
+=====================================
+FILES CREATED/MODIFIED
+=====================================
+
+✅ lib/actions/send-onesignal-notification.ts
+   - Server action για αποστολή notifications
+   - Function για αποθήκευση player ID
+
+✅ components/admin/onesignal-provider.tsx
+   - Client component για OneSignal initialization
+   - Auto-registration του player ID
+
+✅ app/admin/layout.tsx
+   - Προσθήκη OneSignalProvider
+
+✅ app/api/webhooks/viva/route.ts
+   - Integration για push notifications
+
+✅ database/add-onesignal-player-id.sql
+   - Migration για onesignal_player_id column
+
+✅ lib/types/database.ts
+   - Update AdminUser type
+
+=====================================
+

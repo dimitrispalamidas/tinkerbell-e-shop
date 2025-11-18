@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -29,10 +30,24 @@ export function PremiumHero({ locale }: PremiumHeroProps) {
         {locale === 'el' ? 'Παιδικα Ρούχα • Βαπτιστικά • Στολισμοί' : 'Kids Clothing • Baptism • Unique Moments'}
       </p>
 
-      {/* Main Title */}
-      <h1 className="text-4xl md:text-6xl lg:text-7xl font-light mb-6 md:mb-8 text-cream-50 tracking-tight leading-tight">
-        {locale === 'el' ? 'Τινκερμπελ' : 'Tinkerbell'}
-      </h1>
+      {/* Main Title - Logo for Greek, Text for English */}
+      <div className="mb-6 md:mb-8 flex justify-center">
+        {locale === 'el' ? (
+          <Image 
+            src="/logo.webp" 
+            alt="Τίνκερμπελ - Παιδικά ρούχα, βαπτιστικά, στολισμοί" 
+            width={480} 
+            height={120}
+            className="h-16 w-auto md:h-24 lg:h-32 drop-shadow-2xl transition-all duration-300 hover:scale-105"
+            priority
+            style={{ filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))' }}
+          />
+        ) : (
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-light text-cream-50 tracking-tight leading-tight">
+            Tinkerbell
+          </h1>
+        )}
+      </div>
 
       {/* Description */}
       <p className="text-base md:text-lg text-cream-100 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed font-light px-4 drop-shadow-lg">

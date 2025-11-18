@@ -71,7 +71,7 @@ export function Header() {
             alt="Τίνκερμπελ - Παιδικά ρούχα, βαπτιστικά, στολισμοί" 
             width={240} 
             height={60}
-            className="h-10 w-auto md:h-16 transition-transform duration-300 group-hover:scale-105"
+            className="h-11 w-auto md:h-[4.5rem] transition-all duration-300 group-hover:scale-105 drop-shadow-sm"
             priority
           />
         </Link>

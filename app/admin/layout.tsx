@@ -1,9 +1,11 @@
 import { redirect } from 'next/navigation'
 import { NextIntlClientProvider } from 'next-intl'
 import { getLocale, getMessages } from 'next-intl/server'
+import Script from 'next/script'
 import { createClient } from '@/lib/supabase/server'
 import { AdminNav } from '@/components/admin/admin-nav'
 import { Toaster } from '@/components/ui/toaster'
+import { OneSignalProvider } from '@/components/admin/onesignal-provider'
 
 export default async function AdminLayout({
   children,
@@ -33,8 +35,41 @@ export default async function AdminLayout({
   const locale = await getLocale()
   const messages = await getMessages()
 
+  // Get OneSignal App ID (dev or prod)
+  const onesignalAppId = process.env.NODE_ENV === 'development' 
+    ? (process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID_DEV || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID)
+    : (process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID);
+
   return (
     <NextIntlClientProvider messages={messages} locale={locale}>
+      {/* OneSignal Web Push SDK - Only for admin pages */}
+      {onesignalAppId && (
+        <>
+          <Script
+            src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js"
+            strategy="afterInteractive"
+          />
+          <Script
+            id="onesignal-init"
+            strategy="afterInteractive"
+            dangerouslySetInnerHTML={{
+              __html: `
+                window.OneSignalDeferred = window.OneSignalDeferred || [];
+                OneSignalDeferred.push(async function(OneSignal) {
+                  await OneSignal.init({
+                    appId: "${onesignalAppId}",
+                    notifyButton: {
+                      enable: false,
+                    },
+                    allowLocalhostAsSecureOrigin: ${process.env.NODE_ENV === 'development' ? 'true' : 'false'},
+                  });
+                });
+              `,
+            }}
+          />
+        </>
+      )}
+      <OneSignalProvider />
       <div className="min-h-screen bg-background">
         <AdminNav />
         <main className="container mx-auto px-4 py-4 md:py-8">
