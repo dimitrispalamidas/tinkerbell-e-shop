@@ -246,7 +246,7 @@ export async function saveAdminPlayerId(userId: string, playerId: string) {
   }
 }
 
-export async function removeAdminPlayerId(userId: string, playerId: string) {
+export async function removeAdminPlayerId(userId: string, playerId: string | 'all') {
   try {
     console.log(`🗑️ [OneSignal] Attempting to remove player ID for user: ${userId}, player ID: ${playerId}`);
     const supabase = getSupabaseAdmin();
@@ -279,6 +279,33 @@ export async function removeAdminPlayerId(userId: string, playerId: string) {
         // Legacy format - convert to array
         currentPlayerIds = [adminUser.onesignal_player_id];
       }
+    }
+
+    // If playerId is 'all', remove all player IDs
+    if (playerId === 'all') {
+      if (currentPlayerIds.length === 0) {
+        console.log(`ℹ️ [OneSignal] No player IDs to remove for admin: ${userId}`);
+        return { success: true, alreadyRemoved: true };
+      }
+      
+      console.log(`📱 [OneSignal] Removing all player IDs for admin ${userId}:`);
+      console.log(`   Existing devices: ${currentPlayerIds.length}`);
+      console.log(`   All player IDs will be removed`);
+      
+      // Set to null to remove all
+      const { data: updatedData, error: updateError } = await supabase
+        .from('admin_users')
+        .update({ onesignal_player_id: null })
+        .eq('user_id', userId)
+        .select('onesignal_player_id');
+
+      if (updateError) {
+        console.error('❌ [OneSignal] Failed to remove all player IDs:', updateError);
+        return { success: false, error: updateError.message };
+      }
+
+      console.log(`✅ [OneSignal] All player IDs removed successfully for admin: ${userId}`);
+      return { success: true, allDevicesRemoved: true };
     }
 
     // Check if player ID exists

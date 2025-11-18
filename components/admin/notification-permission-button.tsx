@@ -139,10 +139,21 @@ export function NotificationPermissionButton() {
           if (preserveCurrentState && previousSubscribedState === true) {
             // If we were already subscribed, keep it as true (might be timing issue)
             currentDeviceSubscribed = true
+            console.log('✅ [OneSignal] Preserving subscription state (timing issue)')
           } else {
             currentDeviceSubscribed = false
           }
         }
+      }
+
+      // IMPORTANT: If preserveCurrentState is true and we were subscribed,
+      // but OneSignal subscription check failed, keep it as true
+      // This prevents auto-toggle-off when subscription is still initializing
+      if (preserveCurrentState && previousSubscribedState === true && !currentDeviceSubscribed) {
+        // OneSignal might not be ready yet, but we just enabled it
+        // Keep it as true to prevent auto-toggle-off
+        console.log('✅ [OneSignal] Preserving ON state - subscription might still be initializing')
+        currentDeviceSubscribed = true
       }
 
       setIsSubscribed(currentDeviceSubscribed)
@@ -163,12 +174,16 @@ export function NotificationPermissionButton() {
     try {
       if (checked) {
         await handleEnableNotifications()
+        // After enabling, keep the state as true
+        // Don't let checkSubscriptionStatus override it immediately
+        setIsSubscribed(true)
       } else {
         await handleDisableNotifications()
       }
     } catch (error) {
       // Revert on error
       setIsSubscribed(previousState)
+      setIsProcessing(false)
       throw error
     }
   }
@@ -209,39 +224,86 @@ export function NotificationPermissionButton() {
         readyRetries++
       }
 
-      // Request permission using OneSignal methods
-      let permissionGranted = false
-      
+      // Check if already subscribed - if yes, just ensure External User ID is set
+      let alreadySubscribed = false
       try {
-        // Method 1: showSlidedownPrompt (recommended for iOS)
-        if (window.OneSignal?.showSlidedownPrompt) {
-          await window.OneSignal.showSlidedownPrompt()
-          permissionGranted = true
+        if (window.OneSignal?.User?.PushSubscription) {
+          alreadySubscribed = await window.OneSignal.User.PushSubscription.optedIn
         }
-        // Method 2: Slidedown.promptPush
-        else if (window.OneSignal?.Slidedown?.promptPush) {
-          await window.OneSignal.Slidedown.promptPush()
-          permissionGranted = true
+      } catch (error) {
+        console.log('Checking subscription status...', error)
+      }
+
+      // If not subscribed, request permission or opt-in
+      if (!alreadySubscribed) {
+        // First check if we have browser permission but OneSignal is opted out
+        if ('Notification' in window && Notification.permission === 'granted') {
+          // Browser permission exists but OneSignal is opted out - try to opt-in
+          if (window.OneSignal?.User?.PushSubscription?.optIn) {
+            try {
+              await window.OneSignal.User.PushSubscription.optIn()
+              console.log('✅ [OneSignal] Opted in (was previously opted out)')
+              // Wait a bit for opt-in to process
+              await new Promise(resolve => setTimeout(resolve, 1000))
+              // Re-check subscription status
+              alreadySubscribed = await window.OneSignal.User.PushSubscription.optedIn
+              if (alreadySubscribed) {
+                console.log('✅ [OneSignal] Successfully re-subscribed')
+              }
+            } catch (optInError) {
+              console.log('⚠️ [OneSignal] Could not opt-in, will request permission:', optInError)
+            }
+          }
         }
-        // Method 3: optIn
-        else if (window.OneSignal?.User?.PushSubscription?.optIn) {
-          await window.OneSignal.User.PushSubscription.optIn()
-          permissionGranted = true
+        let permissionGranted = false
+        
+        try {
+          // Method 1: showSlidedownPrompt (recommended for iOS)
+          if (window.OneSignal?.showSlidedownPrompt) {
+            await window.OneSignal.showSlidedownPrompt()
+            permissionGranted = true
+          }
+          // Method 2: Slidedown.promptPush
+          else if (window.OneSignal?.Slidedown?.promptPush) {
+            await window.OneSignal.Slidedown.promptPush()
+            permissionGranted = true
+          }
+          // Method 3: optIn (if already has permission)
+          else if (window.OneSignal?.User?.PushSubscription?.optIn) {
+            // Check if we have permission first
+            if ('Notification' in window && Notification.permission === 'granted') {
+              await window.OneSignal.User.PushSubscription.optIn()
+              permissionGranted = true
+            } else if (Notification.permission === 'default') {
+              // Request permission first
+              const permission = await Notification.requestPermission()
+              if (permission === 'granted') {
+                await window.OneSignal.User.PushSubscription.optIn()
+                permissionGranted = true
+              }
+            }
+          }
+          // Method 4: Native browser API (fallback)
+          else if ('Notification' in window && Notification.permission === 'default') {
+            const permission = await Notification.requestPermission()
+            permissionGranted = permission === 'granted'
+            // After getting permission, try to opt in
+            if (permissionGranted && window.OneSignal?.User?.PushSubscription?.optIn) {
+              await window.OneSignal.User.PushSubscription.optIn()
+            }
+          }
+        } catch (error: any) {
+          console.error('Error requesting permission:', error)
+          if (error?.message?.includes('permission') || error?.message?.includes('denied')) {
+            toast.error(locale === 'el' ? 'Η άδεια ειδοποιήσεων απορρίφθηκε' : 'Notification permission denied')
+          } else {
+            toast.error(locale === 'el' ? 'Σφάλμα κατά την αίτηση άδειας' : 'Error requesting permission')
+          }
+          setIsProcessing(false)
+          return
         }
-        // Method 4: Native browser API (fallback)
-        else if ('Notification' in window && Notification.permission === 'default') {
-          const permission = await Notification.requestPermission()
-          permissionGranted = permission === 'granted'
-        }
-      } catch (error: any) {
-        console.error('Error requesting permission:', error)
-        if (error?.message?.includes('permission') || error?.message?.includes('denied')) {
-          toast.error(locale === 'el' ? 'Η άδεια ειδοποιήσεων απορρίφθηκε' : 'Notification permission denied')
-        } else {
-          toast.error(locale === 'el' ? 'Σφάλμα κατά την αίτηση άδειας' : 'Error requesting permission')
-        }
-        setIsProcessing(false)
-        return
+      } else {
+        console.log('✅ [OneSignal] Already subscribed - ensuring External User ID is set')
       }
 
       // IMPORTANT: Set external ID FIRST (even before getting Player ID)
@@ -389,17 +451,29 @@ export function NotificationPermissionButton() {
         console.log('Could not get player ID:', error)
       }
 
-      // Opt out from OneSignal
+      // Opt out from OneSignal - IMPORTANT: This stops receiving notifications
       try {
-        // Method 1: optOut (OneSignal SDK v16)
+        // Method 1: optOut (OneSignal SDK v16) - PRIMARY METHOD
         if (window.OneSignal?.User?.PushSubscription?.optOut) {
           await window.OneSignal.User.PushSubscription.optOut()
-          console.log('✅ [OneSignal] Opted out via optOut()')
+          console.log('✅ [OneSignal] Opted out via optOut() - notifications will stop')
+          
+          // Verify opt-out was successful
+          await new Promise(resolve => setTimeout(resolve, 500))
+          const isStillSubscribed = await window.OneSignal.User.PushSubscription.optedIn
+          if (isStillSubscribed) {
+            console.warn('⚠️ [OneSignal] optOut() did not work, trying alternative methods')
+            // Try alternative if optOut didn't work
+            if (window.OneSignal?.logout) {
+              await window.OneSignal.logout()
+              console.log('✅ [OneSignal] Logged out as fallback')
+            }
+          }
         }
-        // Method 2: logout (removes external user ID)
+        // Method 2: logout (removes external user ID) - also stops notifications
         else if (window.OneSignal?.logout) {
           await window.OneSignal.logout()
-          console.log('✅ [OneSignal] Logged out (removed external user ID)')
+          console.log('✅ [OneSignal] Logged out (removed external user ID) - notifications will stop')
         }
         // Method 3: setSubscription (legacy)
         else if (window.OneSignal?.setSubscription) {
@@ -410,27 +484,36 @@ export function NotificationPermissionButton() {
         console.error('Error opting out from OneSignal:', error)
         // Continue anyway - we'll still remove from database
       }
+      
+      // Also remove External User ID by logging out (ensures no notifications via external_user_ids)
+      try {
+        if (window.OneSignal?.logout) {
+          await window.OneSignal.logout()
+          console.log('✅ [OneSignal] External User ID removed (logged out) - ensures no notifications')
+        }
+      } catch (error) {
+        console.log('Could not logout from OneSignal:', error)
+      }
 
       // Remove player ID from database (if we have it)
+      // This ensures the server won't try to send notifications to this device
       if (playerId) {
         console.log('💾 [OneSignal] Removing player ID from database...')
         const result = await removeAdminPlayerId(user.id, playerId)
         
         if (result.success) {
-          console.log('✅ [OneSignal] Player ID removed from database')
+          console.log('✅ [OneSignal] Player ID removed from database - server won\'t send notifications')
         } else {
           console.warn('⚠️ [OneSignal] Failed to remove player ID from database:', result.error)
         }
-      }
-
-      // Also try to remove external user ID by logging out
-      try {
-        if (window.OneSignal?.logout) {
-          await window.OneSignal.logout()
-          console.log('✅ [OneSignal] External User ID removed (logged out)')
+      } else {
+        // Even without player ID, try to remove any existing player IDs from database
+        // This handles the case where we don't have the current player ID but want to opt out
+        console.log('💾 [OneSignal] Attempting to remove all player IDs for this user...')
+        const result = await removeAdminPlayerId(user.id, 'all')
+        if (result.success) {
+          console.log('✅ [OneSignal] All player IDs removed from database')
         }
-      } catch (error) {
-        console.log('Could not logout from OneSignal:', error)
       }
 
       setIsSubscribed(false)
