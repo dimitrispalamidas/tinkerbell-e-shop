@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { updateOrderPaymentStatus, validateVivaTransactionAgainstOrder } from '@/lib/actions/viva-wallet';
-import { sendOrderConfirmationEmail } from '@/lib/actions/send-order-email';
+import { sendOrderConfirmationEmail, sendAdminOrderNotificationEmail } from '@/lib/actions/send-order-email';
 
 // Viva Wallet Webhook Verification Key
 const VIVA_WEBHOOK_KEY = process.env.VIVA_WEBHOOK_KEY!;
@@ -144,7 +144,7 @@ export async function POST(req: Request) {
 
         await updateOrderPaymentStatus(orderCode, transactionId, 'paid');
 
-        // Send order confirmation email
+        // Send order confirmation email to customer
         try {
           const emailResult = await sendOrderConfirmationEmail(orderCode);
 
@@ -158,6 +158,24 @@ export async function POST(req: Request) {
           // Don't fail the webhook if email sending fails
           console.error('⚠️ Error sending order confirmation email:', emailError);
           console.error('⚠️ Webhook continues despite email error');
+        }
+
+        // Send admin notification email
+        try {
+          const adminEmailResult = await sendAdminOrderNotificationEmail(orderCode);
+
+          if (!adminEmailResult.success) {
+            console.error(
+              '⚠️ Failed to send admin notification email:',
+              adminEmailResult.error
+            );
+          } else {
+            console.log('✅ Admin notification sent successfully');
+          }
+        } catch (adminEmailError) {
+          // Don't fail the webhook if admin email sending fails
+          console.error('⚠️ Error sending admin notification email:', adminEmailError);
+          console.error('⚠️ Webhook continues despite admin email error');
         }
       }
     } else if (eventTypeId === 1797) {

@@ -6,7 +6,23 @@
 -- ============================================
 
 -- ============================================
--- 1. ROW LEVEL SECURITY (RLS) POLICIES
+-- 1. HELPER FUNCTIONS (MUST BE CREATED FIRST)
+-- ============================================
+
+-- Function to check if user is admin
+-- SECURITY DEFINER allows this function to bypass RLS when checking admin_users
+-- This prevents infinite recursion in RLS policies
+-- IMPORTANT: Create this BEFORE the RLS policies that use it
+CREATE OR REPLACE FUNCTION is_admin(check_user_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM admin_users
+    WHERE admin_users.user_id = check_user_id
+  );
+$$ LANGUAGE sql SECURITY DEFINER;
+
+-- ============================================
+-- 2. ROW LEVEL SECURITY (RLS) POLICIES
 -- ============================================
 
 -- Enable RLS on all tables
@@ -28,14 +44,10 @@ CREATE POLICY "Public can read active products"
   USING (is_active = true AND status IN ('active', 'sold_out'));
 
 -- Admins can do everything
+-- Use is_admin() function to avoid RLS recursion issues
 CREATE POLICY "Admins can manage products"
   ON products FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE admin_users.user_id = auth.uid()
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ============================================
 -- CATEGORIES TABLE POLICIES
@@ -47,14 +59,10 @@ CREATE POLICY "Public can read categories"
   USING (true);
 
 -- Admins can manage categories
+-- Use is_admin() function to avoid RLS recursion issues
 CREATE POLICY "Admins can manage categories"
   ON categories FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE admin_users.user_id = auth.uid()
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ============================================
 -- PRODUCT_VARIANTS TABLE POLICIES
@@ -73,38 +81,26 @@ CREATE POLICY "Public can read variants for active products"
   );
 
 -- Admins can manage variants
+-- Use is_admin() function to avoid RLS recursion issues
 CREATE POLICY "Admins can manage variants"
   ON product_variants FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE admin_users.user_id = auth.uid()
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ============================================
 -- ORDERS TABLE POLICIES
 -- ============================================
 
 -- Admins can read all orders
+-- Use is_admin() function to avoid RLS recursion issues
 CREATE POLICY "Admins can read orders"
   ON orders FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE admin_users.user_id = auth.uid()
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- Admins can update orders
+-- Use is_admin() function to avoid RLS recursion issues
 CREATE POLICY "Admins can update orders"
   ON orders FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE admin_users.user_id = auth.uid()
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- Service role can insert orders (for checkout)
 -- Note: This is handled by service role key which bypasses RLS
@@ -115,24 +111,16 @@ CREATE POLICY "Admins can update orders"
 -- ============================================
 
 -- Admins can read order items
+-- Use is_admin() function to avoid RLS recursion issues
 CREATE POLICY "Admins can read order items"
   ON order_items FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE admin_users.user_id = auth.uid()
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- Admins can manage order items
+-- Use is_admin() function to avoid RLS recursion issues
 CREATE POLICY "Admins can manage order items"
   ON order_items FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE admin_users.user_id = auth.uid()
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ============================================
 -- GALLERY_ITEMS TABLE POLICIES
@@ -144,34 +132,27 @@ CREATE POLICY "Public can read active gallery items"
   USING (is_active = true);
 
 -- Admins can manage gallery items
+-- Use is_admin() function to avoid RLS recursion issues
 CREATE POLICY "Admins can manage gallery items"
   ON gallery_items FOR ALL
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users
-      WHERE admin_users.user_id = auth.uid()
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- ============================================
 -- ADMIN_USERS TABLE POLICIES
 -- ============================================
 
 -- Only admins can read admin_users (for verification)
+-- IMPORTANT: Use is_admin() function to avoid infinite recursion
+-- The function uses SECURITY DEFINER which bypasses RLS
 CREATE POLICY "Admins can read admin_users"
   ON admin_users FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM admin_users au
-      WHERE au.user_id = auth.uid()
-    )
-  );
+  USING (is_admin(auth.uid()));
 
 -- Service role can manage admin_users (for setup scripts)
 -- Handled by service role key
 
 -- ============================================
--- 2. DATABASE INDEXES FOR PERFORMANCE
+-- 3. DATABASE INDEXES FOR PERFORMANCE
 -- ============================================
 
 -- PRODUCTS TABLE INDEXES
@@ -290,19 +271,6 @@ CREATE INDEX IF NOT EXISTS idx_gallery_display_order
 -- Index for user_id lookups (admin verification)
 CREATE INDEX IF NOT EXISTS idx_admin_users_user_id
   ON admin_users(user_id);
-
--- ============================================
--- 3. HELPER FUNCTIONS (OPTIONAL)
--- ============================================
-
--- Function to check if user is admin
-CREATE OR REPLACE FUNCTION is_admin(user_id UUID)
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM admin_users
-    WHERE admin_users.user_id = is_admin.user_id
-  );
-$$ LANGUAGE sql SECURITY DEFINER;
 
 -- ============================================
 -- 4. VERIFICATION QUERIES
