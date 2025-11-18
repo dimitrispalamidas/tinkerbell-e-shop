@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from '@/components/ui/toaster';
 import { PlaceholderManager } from '@/components/placeholder-manager';
+import { AdminKeyboardShortcut } from '@/components/admin/admin-keyboard-shortcut';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -129,6 +130,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
         <link rel="manifest" href="/site.webmanifest" />
         <meta name="theme-color" content="#db2777" />
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Τινκερμπελ" />
@@ -188,6 +190,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <PlaceholderManager />
+        <AdminKeyboardShortcut />
         {children}
         <Toaster />
       </body>

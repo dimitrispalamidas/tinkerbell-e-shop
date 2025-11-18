@@ -1,14 +1,58 @@
 "use client"
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocale } from 'next-intl'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Mail, Phone, MapPin } from 'lucide-react'
 
 export function Footer() {
   const locale = useLocale()
+  const router = useRouter()
   const [year] = useState(() => new Date().getFullYear())
+  
+  // Admin access: triple tap on logo
+  const [logoTapCount, setLogoTapCount] = useState(0)
+  const [logoTapTimer, setLogoTapTimer] = useState<NodeJS.Timeout | null>(null)
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (logoTapTimer) {
+        clearTimeout(logoTapTimer)
+      }
+    }
+  }, [logoTapTimer])
+
+  // Handle logo tap for admin access (triple tap)
+  const handleLogoClick = (e: React.MouseEvent) => {
+    // Clear existing timer
+    if (logoTapTimer) {
+      clearTimeout(logoTapTimer)
+    }
+
+    const newCount = logoTapCount + 1
+    setLogoTapCount(newCount)
+
+    // If triple tap, navigate to admin login
+    if (newCount >= 3) {
+      e.preventDefault()
+      e.stopPropagation()
+      router.push('/admin-login')
+      setLogoTapCount(0)
+      if (logoTapTimer) {
+        clearTimeout(logoTapTimer)
+      }
+      return
+    }
+
+    // Reset counter after 1 second
+    const timer = setTimeout(() => {
+      setLogoTapCount(0)
+    }, 1000)
+    setLogoTapTimer(timer)
+  }
 
   return (
     <footer className="border-t border-sage-200/30 bg-gradient-to-b from-sage-50/30 to-sage-100/20">
@@ -16,16 +60,22 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
           {/* Logo & Brand Section */}
           <div className="md:col-span-3">
-            <Link href="/" className="inline-block mb-4 md:mb-6 group">
-              <Image 
-                src="/logo.webp" 
-                alt="Τίνκερμπελ - Παιδικά ρούχα, βαπτιστικά, στολισμοί" 
-                width={180} 
-                height={40}
-                style={{ objectFit: 'contain', height: '40px', width: 'auto' }}
-                className="transition-transform duration-300 group-hover:scale-105"
-              />
-            </Link>
+            {/* Logo - Triple tap for admin access */}
+            <div 
+              className="inline-block mb-4 md:mb-6 group cursor-pointer"
+              onClick={handleLogoClick}
+            >
+              <Link href="/" className="inline-block">
+                <Image 
+                  src="/logo.webp" 
+                  alt="Τίνκερμπελ - Παιδικά ρούχα, βαπτιστικά, στολισμοί" 
+                  width={180} 
+                  height={40}
+                  style={{ objectFit: 'contain', height: '40px', width: 'auto' }}
+                  className="transition-transform duration-300 group-hover:scale-105"
+                />
+              </Link>
+            </div>
             <p className="text-sm text-sage-700 mb-6 md:mb-8 font-light leading-relaxed">
               Παιδικά & Εφηβικά Ρούχα και Παπούτσια
             </p>
