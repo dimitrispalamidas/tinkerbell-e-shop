@@ -46,7 +46,23 @@ export function OneSignalProvider() {
         }
 
         // Wait for OneSignal to be fully initialized
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        // Check if OneSignal is ready by waiting for the User object
+        let readyRetries = 0;
+        const maxReadyRetries = 20;
+        while (readyRetries < maxReadyRetries) {
+          if (window.OneSignal?.User) {
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, 200));
+          readyRetries++;
+        }
+        
+        if (!window.OneSignal?.User) {
+          console.warn('⚠️ OneSignal User object not available yet');
+        }
+        
+        // Additional wait to ensure everything is ready
+        await new Promise(resolve => setTimeout(resolve, 500));
         
         // Register player
         await registerPlayer();
@@ -96,39 +112,96 @@ export function OneSignalProvider() {
           return;
         }
 
-        // Get OneSignal user ID (player ID)
-        // Try different methods depending on OneSignal SDK version
+        // Check if user has already subscribed to push notifications
+        let isSubscribed = false;
         let userId: string | null = null;
-        
+
         try {
-          // Method 1: OneSignal SDK v16+
-          if (window.OneSignal?.User?.PushSubscription?.id) {
-            userId = await window.OneSignal.User.PushSubscription.id;
-          }
-          // Method 2: Alternative API
-          else if (window.OneSignal?.getUserId) {
-            userId = await window.OneSignal.getUserId();
-          }
-          // Method 3: Direct access
-          else if (window.OneSignal?.userId) {
-            userId = window.OneSignal.userId;
+          // Check subscription status (OneSignal SDK v16+)
+          if (window.OneSignal?.User?.PushSubscription) {
+            const subscription = window.OneSignal.User.PushSubscription;
+            isSubscribed = await subscription.optedIn;
+            if (isSubscribed) {
+              userId = await subscription.id;
+            }
           }
         } catch (error) {
-          console.error('Error getting OneSignal user ID:', error);
-        }
-        
-        if (!userId) {
-          console.log('OneSignal user ID not available yet - user may need to allow notifications');
-          return;
+          console.log('Checking subscription status...', error);
         }
 
-        // Save player ID to database (only if it doesn't exist)
-        const result = await saveAdminPlayerId(user.id, userId);
-        
-        if (result.success) {
-          console.log('✅ OneSignal player ID registered');
+        // If not subscribed, prompt for permission
+        if (!isSubscribed || !userId) {
+          console.log('🔔 Requesting push notification permission...');
+          
+          try {
+            // Method 1: Use showSlidedownPrompt (OneSignal SDK v16 recommended method)
+            if (window.OneSignal?.showSlidedownPrompt) {
+              await window.OneSignal.showSlidedownPrompt();
+              console.log('✅ Permission prompt shown via showSlidedownPrompt');
+            }
+            // Method 2: Use Slidedown.promptPush (alternative API)
+            else if (window.OneSignal?.Slidedown?.promptPush) {
+              await window.OneSignal.Slidedown.promptPush();
+              console.log('✅ Permission prompt shown via Slidedown.promptPush');
+            }
+            // Method 3: Use optIn (alternative)
+            else if (window.OneSignal?.User?.PushSubscription?.optIn) {
+              await window.OneSignal.User.PushSubscription.optIn();
+              console.log('✅ Permission requested via optIn');
+            }
+            // Method 4: Fallback - try to get permission via native browser API
+            else if ('Notification' in window && Notification.permission === 'default') {
+              await Notification.requestPermission();
+              console.log('✅ Permission requested via native API');
+            }
+
+            // Wait a bit for user to respond to prompt
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // Try to get the player ID after permission request
+            try {
+              if (window.OneSignal?.User?.PushSubscription?.id) {
+                userId = await window.OneSignal.User.PushSubscription.id;
+              } else if (window.OneSignal?.getUserId) {
+                userId = await window.OneSignal.getUserId();
+              } else if (window.OneSignal?.userId) {
+                userId = window.OneSignal.userId;
+              }
+            } catch (error) {
+              console.log('Player ID not available yet, user may need to allow notifications');
+            }
+          } catch (error: any) {
+            // Handle permission errors gracefully
+            if (error?.message?.includes('permission') || error?.message?.includes('denied')) {
+              console.log('⚠️ User denied notification permission or permission already handled');
+            } else {
+              console.error('Error requesting permission:', error);
+            }
+          }
+        }
+
+        // If we have a player ID, save it to database and set external ID
+        if (userId) {
+          // Set external ID to link admin user with OneSignal player (OneSignal best practice)
+          try {
+            if (window.OneSignal?.login) {
+              await window.OneSignal.login(user.id);
+              console.log('✅ OneSignal external ID set for admin user');
+            }
+          } catch (loginError) {
+            console.log('Note: Could not set OneSignal external ID (may not be available in this SDK version)');
+          }
+
+          // Save player ID to database
+          const result = await saveAdminPlayerId(user.id, userId);
+          
+          if (result.success) {
+            console.log('✅ OneSignal player ID registered:', userId);
+          } else {
+            console.error('Failed to register OneSignal player ID:', result.error);
+          }
         } else {
-          console.error('Failed to register OneSignal player ID:', result.error);
+          console.log('ℹ️ OneSignal player ID not available - user may need to allow notifications in browser settings');
         }
       } catch (error) {
         console.error('Error registering OneSignal player:', error);
