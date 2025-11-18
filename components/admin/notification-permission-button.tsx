@@ -35,7 +35,7 @@ export function NotificationPermissionButton() {
     checkSubscriptionStatus()
   }, [])
 
-  const checkSubscriptionStatus = async () => {
+  const checkSubscriptionStatus = async (preserveCurrentState = false) => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
@@ -45,6 +45,9 @@ export function NotificationPermissionButton() {
         setIsLoading(false)
         return
       }
+      
+      // Store current state to preserve it if needed
+      const previousSubscribedState = isSubscribed
 
       // Wait for OneSignal to be ready
       let retries = 0
@@ -61,7 +64,22 @@ export function NotificationPermissionButton() {
       if (window.OneSignal?.User?.PushSubscription) {
         try {
           const subscription = window.OneSignal.User.PushSubscription
-          currentDeviceSubscribed = await subscription.optedIn
+          // Wait a bit for subscription to be ready (especially on iOS)
+          let subscriptionRetries = 0
+          while (subscriptionRetries < 5) {
+            try {
+              currentDeviceSubscribed = await subscription.optedIn
+              if (currentDeviceSubscribed !== undefined) {
+                break
+              }
+            } catch (error) {
+              // Subscription might not be ready yet, retry
+              if (subscriptionRetries < 4) {
+                await new Promise(resolve => setTimeout(resolve, 500))
+              }
+            }
+            subscriptionRetries++
+          }
           
           if (currentDeviceSubscribed) {
             // This device is subscribed, check if we have a player ID
@@ -107,12 +125,23 @@ export function NotificationPermissionButton() {
       }
 
       // Also check browser permission as fallback
+      // If browser permission is granted but OneSignal subscription is not ready yet,
+      // don't set to false - might be a timing issue (especially on iOS)
       if (!currentDeviceSubscribed && 'Notification' in window) {
         const permission = Notification.permission
         if (permission === 'granted') {
-          // Browser permission granted but OneSignal not subscribed yet
-          // This might happen on iOS or if OneSignal isn't ready
-          currentDeviceSubscribed = false // Still show button to complete OneSignal setup
+          // Browser permission granted but OneSignal subscription might not be ready yet
+          // This is common on iOS - don't set to false immediately
+          // The subscription might become available shortly
+          console.log('ℹ️ [OneSignal] Browser permission granted but subscription status pending')
+          // Keep current state if preserveCurrentState is true and we were subscribed
+          // This prevents auto-toggle-off when subscription is still initializing
+          if (preserveCurrentState && previousSubscribedState === true) {
+            // If we were already subscribed, keep it as true (might be timing issue)
+            currentDeviceSubscribed = true
+          } else {
+            currentDeviceSubscribed = false
+          }
         }
       }
 
@@ -272,6 +301,12 @@ export function NotificationPermissionButton() {
         toast.success(locale === 'el' ? 'Οι ειδοποιήσεις ενεργοποιήθηκαν! (Player ID pending)' : 'Notifications enabled! (Player ID pending)')
         setIsSubscribed(true)
         setIsProcessing(false)
+        
+        // Re-check status after delay to see if Player ID becomes available
+        // Pass preserveCurrentState=true to prevent auto-toggle-off if subscription is still initializing
+        setTimeout(() => {
+          checkSubscriptionStatus(true)
+        }, 5000) // Longer delay for iOS when Player ID is not available yet
         return
       }
 
@@ -285,13 +320,16 @@ export function NotificationPermissionButton() {
         setIsSubscribed(true)
         toast.success(locale === 'el' ? 'Οι ειδοποιήσεις ενεργοποιήθηκαν!' : 'Notifications enabled!')
         
-        // Re-check status to ensure everything is synced
+        // Re-check status after longer delay to ensure OneSignal is fully synced
+        // iOS may need more time to update the subscription status
+        // Pass preserveCurrentState=true to prevent auto-toggle-off if subscription is still initializing
         setTimeout(() => {
-          checkSubscriptionStatus()
-        }, 1000)
+          checkSubscriptionStatus(true)
+        }, 3000) // Increased from 1000ms to 3000ms for iOS
       } else {
         console.error('❌ [OneSignal] Failed to save player ID:', result.error)
         toast.error(locale === 'el' ? 'Σφάλμα κατά την αποθήκευση' : 'Error saving player ID')
+        // Don't revert toggle on save error - subscription might still work via External User ID
       }
     } catch (error) {
       console.error('Error requesting notification permission:', error)
@@ -401,7 +439,7 @@ export function NotificationPermissionButton() {
       // Re-check status to ensure everything is synced
       setTimeout(() => {
         checkSubscriptionStatus()
-      }, 1000)
+      }, 2000)
     } catch (error) {
       console.error('Error disabling notifications:', error)
       toast.error(locale === 'el' ? 'Σφάλμα κατά την απενεργοποίηση' : 'Error disabling notifications')
