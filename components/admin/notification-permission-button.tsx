@@ -35,41 +35,67 @@ export function NotificationPermissionButton() {
         return
       }
 
-      // Check if admin has OneSignal player ID in database
-      const { data: adminRecord } = await supabase
-        .from('admin_users')
-        .select('onesignal_player_id')
-        .eq('user_id', user.id)
-        .maybeSingle()
-
-      if (adminRecord?.onesignal_player_id) {
-        setIsSubscribed(true)
-        setIsLoading(false)
-        return
+      // Wait for OneSignal to be ready
+      let retries = 0
+      const maxRetries = 20
+      while (!window.OneSignal && retries < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 200))
+        retries++
       }
 
-      // Check browser permission status
-      if ('Notification' in window) {
+      // Check if THIS DEVICE has granted permission and is subscribed
+      // Each device has its own player ID, so we check the current device's status
+      let currentDeviceSubscribed = false
+      
+      if (window.OneSignal?.User?.PushSubscription) {
+        try {
+          const subscription = window.OneSignal.User.PushSubscription
+          currentDeviceSubscribed = await subscription.optedIn
+          
+          if (currentDeviceSubscribed) {
+            // This device is subscribed, check if we have a player ID
+            let playerId: string | null = null
+            try {
+              playerId = await subscription.id
+            } catch (error) {
+              // Try alternative methods to get player ID
+              if (window.OneSignal?.getUserId) {
+                playerId = await window.OneSignal.getUserId()
+              } else if (window.OneSignal?.userId) {
+                playerId = window.OneSignal.userId
+              }
+            }
+            
+            // If we have a player ID, make sure it's saved to database
+            if (playerId) {
+              const { data: adminRecord } = await supabase
+                .from('admin_users')
+                .select('onesignal_player_id')
+                .eq('user_id', user.id)
+                .maybeSingle()
+              
+              // If player ID is different or not saved, update it
+              if (!adminRecord?.onesignal_player_id || adminRecord.onesignal_player_id !== playerId) {
+                await saveAdminPlayerId(user.id, playerId)
+              }
+            }
+          }
+        } catch (error) {
+          console.log('Error checking OneSignal subscription:', error)
+        }
+      }
+
+      // Also check browser permission as fallback
+      if (!currentDeviceSubscribed && 'Notification' in window) {
         const permission = Notification.permission
         if (permission === 'granted') {
-          // Check if OneSignal is available and user is subscribed
-          if (window.OneSignal?.User?.PushSubscription) {
-            try {
-              const subscription = window.OneSignal.User.PushSubscription
-              const optedIn = await subscription.optedIn
-              setIsSubscribed(optedIn)
-            } catch (error) {
-              setIsSubscribed(false)
-            }
-          } else {
-            setIsSubscribed(false)
-          }
-        } else {
-          setIsSubscribed(false)
+          // Browser permission granted but OneSignal not subscribed yet
+          // This might happen on iOS or if OneSignal isn't ready
+          currentDeviceSubscribed = false // Still show button to complete OneSignal setup
         }
-      } else {
-        setIsSubscribed(false)
       }
+
+      setIsSubscribed(currentDeviceSubscribed)
     } catch (error) {
       console.error('Error checking subscription status:', error)
       setIsSubscribed(false)
