@@ -3,10 +3,10 @@
 import { useState, useEffect } from 'react'
 import { useLocale } from 'next-intl'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Bell, BellOff, CheckCircle2 } from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
-import { saveAdminPlayerId } from '@/lib/actions/send-onesignal-notification'
+import { saveAdminPlayerId, removeAdminPlayerId } from '@/lib/actions/send-onesignal-notification'
 
 declare global {
   interface Window {
@@ -18,9 +18,20 @@ export function NotificationPermissionButton() {
   const locale = useLocale()
   const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [isRequesting, setIsRequesting] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
+  const [isOneSignalConfigured, setIsOneSignalConfigured] = useState(false)
 
   useEffect(() => {
+    // Check if OneSignal is configured - use production app ID for both dev and prod
+    const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID
+    
+    if (!appId) {
+      setIsOneSignalConfigured(false)
+      setIsLoading(false)
+      return
+    }
+    
+    setIsOneSignalConfigured(true)
     checkSubscriptionStatus()
   }, [])
 
@@ -114,8 +125,26 @@ export function NotificationPermissionButton() {
     }
   }
 
-  const handleRequestPermission = async () => {
-    setIsRequesting(true)
+  const handleToggle = async (checked: boolean) => {
+    // Optimistically update UI for better UX on mobile
+    const previousState = isSubscribed
+    setIsSubscribed(checked)
+    setIsProcessing(true)
+    
+    try {
+      if (checked) {
+        await handleEnableNotifications()
+      } else {
+        await handleDisableNotifications()
+      }
+    } catch (error) {
+      // Revert on error
+      setIsSubscribed(previousState)
+      throw error
+    }
+  }
+
+  const handleEnableNotifications = async () => {
     
     try {
       const supabase = createClient()
@@ -123,7 +152,7 @@ export function NotificationPermissionButton() {
 
       if (!user) {
         toast.error(locale === 'el' ? 'Πρέπει να είστε συνδεδεμένος' : 'You must be logged in')
-        setIsRequesting(false)
+        setIsProcessing(false)
         return
       }
 
@@ -136,8 +165,11 @@ export function NotificationPermissionButton() {
       }
 
       if (!window.OneSignal) {
-        toast.error(locale === 'el' ? 'Το OneSignal δεν είναι διαθέσιμο' : 'OneSignal is not available')
-        setIsRequesting(false)
+        // OneSignal not loaded - might not be configured or still loading
+        // Don't show error if it's just not configured (normal in dev)
+        console.warn('⚠️ OneSignal SDK not loaded')
+        setIsProcessing(false)
+        setIsSubscribed(false)
         return
       }
 
@@ -179,7 +211,7 @@ export function NotificationPermissionButton() {
         } else {
           toast.error(locale === 'el' ? 'Σφάλμα κατά την αίτηση άδειας' : 'Error requesting permission')
         }
-        setIsRequesting(false)
+        setIsProcessing(false)
         return
       }
 
@@ -239,7 +271,7 @@ export function NotificationPermissionButton() {
         console.warn('   Notifications should still work via include_external_user_ids')
         toast.success(locale === 'el' ? 'Οι ειδοποιήσεις ενεργοποιήθηκαν! (Player ID pending)' : 'Notifications enabled! (Player ID pending)')
         setIsSubscribed(true)
-        setIsRequesting(false)
+        setIsProcessing(false)
         return
       }
 
@@ -264,43 +296,158 @@ export function NotificationPermissionButton() {
     } catch (error) {
       console.error('Error requesting notification permission:', error)
       toast.error(locale === 'el' ? 'Σφάλμα κατά την αίτηση άδειας' : 'Error requesting permission')
+      setIsSubscribed(false)
     } finally {
-      setIsRequesting(false)
+      setIsProcessing(false)
     }
   }
 
-  if (isLoading) {
-    return null // Don't show anything while loading
+  const handleDisableNotifications = async () => {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        toast.error(locale === 'el' ? 'Πρέπει να είστε συνδεδεμένος' : 'You must be logged in')
+        setIsProcessing(false)
+        return
+      }
+
+      // Wait for OneSignal to be ready
+      let retries = 0
+      const maxRetries = 20
+      while (!window.OneSignal && retries < maxRetries) {
+        await new Promise(resolve => setTimeout(resolve, 200))
+        retries++
+      }
+
+      if (!window.OneSignal) {
+        // OneSignal not loaded - might not be configured or still loading
+        // Don't show error if it's just not configured (normal in dev)
+        console.warn('⚠️ OneSignal SDK not loaded')
+        setIsProcessing(false)
+        setIsSubscribed(false)
+        return
+      }
+
+      // Wait for OneSignal User object
+      let readyRetries = 0
+      while (!window.OneSignal?.User && readyRetries < 20) {
+        await new Promise(resolve => setTimeout(resolve, 200))
+        readyRetries++
+      }
+
+      // Get current player ID before opting out
+      let playerId: string | null = null
+      try {
+        if (window.OneSignal?.User?.PushSubscription?.id) {
+          playerId = await window.OneSignal.User.PushSubscription.id
+        } else if (window.OneSignal?.getUserId) {
+          playerId = await window.OneSignal.getUserId()
+        } else if (window.OneSignal?.userId) {
+          playerId = window.OneSignal.userId
+        }
+      } catch (error) {
+        console.log('Could not get player ID:', error)
+      }
+
+      // Opt out from OneSignal
+      try {
+        // Method 1: optOut (OneSignal SDK v16)
+        if (window.OneSignal?.User?.PushSubscription?.optOut) {
+          await window.OneSignal.User.PushSubscription.optOut()
+          console.log('✅ [OneSignal] Opted out via optOut()')
+        }
+        // Method 2: logout (removes external user ID)
+        else if (window.OneSignal?.logout) {
+          await window.OneSignal.logout()
+          console.log('✅ [OneSignal] Logged out (removed external user ID)')
+        }
+        // Method 3: setSubscription (legacy)
+        else if (window.OneSignal?.setSubscription) {
+          await window.OneSignal.setSubscription(false)
+          console.log('✅ [OneSignal] Subscription disabled via setSubscription()')
+        }
+      } catch (error: any) {
+        console.error('Error opting out from OneSignal:', error)
+        // Continue anyway - we'll still remove from database
+      }
+
+      // Remove player ID from database (if we have it)
+      if (playerId) {
+        console.log('💾 [OneSignal] Removing player ID from database...')
+        const result = await removeAdminPlayerId(user.id, playerId)
+        
+        if (result.success) {
+          console.log('✅ [OneSignal] Player ID removed from database')
+        } else {
+          console.warn('⚠️ [OneSignal] Failed to remove player ID from database:', result.error)
+        }
+      }
+
+      // Also try to remove external user ID by logging out
+      try {
+        if (window.OneSignal?.logout) {
+          await window.OneSignal.logout()
+          console.log('✅ [OneSignal] External User ID removed (logged out)')
+        }
+      } catch (error) {
+        console.log('Could not logout from OneSignal:', error)
+      }
+
+      setIsSubscribed(false)
+      toast.success(locale === 'el' ? 'Οι ειδοποιήσεις απενεργοποιήθηκαν' : 'Notifications disabled')
+      
+      // Re-check status to ensure everything is synced
+      setTimeout(() => {
+        checkSubscriptionStatus()
+      }, 1000)
+    } catch (error) {
+      console.error('Error disabling notifications:', error)
+      toast.error(locale === 'el' ? 'Σφάλμα κατά την απενεργοποίηση' : 'Error disabling notifications')
+      setIsSubscribed(true) // Revert toggle on error
+    } finally {
+      setIsProcessing(false)
+    }
   }
 
-  if (isSubscribed) {
+  // Don't show anything if OneSignal is not configured
+  if (!isOneSignalConfigured) {
+    return null
+  }
+
+  if (isLoading) {
     return (
-      <div className="flex items-center gap-2 text-sm text-green-600">
-        <CheckCircle2 className="h-4 w-4" />
-        <span>{locale === 'el' ? 'Οι ειδοποιήσεις είναι ενεργοποιημένες' : 'Notifications are enabled'}</span>
+      <div className="flex items-center gap-3">
+        <div className="h-7 w-12 rounded-full bg-sage-200 animate-pulse" />
+        <Label className="text-sm text-muted-foreground">
+          {locale === 'el' ? 'Φόρτωση...' : 'Loading...'}
+        </Label>
       </div>
     )
   }
 
   return (
-    <Button
-      onClick={handleRequestPermission}
-      disabled={isRequesting}
-      className="flex items-center gap-2"
-      variant="default"
-    >
-      {isRequesting ? (
-        <>
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-background border-t-transparent" />
-          <span>{locale === 'el' ? 'Επεξεργασία...' : 'Processing...'}</span>
-        </>
-      ) : (
-        <>
-          <Bell className="h-4 w-4" />
-          <span>{locale === 'el' ? 'Ενεργοποίηση Ειδοποιήσεων' : 'Enable Notifications'}</span>
-        </>
+    <div className="flex items-center gap-3">
+      <Switch
+        id="notification-toggle"
+        checked={isSubscribed === true}
+        onCheckedChange={handleToggle}
+        disabled={isProcessing || isSubscribed === null}
+        aria-label={locale === 'el' ? 'Ειδοποιήσεις' : 'Notifications'}
+      />
+      <Label
+        htmlFor="notification-toggle"
+        className="text-sm font-medium cursor-pointer select-none"
+      >
+        {isSubscribed
+          ? (locale === 'el' ? 'Οι ειδοποιήσεις είναι ενεργοποιημένες' : 'Notifications are enabled')
+          : (locale === 'el' ? 'Ενεργοποίηση ειδοποιήσεων' : 'Enable notifications')}
+      </Label>
+      {isProcessing && (
+        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent ml-2" />
       )}
-    </Button>
+    </div>
   )
 }
 

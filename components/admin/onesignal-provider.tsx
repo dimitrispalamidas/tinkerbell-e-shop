@@ -16,10 +16,8 @@ export function OneSignalProvider() {
 
   useEffect(() => {
     // Only initialize OneSignal if we have the app ID
-    // Use different App ID for dev vs production if configured
-    const appId = process.env.NODE_ENV === 'development' 
-      ? (process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID_DEV || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID)
-      : (process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID);
+    // Use production app ID for both dev and prod
+    const appId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
     
     if (!appId) {
       console.log('OneSignal not configured - skipping initialization');

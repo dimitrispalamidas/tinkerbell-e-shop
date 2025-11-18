@@ -35,10 +35,8 @@ export default async function AdminLayout({
   const locale = await getLocale()
   const messages = await getMessages()
 
-  // Get OneSignal App ID (dev or prod)
-  const onesignalAppId = process.env.NODE_ENV === 'development' 
-    ? (process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID_DEV || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID)
-    : (process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID);
+  // Get OneSignal App ID - use production app ID for both dev and prod
+  const onesignalAppId = process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID_PROD || process.env.NEXT_PUBLIC_ONESIGNAL_APP_ID;
 
   return (
     <NextIntlClientProvider messages={messages} locale={locale}>

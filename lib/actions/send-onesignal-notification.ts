@@ -19,14 +19,9 @@ const getSupabaseAdmin = () => {
 
 // Initialize OneSignal client
 const getOneSignalClient = () => {
-  // Use different credentials for dev vs production if configured
-  const appId = process.env.NODE_ENV === 'development'
-    ? (process.env.ONESIGNAL_APP_ID_DEV || process.env.ONESIGNAL_APP_ID)
-    : (process.env.ONESIGNAL_APP_ID_PROD || process.env.ONESIGNAL_APP_ID);
-  
-  const apiKey = process.env.NODE_ENV === 'development'
-    ? (process.env.ONESIGNAL_REST_API_KEY_DEV || process.env.ONESIGNAL_REST_API_KEY)
-    : (process.env.ONESIGNAL_REST_API_KEY_PROD || process.env.ONESIGNAL_REST_API_KEY);
+  // Use production credentials for both dev and prod
+  const appId = process.env.ONESIGNAL_APP_ID_PROD || process.env.ONESIGNAL_APP_ID;
+  const apiKey = process.env.ONESIGNAL_REST_API_KEY_PROD || process.env.ONESIGNAL_REST_API_KEY;
 
   if (!appId || !apiKey) {
     throw new Error('OneSignal credentials not configured');
@@ -247,6 +242,99 @@ export async function saveAdminPlayerId(userId: string, playerId: string) {
     return { success: false, error: 'Update verification failed' };
   } catch (error) {
     console.error('❌ [OneSignal] Error saving player ID:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+export async function removeAdminPlayerId(userId: string, playerId: string) {
+  try {
+    console.log(`🗑️ [OneSignal] Attempting to remove player ID for user: ${userId}, player ID: ${playerId}`);
+    const supabase = getSupabaseAdmin();
+    
+    // Verify user is admin and get current player IDs
+    const { data: adminUser, error: checkError } = await supabase
+      .from('admin_users')
+      .select('id, onesignal_player_id')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (checkError) {
+      console.error('❌ [OneSignal] Error checking admin user:', checkError);
+      return { success: false, error: `Database error: ${checkError.message}` };
+    }
+
+    if (!adminUser) {
+      console.error('❌ [OneSignal] User is not an admin:', userId);
+      return { success: false, error: 'User is not an admin' };
+    }
+
+    // Get current player IDs array (or create new array)
+    let currentPlayerIds: string[] = [];
+    
+    if (adminUser.onesignal_player_id) {
+      // Handle both array format (new) and single string (legacy)
+      if (Array.isArray(adminUser.onesignal_player_id)) {
+        currentPlayerIds = adminUser.onesignal_player_id.filter((id): id is string => typeof id === 'string' && !!id);
+      } else if (typeof adminUser.onesignal_player_id === 'string') {
+        // Legacy format - convert to array
+        currentPlayerIds = [adminUser.onesignal_player_id];
+      }
+    }
+
+    // Check if player ID exists
+    if (!currentPlayerIds.includes(playerId)) {
+      console.log(`ℹ️ [OneSignal] Player ID not found for admin: ${userId}`);
+      // Still return success - maybe it was already removed
+      return { success: true, alreadyRemoved: true };
+    }
+
+    // Remove player ID from array
+    const updatedPlayerIds = currentPlayerIds.filter(id => id !== playerId);
+    
+    console.log(`📱 [OneSignal] Removing player ID from device list for admin ${userId}:`);
+    console.log(`   Existing devices: ${currentPlayerIds.length}`);
+    console.log(`   Removed device Player ID: ${playerId}`);
+    console.log(`   Remaining devices: ${updatedPlayerIds.length}`);
+
+    // Update admin user with updated player IDs array
+    // If no devices remain, set to null
+    const updateValue = updatedPlayerIds.length > 0 ? updatedPlayerIds : null;
+    
+    const { data: updatedData, error: updateError } = await supabase
+      .from('admin_users')
+      .update({ onesignal_player_id: updateValue })
+      .eq('user_id', userId)
+      .select('onesignal_player_id');
+
+    if (updateError) {
+      console.error('❌ [OneSignal] Failed to remove player ID:', updateError);
+      return { success: false, error: updateError.message };
+    }
+
+    // Verify the update was successful
+    if (updateValue === null) {
+      // All devices removed
+      if (!updatedData || !updatedData[0]?.onesignal_player_id) {
+        console.log(`✅ [OneSignal] All player IDs removed successfully for admin: ${userId}`);
+        return { success: true, allDevicesRemoved: true };
+      }
+    } else {
+      // Some devices remain
+      const savedIds = Array.isArray(updatedData[0]?.onesignal_player_id) 
+        ? updatedData[0].onesignal_player_id 
+        : [updatedData[0]?.onesignal_player_id];
+      
+      if (!savedIds.includes(playerId)) {
+        console.log(`✅ [OneSignal] Player ID removed successfully for admin: ${userId}`);
+        console.log(`   Remaining devices: ${savedIds.length}`);
+        return { success: true };
+      }
+    }
+    
+    console.error('❌ [OneSignal] Player ID removal verification failed');
+    return { success: false, error: 'Removal verification failed' };
+  } catch (error) {
+    console.error('❌ [OneSignal] Error removing player ID:', error);
     return { success: false, error: String(error) };
   }
 }
