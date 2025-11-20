@@ -5,9 +5,12 @@ import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatPrice } from '@/lib/utils';
-import { Package, ShoppingCart, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Package, ShoppingCart, TrendingUp, AlertTriangle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { NotificationPermissionButton } from '@/components/admin/notification-permission-button';
+
+// Low stock threshold - για μικρό eshop: 1 = κρίσιμο, 2 = προσοχή
+const LOW_STOCK_THRESHOLD = 2;
 
 export default function AdminDashboard() {
   const locale = useLocale();
@@ -19,13 +22,15 @@ export default function AdminDashboard() {
     soldOutProducts: any[];
     topSellingProducts: any[];
     totalOrders: number;
+    lowStockProducts: any[];
   }>({
     products: [],
     orders: [],
     todaySales: 0,
     soldOutProducts: [],
     topSellingProducts: [],
-    totalOrders: 0
+    totalOrders: 0,
+    lowStockProducts: []
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -94,6 +99,47 @@ export default function AdminDashboard() {
         .sort((a, b) => b.totalSold - a.totalSold)
         .slice(0, 5) || [];
 
+      // Get low stock products (variants with stock <= LOW_STOCK_THRESHOLD)
+      const { data: productsWithVariants } = await supabase
+        .from('products')
+        .select(`
+          id,
+          name_el,
+          name_en,
+          sku,
+          product_variants (
+            id,
+            size,
+            color,
+            stock
+          )
+        `)
+        .eq('is_active', true)
+        .neq('status', 'archived');
+
+      // Filter variants with low stock
+      const lowStockItems: any[] = [];
+      productsWithVariants?.forEach((product: any) => {
+        product.product_variants?.forEach((variant: any) => {
+          if (variant.stock > 0 && variant.stock <= LOW_STOCK_THRESHOLD) {
+            lowStockItems.push({
+              productId: product.id,
+              productName: locale === 'el' ? product.name_el : product.name_en,
+              productSku: product.sku,
+              variantId: variant.id,
+              size: variant.size,
+              color: variant.color,
+              stock: variant.stock
+            });
+          }
+        });
+      });
+
+      // Sort by stock (lowest first) and limit to 10
+      const lowStockProducts = lowStockItems
+        .sort((a, b) => a.stock - b.stock)
+        .slice(0, 10);
+
       const todaySales = todayOrders?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
 
       setStats({
@@ -102,7 +148,8 @@ export default function AdminDashboard() {
         todaySales,
         soldOutProducts: soldOutProducts || [],
         topSellingProducts,
-        totalOrders: totalOrdersCount || 0
+        totalOrders: totalOrdersCount || 0,
+        lowStockProducts
       });
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -237,8 +284,8 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* Top Selling & Sold Out Products */}
-      <div className="grid gap-3 md:gap-4 md:grid-cols-2">
+      {/* Top Selling, Low Stock & Sold Out Products */}
+      <div className="grid gap-3 md:gap-4 md:grid-cols-3">
         {/* Top Selling */}
         <Card>
           <CardHeader className="p-4 md:p-6">
@@ -261,6 +308,57 @@ export default function AdminDashboard() {
             ) : (
               <p className="text-center text-muted-foreground py-4 text-sm">
                 {locale === 'el' ? 'Δεν υπάρχουν πωλήσεις ακόμα' : 'No sales yet'}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Low Stock Products */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between p-4 md:p-6">
+            <CardTitle className="text-base md:text-lg flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-orange-600" />
+              {locale === 'el' ? 'Χαμηλό Απόθεμα' : 'Low Stock'}
+            </CardTitle>
+            <Link 
+              href="/admin/products" 
+              className="text-xs md:text-sm text-primary hover:underline whitespace-nowrap"
+            >
+              {locale === 'el' ? 'Προβολή Όλων' : 'View All'}
+            </Link>
+          </CardHeader>
+          <CardContent className="p-4 md:p-6 pt-0">
+            {stats.lowStockProducts.length > 0 ? (
+              <div className="space-y-2">
+                {stats.lowStockProducts.map((item: any, index: number) => (
+                  <Link
+                    key={`${item.productId}-${item.variantId}-${index}`}
+                    href={`/admin/products/${item.productId}`}
+                    className="block p-2 rounded hover:bg-muted transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs md:text-sm font-medium truncate">
+                          {item.productName}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {item.size} / {item.color}
+                        </p>
+                      </div>
+                      <span className={`text-xs font-bold whitespace-nowrap px-2 py-1 rounded ${
+                        item.stock === 1 
+                          ? 'bg-red-200 text-red-800' 
+                          : 'bg-orange-200 text-orange-800'
+                      }`}>
+                        {item.stock}
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-4 text-sm">
+                {locale === 'el' ? 'Όλα τα προϊόντα έχουν επαρκές απόθεμα' : 'All products have sufficient stock'}
               </p>
             )}
           </CardContent>

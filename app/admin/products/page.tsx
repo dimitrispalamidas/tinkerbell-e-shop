@@ -145,6 +145,21 @@ export default function AdminProductsPage() {
     return products.filter(p => p.status === status).length;
   };
 
+  // Check if product has low stock variants (stock <= 2)
+  const hasLowStock = (product: Product) => {
+    return product.product_variants?.some(
+      (variant) => variant.stock > 0 && variant.stock <= 2
+    ) || false;
+  };
+
+  // Get minimum stock for a product
+  const getMinStock = (product: Product) => {
+    const stocks = product.product_variants
+      ?.filter(v => v.stock > 0)
+      .map(v => v.stock) || [];
+    return stocks.length > 0 ? Math.min(...stocks) : 0;
+  };
+
   const tabs = [
     { 
       id: 'active' as TabType, 
@@ -296,7 +311,7 @@ export default function AdminProductsPage() {
                       {/* Price & Status & Actions Row */}
                       <div className="flex items-center justify-between gap-2 flex-wrap">
                         {/* Price & Status */}
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-base md:text-lg">{formatPrice(product.price, locale)}</p>
                           <span className={`px-2 py-1 rounded text-xs whitespace-nowrap ${
                             product.status === 'active' ? 'bg-green-100 text-green-700' :
@@ -307,6 +322,15 @@ export default function AdminProductsPage() {
                              product.status === 'archived' ? (locale === 'el' ? 'Αρχειοθετημένο' : 'Archived') :
                              (locale === 'el' ? 'Εξαντλημένο' : 'Sold Out')}
                           </span>
+                          {hasLowStock(product) && (
+                            <span className={`px-2 py-1 rounded text-xs whitespace-nowrap ${
+                              getMinStock(product) === 1 
+                                ? 'bg-red-100 text-red-700' 
+                                : 'bg-orange-100 text-orange-700'
+                            }`}>
+                              {locale === 'el' ? 'Χαμηλό Απόθεμα' : 'Low Stock'}
+                            </span>
+                          )}
                         </div>
 
                         {/* Actions */}
