@@ -44,6 +44,7 @@ export default function EditProductPage() {
     category_id: '',
     sizes: '',
     colors: '',
+    is_active: true,
   });
   
   // Store original data for comparison
@@ -58,6 +59,7 @@ export default function EditProductPage() {
       category_id: '',
       sizes: '',
       colors: '',
+      is_active: true,
     },
     imageUrls: [] as string[],
     variants: [] as Variant[],
@@ -181,6 +183,7 @@ export default function EditProductPage() {
           category_id: data.category_id || '',
           sizes: data.sizes?.join(', ') || '',
           colors: data.colors?.join(', ') || '',
+          is_active: data.is_active ?? true,
         };
         const productImages = data.images || [];
         const productColors = data.colors || [];
@@ -647,6 +650,22 @@ export default function EditProductPage() {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm font-medium">
+                  {locale === 'el' ? 'Το προϊόν είναι ενεργό' : 'Product is active'}
+                </span>
+              </label>
             </CardContent>
           </Card>
 
