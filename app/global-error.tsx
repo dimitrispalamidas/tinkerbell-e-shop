@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import * as Sentry from '@sentry/nextjs'
 
 export default function GlobalError({
   error,
@@ -12,7 +13,8 @@ export default function GlobalError({
   useEffect(() => {
     // Log critical error
     console.error('Global application error:', error)
-    // In production: Sentry.captureException(error)
+    // Capture error to Sentry
+    Sentry.captureException(error)
   }, [error])
 
   return (
