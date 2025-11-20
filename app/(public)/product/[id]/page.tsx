@@ -17,8 +17,9 @@ interface ProductDetailPayload {
 async function fetchProductDetail(id: string) {
   try {
     const baseUrl = await getRequestBaseUrl();
+    // ✅ Cache 30 seconds - cache invalidation via revalidatePath in server actions
     const response = await fetch(`${baseUrl}/api/catalog/products/${id}`, {
-      next: { revalidate: 120 },
+      next: { revalidate: 30 },
     });
 
     if (response.status === 404) {

@@ -17,6 +17,7 @@ import Image from 'next/image';
 import { VariantManager, type Variant } from '@/components/admin/variant-manager';
 import { translateText } from '@/lib/utils/translate';
 import { Color } from '@/lib/types/database';
+import { updateProduct } from '@/lib/actions/update-product';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -295,69 +296,27 @@ export default function EditProductPage() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
+      // ✅ Use server action with cache revalidation
+      const { success } = await updateProduct(productId, {
+        sku: formData.sku,
+        name_el: formData.name_el,
+        name_en: formData.name_en,
+        description_el: formData.description_el || null,
+        description_en: formData.description_en || null,
+        price: formData.price,
+        category_id: formData.category_id || null,
+        sizes: formData.sizes,
+        colors: selectedColors,
+        is_active: formData.is_active,
+        images: imageUrls,
+        variants: variants,
+      });
 
-      // Calculate total stock from variants to determine status
-      const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
-      const productStatus = totalStock > 0 ? 'active' : 'sold_out';
-
-      // Update product
-      const { error: productError } = await supabase
-        .from('products')
-        .update({
-          sku: formData.sku,
-          name_el: formData.name_el,
-          name_en: formData.name_en,
-          description_el: formData.description_el || null,
-          description_en: formData.description_en || null,
-          price: parseFloat(formData.price.replace(',', '.')),
-          category_id: formData.category_id || null,
-          sizes: formData.sizes ? formData.sizes.split(',').map(s => s.trim()) : [],
-          colors: selectedColors,
-          is_active: totalStock > 0,
-          status: productStatus,
-          images: imageUrls,
-        })
-        .eq('id', productId);
-
-      if (productError) throw productError;
-
-      // Update variants: Delete all existing and insert new ones
-      // This ensures clean state
-      const { error: deleteError } = await supabase
-        .from('product_variants')
-        .delete()
-        .eq('product_id', productId);
-
-      if (deleteError) throw deleteError;
-
-      // Insert new variants
-      if (variants.length > 0) {
-        // Remove duplicates before inserting
-        const uniqueVariants = variants.reduce((acc: Variant[], curr) => {
-          const exists = acc.some(v => v.size === curr.size && v.color === curr.color);
-          if (!exists) {
-            acc.push(curr);
-          }
-          return acc;
-        }, []);
-
-        const variantData = uniqueVariants.map(v => ({
-          product_id: productId,
-          size: v.size,
-          color: v.color,
-          stock: v.stock,
-        }));
-
-        const { error: variantError } = await supabase
-          .from('product_variants')
-          .insert(variantData);
-
-        if (variantError) throw variantError;
-      }
+      if (!success) throw new Error('Failed to update product');
 
       toast.success(locale === 'el' ? 'Το προϊόν ενημερώθηκε' : 'Product updated');
       router.push('/admin/products');
+      router.refresh(); // Extra refresh for admin page
     } catch (error: any) {
       console.error('Product update error:', error);
       

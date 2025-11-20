@@ -4,7 +4,8 @@ import { createPublicRouteClient } from '@/lib/supabase/public-route-client'
 import { enforceRateLimit } from '@/lib/utils/rate-limit'
 import type { GalleryItem } from '@/lib/types/database'
 
-const CACHE_HEADER = 's-maxage=600, stale-while-revalidate=3600'
+// ✅ No cache - always fresh gallery items
+const CACHE_HEADER = 'no-store, no-cache, must-revalidate'
 const ALLOWED_CATEGORIES = new Set(['baptism', 'decoration'])
 
 export async function GET(

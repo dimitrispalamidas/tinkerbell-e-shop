@@ -55,6 +55,16 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
     return () => clearTimeout(timer);
   }, []);
 
+  // ✅ Reset client-side filters όταν αλλάζει category/type
+  // Αυτό εξασφαλίζει ότι τα filters (search, price, size, color) 
+  // reset-άρονται όταν ο χρήστης αλλάζει κατηγορία
+  useEffect(() => {
+    setSearchQuery('');
+    setPriceRange(priceBounds);
+    setSelectedSizes([]);
+    setSelectedColors([]);
+  }, [category, type, priceBounds]);
+
   useEffect(() => {
     setPriceRange((previousRange) => {
       const [minBound, maxBound] = priceBounds;

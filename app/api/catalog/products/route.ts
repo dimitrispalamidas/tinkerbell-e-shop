@@ -3,7 +3,9 @@ import { createPublicRouteClient } from '@/lib/supabase/public-route-client'
 import { enforceRateLimit } from '@/lib/utils/rate-limit'
 import type { Category } from '@/lib/types/database'
 
-const CACHE_HEADER = 's-maxage=120, stale-while-revalidate=600'
+// ✅ Cache 30 seconds - balance between performance and freshness
+// Cache invalidation happens via revalidatePath in server actions
+const CACHE_HEADER = 's-maxage=30, stale-while-revalidate=60'
 
 export async function GET(request: Request) {
   const rateLimitResponse = enforceRateLimit(request, 'catalog_products', {

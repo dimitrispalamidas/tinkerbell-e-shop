@@ -32,10 +32,11 @@ export async function generateMetadata(): Promise<Metadata> {
 async function fetchFeaturedProducts(): Promise<CatalogProduct[]> {
   try {
     const baseUrl = await getRequestBaseUrl();
+    // ✅ Cache 30 seconds - cache invalidation via revalidatePath in server actions
     const response = await fetch(
       `${baseUrl}/api/catalog/products?limit=15`,
       {
-        next: { revalidate: 120 },
+        next: { revalidate: 30 },
       }
     );
 

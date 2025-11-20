@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { createPublicRouteClient } from '@/lib/supabase/public-route-client'
 import { enforceRateLimit } from '@/lib/utils/rate-limit'
 
-const CACHE_HEADER = 's-maxage=600, stale-while-revalidate=3600'
+// ✅ Cache 30 seconds - categories don't change often
+const CACHE_HEADER = 's-maxage=30, stale-while-revalidate=60'
 
 export async function GET(request: Request) {
   const rateLimitResponse = enforceRateLimit(request, 'catalog_categories', {

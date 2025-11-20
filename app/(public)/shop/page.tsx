@@ -24,8 +24,9 @@ export async function generateMetadata(): Promise<Metadata> {
 async function fetchCategories() {
   try {
     const baseUrl = await getRequestBaseUrl();
+    // ✅ Cache 30 seconds - categories don't change often
     const response = await fetch(`${baseUrl}/api/catalog/categories`, {
-      next: { revalidate: 300 },
+      next: { revalidate: 30 },
     });
 
     if (!response.ok) {
@@ -56,7 +57,11 @@ async function fetchProducts(params: { type?: string; category?: string }) {
       ? `${baseUrl}/api/catalog/products?${query}`
       : `${baseUrl}/api/catalog/products`;
 
-    const response = await fetch(url, { next: { revalidate: 120 } });
+    // ✅ Cache 30 seconds - cache invalidation via revalidatePath in server actions
+    // Each filter combination has its own cache key automatically
+    const response = await fetch(url, { 
+      next: { revalidate: 30 }
+    });
 
     if (!response.ok) {
       console.error('Failed to fetch products', await response.text());
@@ -84,8 +89,13 @@ export default async function ShopPage({
     fetchProducts({ type, category }),
   ]);
 
+  // ✅ Key για να force re-render όταν αλλάζει category/type
+  // Αυτό εξασφαλίζει ότι τα προϊόντα ενημερώνονται σωστά με client-side navigation
+  const shopKey = `${type || 'all'}-${category || 'none'}`;
+
   return (
     <ShopClient
+      key={shopKey}
       locale={locale}
       products={products}
       allCategories={allCategories}

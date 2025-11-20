@@ -4,7 +4,8 @@ import { createPublicRouteClient } from '@/lib/supabase/public-route-client'
 import { enforceRateLimit } from '@/lib/utils/rate-limit'
 import type { CatalogProduct } from '@/lib/types/catalog'
 
-const CACHE_HEADER = 's-maxage=120, stale-while-revalidate=600'
+// ✅ Cache 30 seconds - cache invalidation via revalidatePath in server actions
+const CACHE_HEADER = 's-maxage=30, stale-while-revalidate=60'
 
 export async function GET(
   request: NextRequest,

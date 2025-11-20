@@ -17,6 +17,7 @@ import Image from 'next/image';
 import { VariantManager, type Variant } from '@/components/admin/variant-manager';
 import { translateText } from '@/lib/utils/translate';
 import { Color } from '@/lib/types/database';
+import { createProduct } from '@/lib/actions/create-product';
 
 export default function NewProductPage() {
   const router = useRouter();
@@ -195,61 +196,27 @@ export default function NewProductPage() {
     setIsLoading(true);
 
     try {
-      const supabase = createClient();
+      // ✅ Use server action with cache revalidation
+      const { product, success } = await createProduct({
+        sku: formData.sku,
+        name_el: formData.name_el,
+        name_en: formData.name_en,
+        description_el: formData.description_el || null,
+        description_en: formData.description_en || null,
+        price: formData.price,
+        category_id: formData.category_id || null,
+        sizes: formData.sizes,
+        colors: selectedColors,
+        is_active: formData.is_active,
+        images: imageUrls,
+        variants: variants,
+      });
 
-      // Calculate total stock from variants
-      const totalStock = variants.reduce((sum, v) => sum + v.stock, 0);
-      const productStatus = totalStock > 0 ? 'active' : 'sold_out';
-
-      // Create product
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .insert({
-          sku: formData.sku,
-          name_el: formData.name_el,
-          name_en: formData.name_en,
-          description_el: formData.description_el || null,
-          description_en: formData.description_en || null,
-          price: parseFloat(formData.price.replace(',', '.')),
-          category_id: formData.category_id || null,
-          sizes: formData.sizes ? formData.sizes.split(',').map(s => s.trim()) : [],
-          colors: selectedColors,
-          is_active: formData.is_active && totalStock > 0,
-          status: productStatus,
-          images: imageUrls,
-        })
-        .select()
-        .single();
-
-      if (productError) throw productError;
-
-      // Create variants if any
-      if (variants.length > 0 && product) {
-        // Remove duplicates before inserting
-        const uniqueVariants = variants.reduce((acc: Variant[], curr) => {
-          const exists = acc.some(v => v.size === curr.size && v.color === curr.color);
-          if (!exists) {
-            acc.push(curr);
-          }
-          return acc;
-        }, []);
-
-        const variantData = uniqueVariants.map(v => ({
-          product_id: product.id,
-          size: v.size,
-          color: v.color,
-          stock: v.stock,
-        }));
-
-        const { error: variantError } = await supabase
-          .from('product_variants')
-          .insert(variantData);
-
-        if (variantError) throw variantError;
-      }
+      if (!success) throw new Error('Failed to create product');
 
       toast.success(locale === 'el' ? 'Το προϊόν δημιουργήθηκε' : 'Product created');
       router.push('/admin/products');
+      router.refresh(); // Extra refresh for admin page
     } catch (error: any) {
       console.error('Product creation error:', error);
       

@@ -23,8 +23,9 @@ export async function generateMetadata(): Promise<Metadata> {
 async function fetchGalleryPhotos(category: 'baptism') {
   try {
     const baseUrl = await getRequestBaseUrl();
+    // ✅ No cache - always fresh gallery photos
     const response = await fetch(`${baseUrl}/api/catalog/gallery/${category}`, {
-      next: { revalidate: 600 },
+      cache: 'no-store',
     });
 
     if (!response.ok) {
