@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Analytics } from '@vercel/analytics/next';
 import { Toaster } from '@/components/ui/toaster';
 import { PlaceholderManager } from '@/components/placeholder-manager';
 import { AdminKeyboardShortcut } from '@/components/admin/admin-keyboard-shortcut';
@@ -193,6 +194,7 @@ export default function RootLayout({
         <AdminKeyboardShortcut />
         {children}
         <Toaster />
+        <Analytics />
       </body>
     </html>
   );
