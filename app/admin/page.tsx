@@ -99,7 +99,7 @@ export default function AdminDashboard() {
         .sort((a, b) => b.totalSold - a.totalSold)
         .slice(0, 5) || [];
 
-      // Get low stock products (variants with stock <= LOW_STOCK_THRESHOLD)
+      // Get low stock products (based on total stock across all variants)
       const { data: productsWithVariants } = await supabase
         .from('products')
         .select(`
@@ -117,27 +117,29 @@ export default function AdminDashboard() {
         .eq('is_active', true)
         .neq('status', 'archived');
 
-      // Filter variants with low stock
+      // Calculate total stock per product and filter products with low total stock
       const lowStockItems: any[] = [];
       productsWithVariants?.forEach((product: any) => {
-        product.product_variants?.forEach((variant: any) => {
-          if (variant.stock > 0 && variant.stock <= LOW_STOCK_THRESHOLD) {
-            lowStockItems.push({
-              productId: product.id,
-              productName: locale === 'el' ? product.name_el : product.name_en,
-              productSku: product.sku,
-              variantId: variant.id,
-              size: variant.size,
-              color: variant.color,
-              stock: variant.stock
-            });
-          }
-        });
+        // Calculate total stock across all variants
+        const totalStock = product.product_variants?.reduce(
+          (sum: number, variant: any) => sum + (variant.stock || 0),
+          0
+        ) || 0;
+
+        // Show products with total stock <= 2 (orange for 2, red for 1)
+        if (totalStock > 0 && totalStock <= LOW_STOCK_THRESHOLD) {
+          lowStockItems.push({
+            productId: product.id,
+            productName: locale === 'el' ? product.name_el : product.name_en,
+            productSku: product.sku,
+            totalStock: totalStock
+          });
+        }
       });
 
-      // Sort by stock (lowest first) and limit to 10
+      // Sort by total stock (lowest first) and limit to 10
       const lowStockProducts = lowStockItems
-        .sort((a, b) => a.stock - b.stock)
+        .sort((a, b) => a.totalStock - b.totalStock)
         .slice(0, 10);
 
       const todaySales = todayOrders?.reduce((sum, order) => sum + Number(order.total), 0) || 0;
@@ -329,10 +331,10 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="p-4 md:p-6 pt-0">
             {stats.lowStockProducts.length > 0 ? (
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[240px] overflow-y-auto pr-2 scrollbar-thin">
                 {stats.lowStockProducts.map((item: any, index: number) => (
                   <Link
-                    key={`${item.productId}-${item.variantId}-${index}`}
+                    key={`${item.productId}-${index}`}
                     href={`/admin/products/${item.productId}`}
                     className="block p-2 rounded hover:bg-muted transition-colors"
                   >
@@ -342,15 +344,15 @@ export default function AdminDashboard() {
                           {item.productName}
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          {item.size} / {item.color}
+                          {locale === 'el' ? 'Κωδικός' : 'SKU'}: {item.productSku}
                         </p>
                       </div>
                       <span className={`text-xs font-bold whitespace-nowrap px-2 py-1 rounded ${
-                        item.stock === 1 
+                        item.totalStock === 1 
                           ? 'bg-red-200 text-red-800' 
                           : 'bg-orange-200 text-orange-800'
                       }`}>
-                        {item.stock}
+                        {item.totalStock}
                       </span>
                     </div>
                   </Link>

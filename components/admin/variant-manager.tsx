@@ -29,17 +29,6 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
     setLocalVariants(variants);
   }, [variants]);
 
-  const addVariant = () => {
-    const newVariant: Variant = {
-      size: sizes[0] || '',
-      color: colors[0] || '',
-      stock: 0,
-    };
-    const updated = [...localVariants, newVariant];
-    setLocalVariants(updated);
-    onChange(updated);
-  };
-
   const updateVariant = (index: number, field: keyof Variant, value: string | number) => {
     const updated = [...localVariants];
     updated[index] = { ...updated[index], [field]: value };
@@ -122,23 +111,14 @@ export function VariantManager({ sizes, colors, variants, onChange }: VariantMan
             onClick={generateAllCombinations}
           >
             <Plus className="h-4 w-4 mr-1" />
-            {locale === 'el' ? 'Δημιουργία Όλων' : 'Generate All'}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addVariant}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            {locale === 'el' ? 'Προσθήκη' : 'Add'}
+            {locale === 'el' ? 'Δημιουργία Διαθέσιμων Επιλογών' : 'Generate Available Options'}
           </Button>
         </div>
       </CardHeader>
       <CardContent>
         {localVariants.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-4">
-            {locale === 'el' ? 'Δεν υπάρχουν παραλλαγές. Κλικ "Δημιουργία Όλων" για αυτόματη δημιουργία όλων των συνδυασμών.' : 'No variants. Click "Generate All" to automatically create all combinations.'}
+            {locale === 'el' ? 'Δεν υπάρχουν παραλλαγές. Κλικ "Δημιουργία Διαθέσιμων Επιλογών" για αυτόματη δημιουργία όλων των συνδυασμών.' : 'No variants. Click "Generate Available Options" to automatically create all combinations.'}
           </p>
         ) : (
           <div className="overflow-x-auto -mx-6 px-6">

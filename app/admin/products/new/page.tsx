@@ -86,6 +86,19 @@ export default function NewProductPage() {
     );
   };
 
+  // Clean trailing commas and spaces from sizes input (only on blur)
+  const cleanSizesInput = (value: string): string => {
+    // Remove trailing commas and spaces
+    return value.replace(/[,\s]+$/, '').trim();
+  };
+
+  const handleSizesBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const cleanedValue = cleanSizesInput(e.target.value);
+    if (cleanedValue !== e.target.value) {
+      setFormData({ ...formData, sizes: cleanedValue });
+    }
+  };
+
   const handleTranslateName = async () => {
     if (!formData.name_el) {
       toast.error(locale === 'el' ? 'Παρακαλώ συμπληρώστε πρώτα το ελληνικό όνομα' : 'Please fill in the Greek name first');
@@ -484,6 +497,7 @@ export default function NewProductPage() {
                 <Input
                   value={formData.sizes}
                   onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                  onBlur={handleSizesBlur}
                   placeholder="4Y, 6Y, 8Y, 10Y, 12Y"
                 />
                 <p className="text-xs text-muted-foreground mt-1">

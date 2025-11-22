@@ -94,6 +94,19 @@ export default function EditProductPage() {
     );
   };
 
+  // Clean trailing commas and spaces from sizes input (only on blur)
+  const cleanSizesInput = (value: string): string => {
+    // Remove trailing commas and spaces
+    return value.replace(/[,\s]+$/, '').trim();
+  };
+
+  const handleSizesBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const cleanedValue = cleanSizesInput(e.target.value);
+    if (cleanedValue !== e.target.value) {
+      setFormData({ ...formData, sizes: cleanedValue });
+    }
+  };
+
   // Check if there are any changes
   const hasChanges = useMemo(() => {
     // Compare form data
@@ -515,6 +528,7 @@ export default function EditProductPage() {
                 <Input
                   value={formData.sizes}
                   onChange={(e) => setFormData({ ...formData, sizes: e.target.value })}
+                  onBlur={handleSizesBlur}
                   placeholder="4Y, 6Y, 8Y, 10Y, 12Y"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
