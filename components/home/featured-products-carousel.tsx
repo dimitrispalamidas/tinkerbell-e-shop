@@ -130,6 +130,8 @@ export function FeaturedProductsCarousel({ products }: Props) {
                       height={300}
                       className="object-cover w-full h-full pointer-events-none"
                       draggable={false}
+                      sizes="300px"
+                      quality={75}
                     />
                   ) : (
                     <ShoppingBag className="h-12 w-12 md:h-20 md:w-20 text-muted-foreground" />

@@ -86,6 +86,8 @@ export function PremiumCategories({ locale }: PremiumCategoriesProps) {
                     alt={locale === 'el' ? category.titleEl : category.titleEn}
                     fill
                     className="object-cover transition-transform duration-700 group-hover:scale-110"
+                    sizes="(max-width: 768px) 400px, 600px"
+                    quality={75}
                   />
                   {/* Gradient Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-sage-900/60 via-sage-900/20 to-transparent opacity-60 group-hover:opacity-40 transition-opacity duration-500" />

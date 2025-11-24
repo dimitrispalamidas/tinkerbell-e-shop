@@ -40,6 +40,7 @@ export function PremiumHero({ locale }: PremiumHeroProps) {
             height={120}
             className="h-16 w-auto md:h-24 lg:h-32 drop-shadow-2xl transition-all duration-300 hover:scale-105"
             priority
+            sizes="(max-width: 768px) 240px, (max-width: 1024px) 360px, 480px"
             style={{ filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))' }}
           />
         ) : (

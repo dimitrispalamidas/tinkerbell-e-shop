@@ -34,6 +34,8 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
           height={800}
           className="object-cover w-full h-full transition-transform duration-700 group-hover:scale-105"
           priority={selectedImage === 0}
+          sizes="(max-width: 768px) 800px, 800px"
+          quality={80}
         />
         {/* Subtle gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-sage-900/5 to-transparent pointer-events-none" />
@@ -70,6 +72,8 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 width={200}
                 height={200}
                 className="object-cover w-full h-full"
+                sizes="200px"
+                unoptimized
               />
             </button>
           ))}

@@ -59,6 +59,8 @@ export function AdminNav() {
               height={30}
               className="h-8 w-auto md:h-12"
               priority
+              sizes="140px"
+              unoptimized
             />
           </Link>
           <button

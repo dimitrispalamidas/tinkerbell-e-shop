@@ -706,6 +706,7 @@ export default function CheckoutPage() {
                           width={40}
                           height={40}
                           className="object-cover w-full h-full"
+                          sizes="40px"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-muted">
@@ -1018,6 +1019,7 @@ export default function CheckoutPage() {
                       width={64}
                       height={64}
                       className="object-cover w-full h-full"
+                      sizes="64px"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center bg-muted">

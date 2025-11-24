@@ -1,10 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Mail, Phone, Baby, Sparkles } from 'lucide-react';
-import { PhotoLightbox } from '@/components/gallery/photo-lightbox';
+
+// Lazy load PhotoLightbox (only loads when user opens lightbox)
+const PhotoLightbox = dynamic(() => import('@/components/gallery/photo-lightbox').then(mod => ({ default: mod.PhotoLightbox })), {
+  ssr: false,
+});
 
 interface BaptismGalleryClientProps {
   locale: string;

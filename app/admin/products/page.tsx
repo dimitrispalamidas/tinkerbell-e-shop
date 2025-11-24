@@ -320,6 +320,8 @@ export default function AdminProductsPage() {
                           width={80}
                           height={80}
                           className="object-cover w-full h-full"
+                          sizes="80px"
+                          unoptimized
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">

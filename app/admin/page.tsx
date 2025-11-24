@@ -41,49 +41,80 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     try {
       const supabase = createClient();
-
-      // Get active products only
-      const { data: products } = await supabase
-        .from('products')
-        .select('*')
-        .neq('status', 'archived');
-
-      // Get all paid orders for total count
-      const { data: allPaidOrders, count: totalOrdersCount } = await supabase
-        .from('orders')
-        .select('*', { count: 'exact', head: false })
-        .eq('payment_status', 'paid');
-
-      // Get recent paid orders
-      const { data: orders } = await supabase
-        .from('orders')
-        .select('*, order_items(*)')
-        .eq('payment_status', 'paid')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      // Get today's sales (paid orders only)
       const today = new Date();
       today.setHours(0, 0, 0, 0);
-      const { data: todayOrders } = await supabase
-        .from('orders')
-        .select('total')
-        .eq('payment_status', 'paid')
-        .gte('created_at', today.toISOString());
+      const todayISO = today.toISOString();
 
-      // Get sold out products
-      const { data: soldOutProducts } = await supabase
-        .from('products')
-        .select('*, product_variants(*)')
-        .eq('status', 'sold_out')
-        .order('updated_at', { ascending: false })
-        .limit(5);
+      // ✅ Parallelize all independent queries for better performance
+      const [
+        { data: products },
+        { data: allPaidOrders, count: totalOrdersCount },
+        { data: orders },
+        { data: todayOrders },
+        { data: soldOutProducts },
+        { data: allProducts },
+        { data: productsWithVariants }
+      ] = await Promise.all([
+        // Get active products only
+        supabase
+          .from('products')
+          .select('*')
+          .neq('status', 'archived'),
+        
+        // Get all paid orders for total count
+        supabase
+          .from('orders')
+          .select('*', { count: 'exact', head: false })
+          .eq('payment_status', 'paid'),
+        
+        // Get recent paid orders
+        supabase
+          .from('orders')
+          .select('*, order_items(*)')
+          .eq('payment_status', 'paid')
+          .order('created_at', { ascending: false })
+          .limit(5),
+        
+        // Get today's sales (paid orders only)
+        supabase
+          .from('orders')
+          .select('total')
+          .eq('payment_status', 'paid')
+          .gte('created_at', todayISO),
+        
+        // Get sold out products
+        supabase
+          .from('products')
+          .select('*, product_variants(*)')
+          .eq('status', 'sold_out')
+          .order('updated_at', { ascending: false })
+          .limit(5),
+        
+        // Get top selling products
+        supabase
+          .from('products')
+          .select('*, product_variants(*)'),
+        
+        // Get low stock products (based on total stock across all variants)
+        supabase
+          .from('products')
+          .select(`
+            id,
+            name_el,
+            name_en,
+            sku,
+            product_variants (
+              id,
+              size,
+              color,
+              stock
+            )
+          `)
+          .eq('is_active', true)
+          .neq('status', 'archived')
+      ]);
 
-      // Get top selling products
-      const { data: allProducts } = await supabase
-        .from('products')
-        .select('*, product_variants(*)');
-
+      // Calculate top selling products
       const topSellingProducts = allProducts
         ?.map(product => {
           const totalSold = product.product_variants?.reduce(
@@ -98,24 +129,6 @@ export default function AdminDashboard() {
         .filter(p => p.totalSold > 0)
         .sort((a, b) => b.totalSold - a.totalSold)
         .slice(0, 5) || [];
-
-      // Get low stock products (based on total stock across all variants)
-      const { data: productsWithVariants } = await supabase
-        .from('products')
-        .select(`
-          id,
-          name_el,
-          name_en,
-          sku,
-          product_variants (
-            id,
-            size,
-            color,
-            stock
-          )
-        `)
-        .eq('is_active', true)
-        .neq('status', 'archived');
 
       // Calculate total stock per product and filter products with low total stock
       const lowStockItems: any[] = [];

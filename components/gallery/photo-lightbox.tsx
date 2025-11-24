@@ -164,7 +164,8 @@ export function PhotoLightbox({ images, initialIndex, onClose }: PhotoLightboxPr
             fill
             className="object-contain"
             priority
-            quality={100}
+            quality={90}
+            sizes="1920px"
           />
         </div>
       </div>
@@ -188,6 +189,7 @@ export function PhotoLightbox({ images, initialIndex, onClose }: PhotoLightboxPr
                 fill
                 className="object-cover"
                 sizes="80px"
+                unoptimized
               />
             </button>
           ))}

@@ -46,6 +46,7 @@ export async function GET(request: Request) {
 
   const response = NextResponse.json({ categories: data ?? [] })
   response.headers.set('Cache-Control', CACHE_HEADER)
+  // Vercel handles compression automatically
   return response
 }
 

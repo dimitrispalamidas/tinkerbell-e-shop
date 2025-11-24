@@ -17,11 +17,16 @@ const nextConfig: NextConfig = {
         hostname: 'placehold.co',
       },
     ],
-    // Image optimization
-    formats: ['image/avif', 'image/webp'],
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    minimumCacheTTL: 60,
+    // Image optimization - CRITICAL: Reduced to minimize Vercel transformations
+    // Only use essential formats and sizes to reduce transformation count
+    formats: ['image/webp'], // Removed AVIF to reduce transformations (webp is sufficient)
+    deviceSizes: [640, 1200], // Reduced to 2 sizes (mobile, desktop) - was 4
+    imageSizes: [64, 128], // Reduced to 2 sizes for small images - was 4
+    minimumCacheTTL: 31536000, // 1 year cache
+    // Disable image optimization for admin routes (not needed for SEO)
+    dangerouslyAllowSVG: false,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   // Cache configuration for Next.js 16
   cacheLife: {
@@ -37,10 +42,28 @@ const nextConfig: NextConfig = {
   },
   // Source maps for production debugging (disable in production builds)
   productionBrowserSourceMaps: false,
+  // Output configuration for Vercel optimization
+  // Note: standalone output removed to avoid Windows symlink permission issues
+  // Vercel doesn't require standalone output - it handles builds natively
+  // output: 'standalone',
   // Experimental features for bundle optimization
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', '@radix-ui/react-dialog', '@radix-ui/react-slot'],
+    optimizePackageImports: [
+      'lucide-react', 
+      '@radix-ui/react-icons', 
+      '@radix-ui/react-dialog', 
+      '@radix-ui/react-slot',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-select',
+      '@radix-ui/react-toast',
+      'recharts',
+      'sonner',
+    ],
   },
+  // Server external packages (moved from experimental.serverComponentsExternalPackages in Next.js 16)
+  serverExternalPackages: ['@supabase/supabase-js'],
+  // Compression (Vercel handles this automatically, but explicit is better)
+  compress: true,
   // Security headers
   async headers() {
     return [

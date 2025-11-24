@@ -16,20 +16,8 @@ import {
   Tag,
   Percent
 } from 'lucide-react';
-import { 
-  LineChart, 
-  Line, 
-  BarChart, 
-  Bar, 
-  PieChart, 
-  Pie, 
-  Cell,
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
-} from 'recharts';
+import dynamic from 'next/dynamic';
+import { RevenueChart, OrdersChart, CategoryPieChart } from '@/components/admin/analytics-charts';
 
 
 type TimePeriod = 'today' | 'week' | 'month' | 'year' | 'all';
@@ -86,7 +74,21 @@ interface DiscountAnalyticsData {
   discountCodesByDay: Array<{ date: string; count: number; amount: number }>;
 }
 
-const COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
+// Lazy load charts components (recharts is heavy ~200KB)
+const LazyRevenueChart = dynamic(() => import('@/components/admin/analytics-charts').then(mod => ({ default: mod.RevenueChart })), {
+  loading: () => <div className="flex items-center justify-center h-[300px]"><p className="text-muted-foreground">Loading chart...</p></div>,
+  ssr: false,
+});
+
+const LazyOrdersChart = dynamic(() => import('@/components/admin/analytics-charts').then(mod => ({ default: mod.OrdersChart })), {
+  loading: () => <div className="flex items-center justify-center h-[300px]"><p className="text-muted-foreground">Loading chart...</p></div>,
+  ssr: false,
+});
+
+const LazyCategoryPieChart = dynamic(() => import('@/components/admin/analytics-charts').then(mod => ({ default: mod.CategoryPieChart })), {
+  loading: () => <div className="flex items-center justify-center h-[250px]"><p className="text-muted-foreground">Loading chart...</p></div>,
+  ssr: false,
+});
 
 export default function AnalyticsPage() {
   const locale = useLocale() as 'el' | 'en';
@@ -434,36 +436,7 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={analytics.revenueByDay}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                />
-                <YAxis 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#ffffff', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px'
-                  }}
-                  formatter={(value: any) => formatPrice(value, locale)}
-                />
-                <Line 
-                  type="monotone" 
-                  dataKey="revenue" 
-                  stroke="#8b5cf6" 
-                  strokeWidth={2}
-                  dot={{ fill: '#8b5cf6', r: 4 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <LazyRevenueChart locale={locale} revenueByDay={analytics.revenueByDay} />
           </CardContent>
         </Card>
 
@@ -476,32 +449,7 @@ export default function AnalyticsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={analytics.revenueByDay}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="date" 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                />
-                <YAxis 
-                  stroke="#6b7280"
-                  style={{ fontSize: '12px' }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#ffffff', 
-                    border: '1px solid #e5e7eb',
-                    borderRadius: '8px'
-                  }}
-                />
-                <Bar 
-                  dataKey="orders" 
-                  fill="#ec4899" 
-                  radius={[8, 8, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            <LazyOrdersChart revenueByDay={analytics.revenueByDay} />
           </CardContent>
         </Card>
       </div>
@@ -557,38 +505,14 @@ export default function AnalyticsPage() {
           <CardContent>
             {analytics.categoryPerformance.length > 0 ? (
               <div className="space-y-4">
-                <ResponsiveContainer width="100%" height={250}>
-                  <PieChart>
-                    <Pie
-                      data={analytics.categoryPerformance}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={90}
-                      fill="#8884d8"
-                      dataKey="value"
-                      paddingAngle={2}
-                    >
-                      {analytics.categoryPerformance.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip 
-                      formatter={(value: any, name: string) => [value, name]}
-                      contentStyle={{ 
-                        backgroundColor: '#ffffff', 
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px'
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
+                <LazyCategoryPieChart categoryPerformance={analytics.categoryPerformance} />
                 
                 {/* Custom Legend */}
                 <div className="grid grid-cols-1 gap-2 px-4">
                   {analytics.categoryPerformance.map((entry, index) => {
                     const total = analytics.categoryPerformance.reduce((sum, item) => sum + item.value, 0);
                     const percentage = ((entry.value / total) * 100).toFixed(0);
+                    const COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
                     return (
                       <div key={index} className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">

@@ -160,6 +160,7 @@ export async function GET(request: Request) {
 
   const response = NextResponse.json({ products: productsWithFilteredDiscounts })
   response.headers.set('Cache-Control', CACHE_HEADER)
+  // Vercel handles compression automatically
   return response
 }
 
