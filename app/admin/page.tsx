@@ -260,7 +260,11 @@ export default function AdminDashboard() {
           {stats.orders.length > 0 ? (
             <div className="space-y-3 md:space-y-4">
               {stats.orders.map((order: any) => (
-                <div key={order.id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3 md:pb-4 last:border-0">
+                <Link
+                  key={order.id}
+                  href={`/admin/orders/${order.id}`}
+                  className="block flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3 md:pb-4 last:border-0 hover:bg-muted/50 rounded-md px-2 py-1 transition-colors cursor-pointer"
+                >
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-sm md:text-base truncate">#{order.id.slice(0, 8)}</p>
                     <p className="text-xs md:text-sm text-muted-foreground truncate">{order.customer_name}</p>
@@ -275,7 +279,7 @@ export default function AdminDashboard() {
                       {getStatusLabel(order.status)}
                     </p>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           ) : (

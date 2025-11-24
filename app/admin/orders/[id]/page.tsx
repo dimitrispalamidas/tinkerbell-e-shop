@@ -16,9 +16,11 @@ import type { Order, OrderItem } from '@/lib/types/database';
 export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const unwrappedParams = use(params);
   const locale = useLocale();
+  const router = useRouter();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [orderDiscounts, setOrderDiscounts] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [status, setStatus] = useState('');
   const [trackingCode, setTrackingCode] = useState('');
@@ -32,7 +34,24 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
 
     const { data: orderData } = await supabase
       .from('orders')
-      .select('*')
+      .select(`
+        *,
+        order_discounts (
+          id,
+          discount_code_id,
+          product_discount_id,
+          discount_amount,
+          discount_codes (
+            code,
+            discount_type,
+            discount_value
+          ),
+          product_discounts (
+            discount_type,
+            discount_value
+          )
+        )
+      `)
       .eq('id', unwrappedParams.id)
       .single();
 
@@ -52,6 +71,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       // Store original data
       setOriginalStatus(orderStatus);
       setOriginalTrackingCode(orderTracking);
+
+      // Set order discounts
+      setOrderDiscounts((orderData as any).order_discounts || []);
     }
     if (itemsData) {
       setOrderItems(itemsData as OrderItem[]);
@@ -83,7 +105,8 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
       toast.error(locale === 'el' ? 'Αποτυχία ενημέρωσης κατάστασης' : 'Failed to update order status');
     } else {
       toast.success(locale === 'el' ? 'Η κατάσταση ενημερώθηκε' : 'Order status updated');
-      fetchOrder();
+      // Redirect to orders list after successful update
+      router.push('/admin/orders');
     }
   };
 
@@ -94,6 +117,32 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   if (!order) {
     return <div className="text-center py-8">{locale === 'el' ? 'Δεν υπάρχουν παραγγελίες ακόμα' : 'No orders yet'}</div>;
   }
+
+  // Calculate subtotal without discounts (original prices)
+  const subtotalWithoutDiscounts = orderItems.reduce((sum, item) => 
+    sum + (item.price * item.quantity), 0
+  );
+
+  // Calculate total discount amounts
+  const productDiscountAmount = orderDiscounts
+    .filter((od) => od.product_discount_id)
+    .reduce((sum, od) => sum + (od.discount_amount || 0), 0);
+  
+  const codeDiscountAmount = orderDiscounts
+    .filter((od) => od.discount_code_id)
+    .reduce((sum, od) => sum + (od.discount_amount || 0), 0);
+
+  const totalDiscountAmount = productDiscountAmount + codeDiscountAmount;
+  const subtotalWithDiscounts = subtotalWithoutDiscounts - totalDiscountAmount;
+  
+  // Shipping cost = total - subtotal with discounts
+  const shippingCost = order.total - subtotalWithDiscounts;
+
+  // Get discount code info
+  const discountCodeInfo = orderDiscounts.find((od) => od.discount_code_id && od.discount_codes);
+  const discountCode = discountCodeInfo?.discount_codes;
+
+  const hasDiscounts = totalDiscountAmount > 0;
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -220,9 +269,74 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             ))}
             
-            <div className="border-t pt-4 flex justify-between items-center">
-              <p className="text-lg font-bold">{locale === 'el' ? 'Σύνολο' : 'Total'}</p>
-              <p className="text-2xl font-bold text-primary">{formatPrice(order.total, locale)}</p>
+            <div className="border-t pt-4 space-y-2">
+              {/* Subtotal without discounts */}
+              {hasDiscounts && (
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-muted-foreground">
+                    {locale === 'el' ? 'Αρχικό Υποσύνολο' : 'Original Subtotal'}
+                  </p>
+                  <p className="text-sm text-muted-foreground line-through">
+                    {formatPrice(subtotalWithoutDiscounts, locale)}
+                  </p>
+                </div>
+              )}
+
+              {/* Product Discounts */}
+              {productDiscountAmount > 0 && (
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-green-600 font-medium">
+                    {locale === 'el' ? 'Έκπτωση Προϊόντων' : 'Product Discount'}
+                  </p>
+                  <p className="text-sm text-green-600 font-medium">
+                    -{formatPrice(productDiscountAmount, locale)}
+                  </p>
+                </div>
+              )}
+
+              {/* Discount Code */}
+              {codeDiscountAmount > 0 && discountCode && (
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-green-600 font-medium">
+                    {locale === 'el' ? 'Έκπτωση Κωδικού' : 'Discount Code'} ({discountCode.code})
+                  </p>
+                  <p className="text-sm text-green-600 font-medium">
+                    -{formatPrice(codeDiscountAmount, locale)}
+                  </p>
+                </div>
+              )}
+
+              {/* Subtotal with discounts */}
+              {hasDiscounts && (
+                <div className="flex justify-between items-center pt-2 border-t">
+                  <p className="text-base font-semibold">
+                    {locale === 'el' ? 'Υποσύνολο' : 'Subtotal'}
+                  </p>
+                  <p className="text-base font-semibold">
+                    {formatPrice(subtotalWithDiscounts, locale)}
+                  </p>
+                </div>
+              )}
+
+              {/* Shipping */}
+              {shippingCost > 0 && (
+                <div className="flex justify-between items-center">
+                  <p className="text-sm text-muted-foreground">
+                    {locale === 'el' ? 'Μεταφορικά' : 'Shipping'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    +{formatPrice(shippingCost, locale)}
+                  </p>
+                </div>
+              )}
+
+              {/* Total */}
+              <div className="flex justify-between items-center pt-2 border-t">
+                <p className="text-lg font-bold">{locale === 'el' ? 'Σύνολο' : 'Total'}</p>
+                <p className={`text-2xl font-bold ${hasDiscounts ? 'text-[#ffb3d9]' : 'text-primary'}`}>
+                  {formatPrice(order.total, locale)}
+                </p>
+              </div>
             </div>
           </div>
         </CardContent>

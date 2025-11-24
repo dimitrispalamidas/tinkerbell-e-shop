@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/utils';
+import { getProductDiscountInfo } from '@/lib/utils/discounts';
 import { ShoppingBag, Sparkles, ArrowUpDown } from 'lucide-react';
 import { ProductFilters } from '@/components/shop/product-filters';
 import { MobileFilterDrawer } from '@/components/shop/mobile-filter-drawer';
@@ -413,9 +414,37 @@ export function ShopClient({ locale, products, allCategories, type, category }: 
                         <p className="text-xs md:text-sm text-sage-600/70 mb-2 line-clamp-1 md:line-clamp-2 font-light">
                           {locale === 'el' ? product.description_el : product.description_en}
                         </p>
-                        <p className="text-base md:text-lg font-light text-sage-800 tracking-wide">
-                          {formatPrice(product.price, locale)}
-                        </p>
+                        {(() => {
+                          const discountInfo = getProductDiscountInfo(
+                            product.price,
+                            (product as any).product_discounts
+                          );
+                          return (
+                            <div className="space-y-1">
+                              {discountInfo.activeDiscount ? (
+                                <>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-base md:text-lg font-light text-sage-800 tracking-wide line-through text-sage-500">
+                                      {formatPrice(product.price, locale)}
+                                    </p>
+                                    <span className="px-2 py-0.5 rounded text-xs font-light bg-magenta-100 text-magenta-700">
+                                      {discountInfo.activeDiscount.discount_type === 'percentage'
+                                        ? `-${discountInfo.activeDiscount.discount_value}%`
+                                        : `-${formatPrice(discountInfo.activeDiscount.discount_value, locale)}`}
+                                    </span>
+                                  </div>
+                                  <p className="text-lg md:text-xl font-light text-magenta-600 tracking-wide">
+                                    {formatPrice(discountInfo.finalPrice, locale)}
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="text-base md:text-lg font-light text-sage-800 tracking-wide">
+                                  {formatPrice(product.price, locale)}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
 
                       {/* Bottom Accent */}

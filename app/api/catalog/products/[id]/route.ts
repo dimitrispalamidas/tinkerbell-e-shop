@@ -72,6 +72,15 @@ export async function GET(
           name_en,
           description_el,
           description_en
+        ),
+        product_discounts (
+          id,
+          discount_type,
+          discount_value,
+          starts_at,
+          ends_at,
+          is_active,
+          can_combine_with_codediscount
         )
       `
     )
@@ -89,7 +98,17 @@ export async function GET(
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const product = data as CatalogProduct
+  // Filter product_discounts to only include active, valid ones
+  const now = new Date()
+  const product = data as CatalogProduct & { product_discounts?: any[] }
+  if (product.product_discounts && Array.isArray(product.product_discounts)) {
+    product.product_discounts = product.product_discounts.filter((discount: any) => {
+      if (!discount.is_active) return false
+      if (discount.starts_at && new Date(discount.starts_at) > now) return false
+      if (discount.ends_at && new Date(discount.ends_at) < now) return false
+      return true
+    })
+  }
 
   const response = NextResponse.json({
     product,

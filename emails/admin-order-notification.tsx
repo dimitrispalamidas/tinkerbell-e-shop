@@ -29,7 +29,15 @@ interface AdminOrderNotificationProps {
   customerEmail: string;
   customerPhone: string;
   total: number;
-  subtotal: number;
+  subtotalWithoutDiscounts: number;
+  subtotalWithDiscounts: number;
+  productDiscountAmount: number;
+  codeDiscountAmount: number;
+  discountCodes?: Array<{
+    code: string;
+    type: 'percentage' | 'fixed';
+    value: number;
+  }>;
   shippingCost: number;
   items: OrderItem[];
   deliveryMethod: 'boxnow' | 'home';
@@ -49,14 +57,21 @@ export const AdminOrderNotificationEmail = ({
   customerEmail = 'customer@example.com',
   customerPhone = '',
   total = 0,
-  subtotal = 0,
+  subtotalWithoutDiscounts = 0,
+  subtotalWithDiscounts = 0,
+  productDiscountAmount = 0,
+  codeDiscountAmount = 0,
+  discountCodes,
   shippingCost = 0,
   items = [],
   deliveryMethod = 'boxnow',
   shippingAddress,
   boxnowLockerAddress,
   baseUrl = 'https://tinkerbell-e-shop.vercel.app',
-}: AdminOrderNotificationProps) => (
+}: AdminOrderNotificationProps) => {
+  const hasAnyDiscount = productDiscountAmount > 0 || codeDiscountAmount > 0;
+  
+  return (
   <Html>
     <Head>
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -174,12 +189,55 @@ export const AdminOrderNotificationEmail = ({
           
           <Hr style={hr} />
           
+          {hasAnyDiscount && (
+            <>
+              <Row style={subtotalRow}>
+                <td>
+                  <Text style={subtotalLabel}>Υποσύνολο</Text>
+                </td>
+                <td>
+                  <Text style={{...subtotalAmount, textDecoration: 'line-through', color: '#9ca3af'}}>
+                    €{subtotalWithoutDiscounts.toFixed(2)}
+                  </Text>
+                </td>
+              </Row>
+              {productDiscountAmount > 0 && (
+                <Row style={subtotalRow}>
+                  <td>
+                    <Text style={subtotalLabel}>Έκπτωση Προϊόντων</Text>
+                  </td>
+                  <td>
+                    <Text style={{...subtotalAmount, color: '#22c55e'}}>
+                      -€{productDiscountAmount.toFixed(2)}
+                    </Text>
+                  </td>
+                </Row>
+              )}
+              {codeDiscountAmount > 0 && (
+                <Row style={subtotalRow}>
+                  <td>
+                    <Text style={subtotalLabel}>
+                      Έκπτωση Κωδικού{discountCodes && discountCodes.length > 0 
+                        ? ` (${discountCodes.map(dc => dc.code).join(', ')})`
+                        : ''}
+                    </Text>
+                  </td>
+                  <td>
+                    <Text style={{...subtotalAmount, color: '#22c55e'}}>
+                      -€{codeDiscountAmount.toFixed(2)}
+                    </Text>
+                  </td>
+                </Row>
+              )}
+            </>
+          )}
+          
           <Row style={subtotalRow}>
             <td>
               <Text style={subtotalLabel}>Υποσύνολο</Text>
             </td>
             <td>
-              <Text style={subtotalAmount}>€{subtotal.toFixed(2)}</Text>
+              <Text style={subtotalAmount}>€{subtotalWithDiscounts.toFixed(2)}</Text>
             </td>
           </Row>
           
@@ -192,7 +250,7 @@ export const AdminOrderNotificationEmail = ({
                 {shippingCost === 0 ? (
                   <span style={{ color: '#22c55e', fontWeight: '600' }}>ΔΩΡΕΑΝ</span>
                 ) : (
-                  `€${shippingCost.toFixed(2)}`
+                  `+€${shippingCost.toFixed(2)}`
                 )}
               </Text>
             </td>
@@ -230,7 +288,8 @@ export const AdminOrderNotificationEmail = ({
       </Container>
     </Body>
   </Html>
-);
+  );
+};
 
 export default AdminOrderNotificationEmail;
 

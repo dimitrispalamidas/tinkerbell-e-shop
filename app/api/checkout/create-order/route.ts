@@ -3,6 +3,8 @@ import { z } from 'zod'
 import { validateCartStock } from '@/lib/actions/validate-cart'
 import { createVivaPaymentOrder, createOrder } from '@/lib/actions/viva-wallet'
 import { createClient as createServiceClient } from '@supabase/supabase-js'
+import { sanitizeDiscountCode, validateDiscountCode, applyDiscountsToCart, validateProductDiscount } from '@/lib/utils/discounts'
+import type { DiscountCode, ProductDiscount } from '@/lib/types/database'
 
 declare global {
   var __CHECKOUT_RATE_LIMIT: Map<string, { count: number; expiresAt: number }> | undefined
@@ -26,6 +28,7 @@ const checkoutSchema = z.object({
       color: z.string().min(1).optional(),
     })
   ).min(1),
+  discountCodes: z.array(z.string()).optional().default([]),
   formData: z.object({
     firstName: z.string().min(1),
     lastName: z.string().min(1),
@@ -112,10 +115,76 @@ export async function POST(request: Request) {
       )
     }
 
-    const { locale, cartItems, formData } = parsed.data
+    const { locale, cartItems, formData, discountCodes } = parsed.data
     const supabase = getSupabaseAdmin()
 
     const productIds = [...new Set(cartItems.map((item) => item.id))]
+
+    // Fetch and validate all discount codes
+    const discountCodeRecords: DiscountCode[] = []
+    if (discountCodes && discountCodes.length > 0) {
+      const sanitizedCodes = discountCodes.map(code => sanitizeDiscountCode(code)).filter(Boolean) as string[]
+      
+      if (sanitizedCodes.length > 0) {
+        const { data: codes, error: codesError } = await supabase
+          .from('discount_codes')
+          .select('*')
+          .in('code', sanitizedCodes)
+
+        if (codesError || !codes || codes.length !== sanitizedCodes.length) {
+          return NextResponse.json(
+            { message: 'Invalid discount code(s)' },
+            { status: 400 }
+          )
+        }
+
+        // Validate each code
+        for (const code of codes) {
+          const validation = validateDiscountCode(code)
+          if (!validation.valid) {
+            return NextResponse.json(
+              { message: validation.error },
+              { status: 400 }
+            )
+          }
+          discountCodeRecords.push(code)
+        }
+
+        // Check if all codes can combine with each other
+        const allCanCombine = discountCodeRecords.every(code => code.can_combine_with_codediscount === true)
+        if (!allCanCombine && discountCodeRecords.length > 1) {
+          return NextResponse.json(
+            { message: 'Cannot combine these discount codes' },
+            { status: 400 }
+          )
+        }
+      }
+    }
+
+    // Fetch product discounts for cart items
+    const { data: productDiscounts, error: productDiscountsError } = await supabase
+      .from('product_discounts')
+      .select('*')
+      .in('product_id', productIds)
+      .eq('is_active', true)
+
+    if (productDiscountsError) {
+      console.error('Failed to fetch product discounts:', productDiscountsError)
+    }
+
+    // Filter and validate product discounts
+    const validProductDiscounts = new Map<string, ProductDiscount>()
+    if (productDiscounts) {
+      for (const discount of productDiscounts) {
+        const validation = validateProductDiscount(discount)
+        if (validation.valid) {
+          validProductDiscounts.set(discount.product_id, discount)
+        }
+      }
+    }
+
+    // Note: Combination rules are handled by applyDiscountsToCart function
+    // It will automatically use the best discount if they cannot combine
 
     const { data: products, error: productsError } = await supabase
       .from('products')
@@ -159,8 +228,22 @@ export async function POST(request: Request) {
     }
 
     const subtotal = validationItems.reduce((total, item) => total + item.price * item.quantity, 0)
+
+    // Apply discounts
+    const discountResult = applyDiscountsToCart({
+      cartItems: validationItems.map((item) => ({
+        productId: item.id,
+        price: item.price,
+        quantity: item.quantity,
+      })),
+      discountCodes: discountCodeRecords,
+      productDiscounts: validProductDiscounts,
+      subtotal,
+    })
+
+    const discountAmount = discountResult.totalDiscount
     const shippingCost = formData.deliveryMethod === 'home' ? HOME_DELIVERY_COST : 0
-    const total = subtotal + shippingCost
+    const total = Math.max(0, subtotal - discountAmount + shippingCost) // Ensure total is never negative
 
     const fullName = `${formData.firstName} ${formData.lastName}`
 
@@ -172,7 +255,28 @@ export async function POST(request: Request) {
       customerPhone: formData.phone,
     })
 
-    await createOrder({
+    // Atomically update discount code usage count if used
+    for (const discountCodeRecord of discountCodeRecords) {
+      const { error: updateUsageError } = await supabase.rpc('increment_discount_code_usage', {
+        code_id: discountCodeRecord.id,
+      })
+
+      if (updateUsageError) {
+        // If update fails, try manual update with atomic check
+        const { error: manualUpdateError } = await supabase
+          .from('discount_codes')
+          .update({ usage_count: discountCodeRecord.usage_count + 1 })
+          .eq('id', discountCodeRecord.id)
+          .lt('usage_count', discountCodeRecord.max_uses ?? 999999)
+
+        if (manualUpdateError) {
+          console.error('Failed to update discount code usage:', manualUpdateError)
+          // Continue anyway - we'll track it in order_discounts
+        }
+      }
+    }
+
+    const order = await createOrder({
       items: validationItems.map((item) => ({
         product_id: item.id,
         quantity: item.quantity,
@@ -182,6 +286,8 @@ export async function POST(request: Request) {
         product_name: item.productName,
       })),
       total,
+      discount_amount: discountAmount,
+      discount_code_id: discountCodeRecords.length > 0 ? discountCodeRecords[0].id : null,
       customer_email: formData.email,
       customer_name: fullName,
       customer_phone: formData.phone,
@@ -203,6 +309,79 @@ export async function POST(request: Request) {
       boxnow_locker_id: formData.deliveryMethod === 'boxnow' ? formData.boxnowLockerId : undefined,
       viva_order_code: orderCode,
     })
+
+    // Create order_discounts records for tracking
+    const orderDiscountsToInsert = []
+
+    // Calculate individual discount amounts for each code (sequential application)
+    if (discountCodeRecords.length > 0 && discountResult.discountBreakdown.codeDiscount > 0) {
+      let remainingAmount = subtotal - discountResult.discountBreakdown.productDiscounts
+      
+      for (const discountCodeRecord of discountCodeRecords) {
+        const codeDiscount = discountCodeRecord.discount_type === 'percentage'
+          ? (remainingAmount * discountCodeRecord.discount_value) / 100
+          : discountCodeRecord.discount_value
+        
+        const actualDiscount = Math.min(codeDiscount, remainingAmount)
+        if (actualDiscount > 0) {
+          orderDiscountsToInsert.push({
+            order_id: order.id,
+            discount_code_id: discountCodeRecord.id,
+            discount_amount: actualDiscount,
+          })
+          remainingAmount -= actualDiscount
+          remainingAmount = Math.max(0, remainingAmount)
+        }
+      }
+    }
+
+    // Add product discounts (only if they were actually applied)
+    if (discountResult.discountBreakdown.productDiscounts > 0) {
+      for (const item of validationItems) {
+        const productDiscount = validProductDiscounts.get(item.id)
+        if (productDiscount) {
+          const itemTotal = item.price * item.quantity
+          let itemDiscount = 0
+
+          if (discountResult.canCombine) {
+            // If can combine, calculate the discount for this item
+            itemDiscount = Math.min(
+              productDiscount.discount_type === 'percentage'
+                ? (itemTotal * productDiscount.discount_value) / 100
+                : productDiscount.discount_value * item.quantity, // Fixed discount per item
+              itemTotal
+            )
+          } else if (discountCodeRecords.length === 0 || discountResult.discountBreakdown.productDiscounts > discountResult.discountBreakdown.codeDiscount) {
+            // If cannot combine, only add if product discount is higher than code discount
+            itemDiscount = Math.min(
+              productDiscount.discount_type === 'percentage'
+                ? (itemTotal * productDiscount.discount_value) / 100
+                : productDiscount.discount_value * item.quantity,
+              itemTotal
+            )
+          }
+
+          if (itemDiscount > 0) {
+            orderDiscountsToInsert.push({
+              order_id: order.id,
+              product_discount_id: productDiscount.id,
+              discount_amount: itemDiscount,
+            })
+          }
+        }
+      }
+    }
+
+    if (orderDiscountsToInsert.length > 0) {
+      const { error: orderDiscountsError } = await supabase
+        .from('order_discounts')
+        .insert(orderDiscountsToInsert)
+
+      if (orderDiscountsError) {
+        console.error('Failed to create order discounts:', orderDiscountsError)
+        // Don't fail the order if tracking fails
+      }
+    }
 
     return NextResponse.json({ checkoutUrl, orderCode })
   } catch (error) {

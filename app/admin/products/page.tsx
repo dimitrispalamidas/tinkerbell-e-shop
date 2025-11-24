@@ -26,6 +26,14 @@ type Product = {
     stock: number;
     sold_count: number;
   }>;
+  product_discounts?: Array<{
+    id: string;
+    discount_type: 'percentage' | 'fixed';
+    discount_value: number;
+    starts_at: string | null;
+    ends_at: string | null;
+    is_active: boolean;
+  }>;
 };
 
 type TabType = 'active' | 'archived' | 'sold_out';
@@ -160,6 +168,28 @@ export default function AdminProductsPage() {
       (sum, variant) => sum + (variant.stock || 0),
       0
     ) || 0;
+  };
+
+  // Check if product has an active discount
+  const hasActiveDiscount = (product: Product) => {
+    if (!product.product_discounts || product.product_discounts.length === 0) {
+      return false;
+    }
+
+    const now = new Date();
+    return product.product_discounts.some(discount => {
+      if (!discount.is_active) return false;
+      
+      if (discount.starts_at && new Date(discount.starts_at) > now) {
+        return false;
+      }
+      
+      if (discount.ends_at && new Date(discount.ends_at) < now) {
+        return false;
+      }
+      
+      return true;
+    });
   };
 
   const tabs = [
@@ -315,15 +345,17 @@ export default function AdminProductsPage() {
                         {/* Price & Status */}
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-base md:text-lg">{formatPrice(product.price, locale)}</p>
-                          <span className={`px-2 py-1 rounded text-xs whitespace-nowrap ${
-                            product.status === 'active' ? 'bg-green-100 text-green-700' :
-                            product.status === 'archived' ? 'bg-gray-100 text-gray-700' :
-                            'bg-orange-100 text-orange-700'
-                          }`}>
-                            {product.status === 'active' ? (locale === 'el' ? 'Ενεργό' : 'Active') :
-                             product.status === 'archived' ? (locale === 'el' ? 'Αρχειοθετημένο' : 'Archived') :
-                             (locale === 'el' ? 'Εξαντλημένο' : 'Sold Out')}
-                          </span>
+                          {product.status !== activeTab && (
+                            <span className={`px-2 py-1 rounded text-xs whitespace-nowrap ${
+                              product.status === 'active' ? 'bg-green-100 text-green-700' :
+                              product.status === 'archived' ? 'bg-gray-100 text-gray-700' :
+                              'bg-orange-100 text-orange-700'
+                            }`}>
+                              {product.status === 'active' ? (locale === 'el' ? 'Ενεργό' : 'Active') :
+                               product.status === 'archived' ? (locale === 'el' ? 'Αρχειοθετημένο' : 'Archived') :
+                               (locale === 'el' ? 'Εξαντλημένο' : 'Sold Out')}
+                            </span>
+                          )}
                           {hasLowStock(product) && (
                             <span className={`px-2 py-1 rounded text-xs whitespace-nowrap ${
                               getTotalStock(product) === 1 
@@ -331,6 +363,11 @@ export default function AdminProductsPage() {
                                 : 'bg-orange-100 text-orange-700'
                             }`}>
                               {locale === 'el' ? 'Χαμηλό Απόθεμα' : 'Low Stock'}
+                            </span>
+                          )}
+                          {hasActiveDiscount(product) && (
+                            <span className="px-2 py-1 rounded text-xs whitespace-nowrap bg-purple-100 text-purple-700">
+                              {locale === 'el' ? 'Με Έκπτωση' : 'With Discount'}
                             </span>
                           )}
                         </div>

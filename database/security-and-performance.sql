@@ -33,6 +33,8 @@ ALTER TABLE orders ENABLE ROW LEVEL SECURITY;
 ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE gallery_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE product_discounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE discount_codes ENABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- PRODUCTS TABLE POLICIES
@@ -150,6 +152,44 @@ CREATE POLICY "Admins can read admin_users"
 
 -- Service role can manage admin_users (for setup scripts)
 -- Handled by service role key
+
+-- ============================================
+-- PRODUCT_DISCOUNTS TABLE POLICIES
+-- ============================================
+
+-- Public can read active product discounts (for product pages)
+CREATE POLICY "Public can read active product discounts"
+  ON product_discounts FOR SELECT
+  USING (
+    is_active = true
+    AND (starts_at IS NULL OR starts_at <= NOW())
+    AND (ends_at IS NULL OR ends_at >= NOW())
+  );
+
+-- Admins can manage product discounts
+-- Use is_admin() function to avoid RLS recursion issues
+CREATE POLICY "Admins can manage product discounts"
+  ON product_discounts FOR ALL
+  USING (is_admin(auth.uid()));
+
+-- ============================================
+-- DISCOUNT_CODES TABLE POLICIES
+-- ============================================
+
+-- Public can read active discount codes (for checkout)
+CREATE POLICY "Public can read active discount codes"
+  ON discount_codes FOR SELECT
+  USING (
+    is_active = true
+    AND (starts_at IS NULL OR starts_at <= NOW())
+    AND (ends_at IS NULL OR ends_at >= NOW())
+  );
+
+-- Admins can manage discount codes
+-- Use is_admin() function to avoid RLS recursion issues
+CREATE POLICY "Admins can manage discount codes"
+  ON discount_codes FOR ALL
+  USING (is_admin(auth.uid()));
 
 -- ============================================
 -- 3. DATABASE INDEXES FOR PERFORMANCE

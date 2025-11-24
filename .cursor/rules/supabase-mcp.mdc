@@ -1,0 +1,10 @@
+---
+alwaysApply: true
+---
+
+When working with Supabase database operations, ALWAYS use Supabase MCP tools directly instead of creating .sql files:
+- Use `mcp_supabase_apply_migration` for DDL operations (CREATE, ALTER, DROP, etc.)
+- Use `mcp_supabase_execute_sql` for queries and data operations
+- Use `mcp_supabase_list_tables` to explore the database schema
+- Use `mcp_supabase_list_migrations` to check existing migrations
+- NEVER create .sql files manually - communicate directly with Supabase through MCP tools

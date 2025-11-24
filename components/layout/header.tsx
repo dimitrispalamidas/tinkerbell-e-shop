@@ -8,19 +8,22 @@ import { useCartStore } from '@/lib/store/cart'
 import { ShoppingCart, Globe, Menu, X, Home, Store, Image as ImageIcon, Mail, Baby, Shirt, Footprints, ChevronDown } from 'lucide-react'
 import { BsBalloonHeart } from 'react-icons/bs'
 import { Button } from '@/components/ui/button'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { MiniCartSidebar } from '@/components/cart/mini-cart-sidebar'
 import { createClient } from '@/lib/supabase/client'
+import { saveClientRoute, getLastAdminRoute } from '@/lib/utils/client-route-storage'
 
 export function Header() {
   const locale = useLocale()
   const router = useRouter()
+  const pathname = usePathname()
   const [itemCount, setItemCount] = useState(0)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isCartOpen, setIsCartOpen] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
   const [shopSubmenuOpen, setShopSubmenuOpen] = useState(false)
   const [gallerySubmenuOpen, setGallerySubmenuOpen] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
   
   useEffect(() => {
     setItemCount(useCartStore.getState().getItemCount())
@@ -29,6 +32,34 @@ export function Header() {
     })
     return unsubscribe
   }, [])
+
+  // Check if user is admin
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (user) {
+        const { data: adminRecord } = await supabase
+          .from('admin_users')
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle()
+        
+        setIsAdmin(!!adminRecord)
+      } else {
+        setIsAdmin(false)
+      }
+    }
+    checkAdmin()
+  }, [])
+
+  // Save current client route whenever pathname changes
+  useEffect(() => {
+    if (pathname) {
+      saveClientRoute(pathname)
+    }
+  }, [pathname])
 
   // Fetch categories from database
   useEffect(() => {
@@ -65,16 +96,29 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-sage-200/30 bg-white/95 backdrop-blur-md supports-[backdrop-filter]:bg-white/90 shadow-sm">
       <div className="container mx-auto flex h-16 md:h-20 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2 z-50 group">
-          <Image 
-            src="/logo.webp" 
-            alt="Τίνκερμπελ - Παιδικά ρούχα, βαπτιστικά, στολισμοί" 
-            width={240} 
-            height={60}
-            className="h-11 w-auto md:h-[4.5rem] transition-all duration-300 group-hover:scale-105 drop-shadow-sm"
-            priority
-          />
-        </Link>
+        <div className="flex items-center gap-2 z-50">
+          <Link href="/" className="flex items-center space-x-2 group">
+            <Image 
+              src="/logo.webp" 
+              alt="Τίνκερμπελ - Παιδικά ρούχα, βαπτιστικά, στολισμοί" 
+              width={240} 
+              height={60}
+              className="h-8 w-auto md:h-12 transition-all duration-300 group-hover:scale-105 drop-shadow-sm"
+              priority
+            />
+          </Link>
+          {isAdmin && (
+            <button
+              onClick={() => {
+                const lastAdminRoute = getLastAdminRoute('/admin')
+                router.push(lastAdminRoute)
+              }}
+              className="text-xs font-semibold text-green-700 px-2 py-1 bg-green-100 rounded hover:bg-green-200 transition-colors cursor-pointer"
+            >
+              Client
+            </button>
+          )}
+        </div>
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex flex-1 items-center justify-center space-x-8 text-base">

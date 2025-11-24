@@ -154,6 +154,8 @@ export async function createOrder(orderData: {
     product_name: string;
   }>;
   total: number;
+  discount_amount?: number;
+  discount_code_id?: string | null;
   customer_email: string;
   customer_name: string;
   customer_phone?: string;
@@ -168,6 +170,8 @@ export async function createOrder(orderData: {
     .from('orders')
     .insert({
       total: orderData.total,
+      discount_amount: orderData.discount_amount ?? 0,
+      discount_code_id: orderData.discount_code_id ?? null,
       customer_email: orderData.customer_email,
       customer_name: orderData.customer_name,
       customer_phone: orderData.customer_phone,
@@ -309,7 +313,7 @@ export async function updateOrderPaymentStatus(
       }
     }
   } 
-  // If payment was refunded, restore variant stock
+  // If payment was refunded, restore variant stock and decrease sold_count
   else if (status === 'refunded' && order.order_items) {
     for (const item of order.order_items) {
       if (!item.size || !item.color) {
@@ -318,7 +322,7 @@ export async function updateOrderPaymentStatus(
 
       const { data: variant, error: variantError } = await supabase
         .from('product_variants')
-        .select('stock')
+        .select('stock, sold_count')
         .eq('product_id', item.product_id)
         .eq('size', item.size)
         .eq('color', item.color)
@@ -327,7 +331,10 @@ export async function updateOrderPaymentStatus(
       if (!variantError && variant) {
         const { error: updateError } = await supabase
           .from('product_variants')
-          .update({ stock: variant.stock + item.quantity })
+          .update({ 
+            stock: variant.stock + item.quantity,
+            sold_count: Math.max((variant.sold_count || 0) - item.quantity, 0) // Decrease sold_count, never go below 0
+          })
           .eq('product_id', item.product_id)
           .eq('size', item.size)
           .eq('color', item.color);

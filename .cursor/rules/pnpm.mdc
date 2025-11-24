@@ -2,3 +2,9 @@
 alwaysApply: true
 ---
 i use pnpm so do you for the next packages
+
+When installing packages, ALWAYS use pnpm commands:
+- Use `pnpm add <package>` instead of `npm install <package>`
+- Use `pnpm add -D <package>` for dev dependencies
+- Use `pnpm remove <package>` instead of `npm uninstall`
+- Use `pnpm install` instead of `npm install` when installing all dependencies

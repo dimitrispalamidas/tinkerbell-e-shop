@@ -57,6 +57,8 @@ export type Order = {
   status: 'pending' | 'paid' | 'shipped' | 'delivered' | 'cancelled'
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
   total: number
+  discount_amount: number
+  discount_code_id: string | null
   viva_order_code: string | null
   viva_transaction_id: string | null
   shipping_address: {
@@ -108,5 +110,43 @@ export type AdminUser = {
   onesignal_player_id: string[] | string | null // JSONB array of Player IDs (one per device), or legacy single string
   created_at: string
   updated_at: string
+}
+
+export type DiscountCode = {
+  id: string
+  code: string
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  starts_at: string | null
+  expires_at: string | null
+  is_active: boolean
+  can_combine_with_productdiscount: boolean
+  can_combine_with_codediscount: boolean
+  usage_count: number
+  max_uses: number | null
+  created_at: string
+  updated_at: string
+}
+
+export type ProductDiscount = {
+  id: string
+  product_id: string
+  discount_type: 'percentage' | 'fixed'
+  discount_value: number
+  starts_at: string | null
+  ends_at: string | null
+  is_active: boolean
+  can_combine_with_codediscount: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type OrderDiscount = {
+  id: string
+  order_id: string
+  discount_code_id: string | null
+  product_discount_id: string | null
+  discount_amount: number
+  created_at: string
 }
 

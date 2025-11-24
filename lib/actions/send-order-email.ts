@@ -24,7 +24,7 @@ const getSupabaseAdmin = () => {
 
 export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
   try {
-    // Fetch order with items from database
+    // Fetch order with items and discounts from database
     const supabase = getSupabaseAdmin();
     const { data: order, error: orderError } = await supabase
       .from('orders')
@@ -36,6 +36,21 @@ export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
           price,
           size,
           color
+        ),
+        order_discounts (
+          id,
+          discount_code_id,
+          product_discount_id,
+          discount_amount,
+          discount_codes (
+            code,
+            discount_type,
+            discount_value
+          ),
+          product_discounts (
+            discount_type,
+            discount_value
+          )
         )
       `)
       .eq('viva_order_code', vivaOrderCode)
@@ -46,15 +61,35 @@ export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
       throw new Error('Order not found');
     }
 
-    // Calculate subtotal and shipping cost
-    const subtotal = order.order_items?.reduce((sum: number, item: any) => 
+    // Calculate subtotal without discounts (original prices)
+    const subtotalWithoutDiscounts = order.order_items?.reduce((sum: number, item: any) => 
       sum + (item.price * item.quantity), 0
     ) || 0;
-    const shippingCost = order.total - subtotal;
+
+    // Calculate total discount amounts
+    const orderDiscounts = order.order_discounts || [];
+    console.log(`📊 [Email] Order ${vivaOrderCode} - Found ${orderDiscounts.length} discount(s)`);
+    
+    const productDiscountAmount = orderDiscounts
+      .filter((od: any) => od.product_discount_id)
+      .reduce((sum: number, od: any) => sum + (od.discount_amount || 0), 0);
+    
+    const codeDiscountAmount = orderDiscounts
+      .filter((od: any) => od.discount_code_id)
+      .reduce((sum: number, od: any) => sum + (od.discount_amount || 0), 0);
+
+    console.log(`💰 [Email] Discounts - Product: €${productDiscountAmount.toFixed(2)}, Code: €${codeDiscountAmount.toFixed(2)}`);
+
+    const totalDiscountAmount = productDiscountAmount + codeDiscountAmount;
+    const subtotalWithDiscounts = subtotalWithoutDiscounts - totalDiscountAmount;
     
     // Determine delivery method
     const deliveryMethod = order.shipping_address?.delivery_method || 
       (order.boxnow_locker_id ? 'boxnow' : 'home');
+    
+    // Calculate shipping cost based on delivery method
+    const HOME_DELIVERY_COST = 3.50;
+    const shippingCost = deliveryMethod === 'home' ? HOME_DELIVERY_COST : 0;
 
     // Get correct locker address for BOXNOW
     let boxnowLockerAddress = undefined;
@@ -63,6 +98,11 @@ export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
       boxnowLockerAddress = order.shipping_address?.boxnow_locker_address || order.boxnow_locker_id;
     }
 
+    // Get all discount codes info
+    const discountCodesInfo = orderDiscounts
+      .filter((od: any) => od.discount_code_id && od.discount_codes)
+      .map((od: any) => od.discount_codes);
+
     // Prepare email data
     const emailData = {
       customerName: order.customer_name,
@@ -70,7 +110,15 @@ export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
       customerPhone: order.customer_phone || order.shipping_address?.phone || '',
       orderCode: order.viva_order_code,
       total: order.total,
-      subtotal: subtotal,
+      subtotalWithoutDiscounts: subtotalWithoutDiscounts,
+      subtotalWithDiscounts: subtotalWithDiscounts,
+      productDiscountAmount: productDiscountAmount,
+      codeDiscountAmount: codeDiscountAmount,
+      discountCodes: discountCodesInfo.length > 0 ? discountCodesInfo.map((dc: any) => ({
+        code: dc.code,
+        type: dc.discount_type,
+        value: dc.discount_value,
+      })) : undefined,
       shippingCost: shippingCost,
       items: order.order_items || [],
       deliveryMethod: deliveryMethod as 'boxnow' | 'home',
@@ -84,6 +132,14 @@ export async function sendOrderConfirmationEmail(vivaOrderCode: string) {
       boxnowLockerAddress: boxnowLockerAddress,
       baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://tinkerbell-e-shop.vercel.app',
     };
+
+    console.log(`📧 [Email] Email data prepared:`, {
+      hasDiscounts: productDiscountAmount > 0 || codeDiscountAmount > 0,
+      productDiscountAmount,
+      codeDiscountAmount,
+      discountCodesCount: discountCodesInfo.length,
+      discountCodes: discountCodesInfo.map((dc: any) => dc.code),
+    });
 
     // Render email HTML
     const emailHtml = await render(OrderConfirmationEmail(emailData));
@@ -124,6 +180,21 @@ export async function sendAdminOrderNotificationEmail(vivaOrderCode: string) {
           price,
           size,
           color
+        ),
+        order_discounts (
+          id,
+          discount_code_id,
+          product_discount_id,
+          discount_amount,
+          discount_codes (
+            code,
+            discount_type,
+            discount_value
+          ),
+          product_discounts (
+            discount_type,
+            discount_value
+          )
         )
       `)
       .eq('viva_order_code', vivaOrderCode)
@@ -135,6 +206,7 @@ export async function sendAdminOrderNotificationEmail(vivaOrderCode: string) {
     }
 
     // Only send notification for paid orders
+    console.log(`🔍 [Admin Email] Order ${vivaOrderCode} payment_status: ${order.payment_status}`);
     if (order.payment_status !== 'paid') {
       console.log('⏭️ [Admin Email] Skipping notification - order not paid yet');
       return { success: true, skipped: true };
@@ -145,11 +217,17 @@ export async function sendAdminOrderNotificationEmail(vivaOrderCode: string) {
       .from('admin_users')
       .select('user_id');
 
-    if (adminError || !adminUsers || adminUsers.length === 0) {
-      console.warn('⚠️ [Admin Email] No admin users found');
+    if (adminError) {
+      console.error('❌ [Admin Email] Error fetching admin users:', adminError);
+      return { success: false, error: `Failed to fetch admin users: ${adminError.message}` };
+    }
+
+    if (!adminUsers || adminUsers.length === 0) {
+      console.warn('⚠️ [Admin Email] No admin users found in admin_users table');
       return { success: false, error: 'No admin users found' };
     }
 
+    console.log(`👥 [Admin Email] Found ${adminUsers.length} admin user(s)`);
     const adminUserIds = adminUsers.map(au => au.user_id);
 
     // Get all admin emails in one call using listUsers
@@ -167,26 +245,59 @@ export async function sendAdminOrderNotificationEmail(vivaOrderCode: string) {
       .map(user => user.email)
       .filter((email): email is string => !!email);
 
+    console.log(`📧 [Admin Email] Sending to ${adminEmails.length} admin email(s): ${adminEmails.join(', ')}`);
+
     if (adminEmails.length === 0) {
-      console.warn('⚠️ [Admin Email] No admin emails found');
+      console.warn('⚠️ [Admin Email] No admin emails found - admin users exist but no emails found');
+      console.warn(`⚠️ [Admin Email] Admin user IDs: ${adminUserIds.join(', ')}`);
+      console.warn(`⚠️ [Admin Email] Total users in auth: ${users.length}`);
+      console.warn(`⚠️ [Admin Email] Available user IDs: ${users.map(u => u.id).join(', ')}`);
+      console.warn(`⚠️ [Admin Email] Admin users with emails:`, users
+        .filter(user => adminUserIds.includes(user.id))
+        .map(u => ({ id: u.id, email: u.email })));
       return { success: false, error: 'No admin emails found' };
     }
 
-    // Calculate subtotal and shipping cost
-    const subtotal = order.order_items?.reduce((sum: number, item: any) => 
+    // Calculate subtotal without discounts (original prices)
+    const subtotalWithoutDiscounts = order.order_items?.reduce((sum: number, item: any) => 
       sum + (item.price * item.quantity), 0
     ) || 0;
-    const shippingCost = order.total - subtotal;
+
+    // Calculate total discount amounts
+    const orderDiscounts = order.order_discounts || [];
+    console.log(`📊 [Admin Email] Order ${vivaOrderCode} - Found ${orderDiscounts.length} discount(s)`);
+    
+    const productDiscountAmount = orderDiscounts
+      .filter((od: any) => od.product_discount_id)
+      .reduce((sum: number, od: any) => sum + (od.discount_amount || 0), 0);
+    
+    const codeDiscountAmount = orderDiscounts
+      .filter((od: any) => od.discount_code_id)
+      .reduce((sum: number, od: any) => sum + (od.discount_amount || 0), 0);
+
+    console.log(`💰 [Admin Email] Discounts - Product: €${productDiscountAmount.toFixed(2)}, Code: €${codeDiscountAmount.toFixed(2)}`);
+
+    const totalDiscountAmount = productDiscountAmount + codeDiscountAmount;
+    const subtotalWithDiscounts = subtotalWithoutDiscounts - totalDiscountAmount;
     
     // Determine delivery method
     const deliveryMethod = order.shipping_address?.delivery_method || 
       (order.boxnow_locker_id ? 'boxnow' : 'home');
+    
+    // Calculate shipping cost based on delivery method
+    const HOME_DELIVERY_COST = 3.50;
+    const shippingCost = deliveryMethod === 'home' ? HOME_DELIVERY_COST : 0;
 
     // Get correct locker address for BOXNOW
     let boxnowLockerAddress = undefined;
     if (deliveryMethod === 'boxnow') {
       boxnowLockerAddress = order.shipping_address?.boxnow_locker_address || order.boxnow_locker_id;
     }
+
+    // Get all discount codes info
+    const discountCodesInfo = orderDiscounts
+      .filter((od: any) => od.discount_code_id && od.discount_codes)
+      .map((od: any) => od.discount_codes);
 
     // Prepare email data
     const emailData = {
@@ -195,7 +306,15 @@ export async function sendAdminOrderNotificationEmail(vivaOrderCode: string) {
       customerEmail: order.customer_email,
       customerPhone: order.customer_phone || order.shipping_address?.phone || '',
       total: order.total,
-      subtotal: subtotal,
+      subtotalWithoutDiscounts: subtotalWithoutDiscounts,
+      subtotalWithDiscounts: subtotalWithDiscounts,
+      productDiscountAmount: productDiscountAmount,
+      codeDiscountAmount: codeDiscountAmount,
+      discountCodes: discountCodesInfo.length > 0 ? discountCodesInfo.map((dc: any) => ({
+        code: dc.code,
+        type: dc.discount_type,
+        value: dc.discount_value,
+      })) : undefined,
       shippingCost: shippingCost,
       items: order.order_items || [],
       deliveryMethod: deliveryMethod as 'boxnow' | 'home',
@@ -208,6 +327,14 @@ export async function sendAdminOrderNotificationEmail(vivaOrderCode: string) {
       boxnowLockerAddress: boxnowLockerAddress,
       baseUrl: process.env.NEXT_PUBLIC_BASE_URL || 'https://tinkerbell-e-shop.vercel.app',
     };
+
+    console.log(`📧 [Admin Email] Email data prepared:`, {
+      hasDiscounts: productDiscountAmount > 0 || codeDiscountAmount > 0,
+      productDiscountAmount,
+      codeDiscountAmount,
+      discountCodesCount: discountCodesInfo.length,
+      discountCodes: discountCodesInfo.map((dc: any) => dc.code),
+    });
 
     // Render email HTML
     const emailHtml = await render(AdminOrderNotificationEmail(emailData));

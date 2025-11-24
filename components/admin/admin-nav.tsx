@@ -1,14 +1,15 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 import { createClient } from '@/lib/supabase/client';
 import { Button } from '@/components/ui/button';
-import { LayoutDashboard, Package, ShoppingCart, Image as ImageIcon, LogOut, Menu, X, BarChart3, Palette } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, Image as ImageIcon, LogOut, Menu, X, BarChart3, Palette, Tag } from 'lucide-react';
 import { toast } from 'sonner';
+import { getLastClientRoute, saveAdminRoute } from '@/lib/utils/client-route-storage';
 
 export function AdminNav() {
   const pathname = usePathname();
@@ -26,34 +27,50 @@ export function AdminNav() {
 
   const navItems = [
     { href: '/admin', label: locale === 'el' ? 'Πίνακας Ελέγχου' : 'Dashboard', icon: LayoutDashboard },
-    { href: '/admin/analytics', label: locale === 'el' ? 'Πωλήσεις' : 'Sales', icon: BarChart3 },
     { href: '/admin/products', label: locale === 'el' ? 'Προϊόντα' : 'Products', icon: Package },
-    { href: '/admin/colors', label: locale === 'el' ? 'Χρώματα' : 'Colors', icon: Palette },
     { href: '/admin/orders', label: locale === 'el' ? 'Παραγγελίες' : 'Orders', icon: ShoppingCart },
     { href: '/admin/gallery', label: locale === 'el' ? 'Γκαλερί' : 'Gallery', icon: ImageIcon },
+    { href: '/admin/discount-codes', label: locale === 'el' ? 'Εκπτωτικοί Κωδικοί' : 'Discount Codes', icon: Tag },
+    { href: '/admin/analytics', label: locale === 'el' ? 'Πωλήσεις' : 'Sales', icon: BarChart3 },
+    { href: '/admin/colors', label: locale === 'el' ? 'Χρώματα' : 'Colors', icon: Palette },
   ];
 
   const handleNavClick = () => {
     setIsMobileMenuOpen(false);
   };
 
+  // Save current admin route whenever pathname changes
+  useEffect(() => {
+    if (pathname) {
+      saveAdminRoute(pathname)
+    }
+  }, [pathname])
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/admin" className="flex items-center gap-2 flex-shrink-0">
-          <Image 
-            src="/logo.webp" 
-            alt="Tinkerbell Admin" 
-            width={140} 
-            height={30}
-            className="h-[30px] w-auto"
-            priority
-          />
-          <span className="text-xs font-semibold text-muted-foreground px-2 py-1 bg-primary/10 rounded">
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <Link href="/admin" className="flex items-center gap-2">
+            <Image 
+              src="/logo.webp" 
+              alt="Tinkerbell Admin" 
+              width={140} 
+              height={30}
+              className="h-8 w-auto md:h-12"
+              priority
+            />
+          </Link>
+          <button
+            onClick={() => {
+              const lastClientRoute = getLastClientRoute('/')
+              router.push(lastClientRoute)
+            }}
+            className="text-xs font-semibold text-muted-foreground px-2 py-1 bg-primary/10 rounded hover:bg-primary/20 transition-colors cursor-pointer"
+          >
             Admin
-          </span>
-        </Link>
+          </button>
+        </div>
         
         {/* Desktop Navigation */}
         <nav className="hidden md:flex flex-1 items-center justify-center space-x-6 text-sm font-medium mx-6">

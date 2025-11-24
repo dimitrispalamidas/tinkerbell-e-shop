@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCartStore } from '@/lib/store/cart';
 import { formatPrice } from '@/lib/utils';
+import { getProductDiscountInfo } from '@/lib/utils/discounts';
 import { validateStock } from '@/lib/utils/stock';
 import { X, ShoppingBag, Trash2, ArrowRight, Plus, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,7 @@ interface MiniCartSidebarProps {
 export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
   const locale = useLocale();
   
-  const { items, removeItem, updateQuantity, getTotal } = useCartStore();
+  const { items, removeItem, updateQuantity, getTotal, getSubtotal } = useCartStore();
   const [mounted, setMounted] = useState(false);
 
   const handleQuantityChange = async (
@@ -158,7 +159,26 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
                     {/* Product Details */}
                     <div className="flex-1 min-w-0 space-y-2">
                       <div className="pr-6">
-                        <h3 className="font-semibold text-sm leading-tight line-clamp-2">{item.name}</h3>
+                        <div className="flex items-start gap-2">
+                          <h3 className="font-semibold text-sm leading-tight line-clamp-2 flex-1">{item.name}</h3>
+                          {(() => {
+                            const itemTotal = item.price * item.quantity;
+                            const discountInfo = getProductDiscountInfo(
+                              itemTotal,
+                              item.product_discounts
+                            );
+                            if (discountInfo.activeDiscount) {
+                              return (
+                                <span className="px-2 py-0.5 rounded text-xs font-light bg-magenta-100 text-magenta-700 whitespace-nowrap flex-shrink-0">
+                                  {discountInfo.activeDiscount.discount_type === 'percentage'
+                                    ? `-${discountInfo.activeDiscount.discount_value}%`
+                                    : `-${formatPrice(discountInfo.activeDiscount.discount_value, locale)}`}
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
                       </div>
                       <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
                         {item.size && (
@@ -200,9 +220,32 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
                           </button>
                         </div>
                         
-                        <p className="text-sm font-extrabold text-primary">
-                          {formatPrice(item.price * item.quantity, locale)}
-                        </p>
+                        {(() => {
+                          const itemTotal = item.price * item.quantity;
+                          const discountInfo = getProductDiscountInfo(
+                            itemTotal,
+                            item.product_discounts,
+                            item.quantity
+                          );
+                          return (
+                            <div className="flex flex-col items-end gap-0.5">
+                              {discountInfo.activeDiscount ? (
+                                <>
+                                  <p className="text-xs text-muted-foreground line-through">
+                                    {formatPrice(itemTotal, locale)}
+                                  </p>
+                                  <p className="text-sm font-extrabold text-magenta-600">
+                                    {formatPrice(discountInfo.finalPrice, locale)}
+                                  </p>
+                                </>
+                              ) : (
+                                <p className="text-sm font-extrabold text-primary">
+                                  {formatPrice(itemTotal, locale)}
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -226,14 +269,35 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
           {items.length > 0 && (
             <div className="border-t bg-muted/50 p-4 space-y-4">
               {/* Total */}
-              <div className="flex justify-between items-center px-1">
-                <span className="text-base font-bold text-foreground">
-                  {locale === 'el' ? 'Σύνολο' : 'Total'}
-                </span>
-                <span className="text-xl font-bold text-primary">
-                  {formatPrice(getTotal(), locale)}
-                </span>
-              </div>
+              {(() => {
+                const subtotal = getSubtotal();
+                const total = getTotal();
+                const hasDiscount = subtotal > total;
+                
+                return (
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-base font-bold text-foreground">
+                      {locale === 'el' ? 'Σύνολο' : 'Total'}
+                    </span>
+                    <div className="flex flex-col items-end gap-0.5">
+                      {hasDiscount ? (
+                        <>
+                          <span className="text-sm text-muted-foreground line-through">
+                            {formatPrice(subtotal, locale)}
+                          </span>
+                          <span className="text-xl font-bold text-magenta-600">
+                            {formatPrice(total, locale)}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="text-xl font-bold text-primary">
+                          {formatPrice(total, locale)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Action Buttons */}
               <div className="space-y-2.5">

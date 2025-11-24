@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { ArrowLeft, Upload, X, Languages } from 'lucide-react';
 import Link from 'next/link';
@@ -46,6 +47,16 @@ export default function EditProductPage() {
     colors: '',
     is_active: true,
   });
+  const [productDiscount, setProductDiscount] = useState<{
+    id?: string;
+    discount_type: 'percentage' | 'fixed';
+    discount_value: string;
+    starts_at: string;
+    ends_at: string;
+    is_active: boolean;
+    can_combine_with_codediscount: boolean;
+  } | null>(null);
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false);
   
   // Store original data for comparison
   const [originalData, setOriginalData] = useState({
@@ -63,6 +74,15 @@ export default function EditProductPage() {
     },
     imageUrls: [] as string[],
     variants: [] as Variant[],
+    productDiscount: null as {
+      id?: string;
+      discount_type: 'percentage' | 'fixed';
+      discount_value: string;
+      starts_at: string;
+      ends_at: string;
+      is_active: boolean;
+      can_combine_with_codediscount: boolean;
+    } | null,
   });
 
   useEffect(() => {
@@ -118,8 +138,11 @@ export default function EditProductPage() {
     // Compare variants
     const variantsChanged = JSON.stringify(variants) !== JSON.stringify(originalData.variants);
     
-    return formChanged || imagesChanged || variantsChanged;
-  }, [formData, imageUrls, variants, originalData]);
+    // Compare product discount
+    const discountChanged = JSON.stringify(productDiscount) !== JSON.stringify(originalData.productDiscount);
+    
+    return formChanged || imagesChanged || variantsChanged || discountChanged;
+  }, [formData, imageUrls, variants, productDiscount, originalData]);
 
   const fetchCategories = async () => {
     try {
@@ -169,6 +192,74 @@ export default function EditProductPage() {
       toast.error(locale === 'el' ? 'Αποτυχία μετάφρασης' : 'Translation failed');
     } finally {
       setTranslating({ ...translating, description: false });
+    }
+  };
+
+  const saveProductDiscount = async () => {
+    if (!productDiscount || !productDiscount.discount_value) {
+      // If no discount value, deactivate existing discount (soft delete with is_active = false)
+      if (productDiscount?.id) {
+        const response = await fetch('/api/admin/product-discounts', {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            id: productDiscount.id,
+            is_active: false,
+          }),
+        });
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to deactivate discount');
+        }
+      }
+      return;
+    }
+
+    const payload: any = {
+      product_id: productId,
+      discount_type: productDiscount.discount_type,
+      discount_value: Number(productDiscount.discount_value),
+      starts_at: productDiscount.starts_at || null,
+      ends_at: productDiscount.ends_at || null,
+      is_active: productDiscount.is_active,
+      can_combine_with_codediscount: productDiscount.can_combine_with_codediscount ?? false,
+    };
+
+    // Validate percentage
+    if (productDiscount.discount_type === 'percentage' && (payload.discount_value < 0 || payload.discount_value > 100)) {
+      throw new Error(locale === 'el' ? 'Το ποσοστό πρέπει να είναι μεταξύ 0 και 100' : 'Percentage must be between 0 and 100');
+    }
+
+    // Validate fixed amount
+    if (productDiscount.discount_type === 'fixed' && payload.discount_value < 0) {
+      throw new Error(locale === 'el' ? 'Το ποσό πρέπει να είναι θετικό' : 'Amount must be positive');
+    }
+
+    // Validate dates
+    if (payload.starts_at && payload.ends_at && new Date(payload.starts_at) > new Date(payload.ends_at)) {
+      throw new Error(locale === 'el' ? 'Η ημερομηνία λήξης πρέπει να είναι μετά την ημερομηνία έναρξης' : 'End date must be after start date');
+    }
+
+    const method = productDiscount.id ? 'PATCH' : 'POST';
+    const requestPayload = productDiscount.id
+      ? { id: productDiscount.id, ...payload }
+      : payload;
+
+    const response = await fetch('/api/admin/product-discounts', {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify(requestPayload),
+    });
+
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.error || 'Failed to save discount');
     }
   };
 
@@ -223,11 +314,46 @@ export default function EditProductPage() {
         
         setVariants(productVariants);
         
+        // Fetch product discount
+        const { data: discountData } = await supabase
+          .from('product_discounts')
+          .select('*')
+          .eq('product_id', productId)
+          .maybeSingle();
+
+        let initialDiscount: {
+          id?: string;
+          discount_type: 'percentage' | 'fixed';
+          discount_value: string;
+          starts_at: string;
+          ends_at: string;
+          is_active: boolean;
+          can_combine_with_codediscount: boolean;
+        } | null = null;
+
+        if (discountData) {
+          initialDiscount = {
+            id: discountData.id,
+            discount_type: discountData.discount_type,
+            discount_value: String(discountData.discount_value),
+            starts_at: discountData.starts_at ? new Date(discountData.starts_at).toISOString().slice(0, 16) : '',
+            ends_at: discountData.ends_at ? new Date(discountData.ends_at).toISOString().slice(0, 16) : '',
+            is_active: discountData.is_active,
+            can_combine_with_codediscount: discountData.can_combine_with_codediscount ?? false,
+          };
+          setProductDiscount(initialDiscount);
+        } else {
+          // Don't create default discount - leave it as null
+          initialDiscount = null;
+          setProductDiscount(null);
+        }
+        
         // Store original data
         setOriginalData({
           formData: productFormData,
           imageUrls: productImages,
           variants: productVariants,
+          productDiscount: initialDiscount,
         });
       }
     } catch (error: any) {
@@ -307,11 +433,15 @@ export default function EditProductPage() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const performSave = async () => {
     setIsLoading(true);
 
     try {
+      // Save product discount first
+      if (productDiscount) {
+        await saveProductDiscount();
+      }
+
       // ✅ Use server action with cache revalidation
       const { success } = await updateProduct(productId, {
         sku: formData.sku,
@@ -350,6 +480,24 @@ export default function EditProductPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Check if category is selected
+    if (!formData.category_id || formData.category_id === '') {
+      setShowCategoryDialog(true);
+      return;
+    }
+    
+    // If category is selected, proceed with save
+    await performSave();
+  };
+
+  const handleConfirmSave = async () => {
+    setShowCategoryDialog(false);
+    await performSave();
   };
 
   if (isFetching) {
@@ -581,6 +729,173 @@ export default function EditProductPage() {
 
           <Card>
             <CardHeader>
+              <CardTitle>{locale === 'el' ? 'Έκπτωση Προϊόντος' : 'Product Discount'}</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="discount_type">
+                    {locale === 'el' ? 'Τύπος Έκπτωσης' : 'Discount Type'}
+                  </Label>
+                  <select
+                    id="discount_type"
+                    value={productDiscount?.discount_type || 'percentage'}
+                    onChange={(e) => setProductDiscount({ 
+                      ...(productDiscount || {
+                        discount_type: 'percentage',
+                        discount_value: '',
+                        starts_at: '',
+                        ends_at: '',
+                        is_active: false,
+                        can_combine_with_codediscount: false,
+                      }),
+                      discount_type: e.target.value as 'percentage' | 'fixed'
+                    })}
+                    className="mt-2 w-full h-10 px-3 rounded-md border border-input bg-background"
+                  >
+                    <option value="percentage">{locale === 'el' ? 'Ποσοστό (%)' : 'Percentage (%)'}</option>
+                    <option value="fixed">{locale === 'el' ? 'Σταθερό Ποσό (€)' : 'Fixed Amount (€)'}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="discount_value">
+                    {(productDiscount?.discount_type || 'percentage') === 'percentage'
+                      ? (locale === 'el' ? 'Ποσοστό (%)' : 'Percentage (%)')
+                      : (locale === 'el' ? 'Ποσό (€)' : 'Amount (€)')}
+                  </Label>
+                  <Input
+                    id="discount_value"
+                    type="number"
+                    step={(productDiscount?.discount_type || 'percentage') === 'percentage' ? '1' : '0.01'}
+                    min="0"
+                    max={(productDiscount?.discount_type || 'percentage') === 'percentage' ? '100' : undefined}
+                    value={productDiscount?.discount_value || ''}
+                    onChange={(e) => setProductDiscount({ 
+                      ...(productDiscount || {
+                        discount_type: 'percentage',
+                        discount_value: '',
+                        starts_at: '',
+                        ends_at: '',
+                        is_active: false,
+                        can_combine_with_codediscount: false,
+                      }),
+                      discount_value: e.target.value
+                    })}
+                    placeholder={(productDiscount?.discount_type || 'percentage') === 'percentage' ? '0-100' : '0.00'}
+                    className="mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="discount_starts_at">
+                    {locale === 'el' ? 'Ημερομηνία Έναρξης' : 'Start Date'} (optional)
+                  </Label>
+                  <Input
+                    id="discount_starts_at"
+                    type="datetime-local"
+                    value={productDiscount?.starts_at || ''}
+                    onChange={(e) => setProductDiscount({ 
+                      ...(productDiscount || {
+                        discount_type: 'percentage',
+                        discount_value: '',
+                        starts_at: '',
+                        ends_at: '',
+                        is_active: false,
+                        can_combine_with_codediscount: false,
+                      }),
+                      starts_at: e.target.value
+                    })}
+                    className="mt-2"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="discount_ends_at">
+                    {locale === 'el' ? 'Ημερομηνία Λήξης' : 'End Date'} (optional)
+                  </Label>
+                  <Input
+                    id="discount_ends_at"
+                    type="datetime-local"
+                    value={productDiscount?.ends_at || ''}
+                    onChange={(e) => setProductDiscount({ 
+                      ...(productDiscount || {
+                        discount_type: 'percentage',
+                        discount_value: '',
+                        starts_at: '',
+                        ends_at: '',
+                        is_active: false,
+                        can_combine_with_codediscount: false,
+                      }),
+                      ends_at: e.target.value
+                    })}
+                    className="mt-2"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="discount_is_active"
+                  checked={productDiscount?.is_active ?? false}
+                  onCheckedChange={(checked) => setProductDiscount({ 
+                    ...(productDiscount || {
+                      discount_type: 'percentage',
+                      discount_value: '',
+                      starts_at: '',
+                      ends_at: '',
+                      is_active: false,
+                      can_combine_with_codediscount: false,
+                    }),
+                    is_active: checked === true
+                  })}
+                />
+                <Label htmlFor="discount_is_active" className="cursor-pointer">
+                  {locale === 'el' ? 'Ενεργό' : 'Active'}
+                </Label>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="discount_can_combine_with_codediscount"
+                  checked={productDiscount?.can_combine_with_codediscount ?? false}
+                  onCheckedChange={(checked) => setProductDiscount({ 
+                    ...(productDiscount || {
+                      discount_type: 'percentage',
+                      discount_value: '',
+                      starts_at: '',
+                      ends_at: '',
+                      is_active: false,
+                      can_combine_with_codediscount: false,
+                    }),
+                    can_combine_with_codediscount: checked === true
+                  })}
+                />
+                <Label htmlFor="discount_can_combine_with_codediscount" className="cursor-pointer">
+                  {locale === 'el' ? 'Μπορεί να συνδυαστεί με εκπτωτικούς κωδικούς' : 'Can combine with discount codes'}
+                </Label>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={formData.is_active}
+                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  className="rounded"
+                />
+                <span className="text-sm font-medium">
+                  {locale === 'el' ? 'Το προϊόν είναι ενεργό' : 'Product is active'}
+                </span>
+              </label>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
               <CardTitle>{locale === 'el' ? 'Εικόνες Προϊόντος' : 'Product Images'}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -667,22 +982,6 @@ export default function EditProductPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="pt-6">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                  className="rounded"
-                />
-                <span className="text-sm font-medium">
-                  {locale === 'el' ? 'Το προϊόν είναι ενεργό' : 'Product is active'}
-                </span>
-              </label>
-            </CardContent>
-          </Card>
-
           <div className="flex gap-4">
             <Link href="/admin/products" className="flex-1">
               <Button type="button" variant="outline" className="w-full">
@@ -695,6 +994,36 @@ export default function EditProductPage() {
           </div>
         </div>
       </form>
+
+      <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {locale === 'el' ? 'Ενημέρωση' : 'Notice'}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            {locale === 'el' 
+              ? 'Δεν έχετε επιλέξει κατηγορία. Είστε σίγουρος ότι θέλετε να συνεχίσετε;'
+              : 'You have not selected a category. Are you sure you want to continue?'}
+          </p>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowCategoryDialog(false)}
+            >
+              {locale === 'el' ? 'Ακύρωση' : 'Cancel'}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmSave}
+            >
+              {locale === 'el' ? 'OK' : 'OK'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

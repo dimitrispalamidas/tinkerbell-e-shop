@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { revalidatePath, revalidateTag } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 
 const requireAdmin = async () => {
@@ -34,7 +35,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('products')
-    .select('*, categories(*), product_variants(*)')
+    .select('*, categories(*), product_variants(*), product_discounts(*)')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -74,6 +75,15 @@ export async function PATCH(request: Request) {
         return NextResponse.json({ error: 'Failed to archive product' }, { status: 500 });
       }
 
+      // ✅ Cache invalidation - clear cache immediately
+      revalidateTag('catalog-products', 'page');
+      revalidateTag(`product-${productId}`, 'page');
+      revalidatePath('/shop');
+      revalidatePath('/');
+      revalidatePath('/api/catalog/products');
+      revalidatePath('/api/admin/products');
+      revalidatePath(`/product/${productId}`);
+
       return NextResponse.json({ success: true });
     }
 
@@ -104,6 +114,15 @@ export async function PATCH(request: Request) {
         console.error('Failed to restore product:', error);
         return NextResponse.json({ error: 'Failed to restore product' }, { status: 500 });
       }
+
+      // ✅ Cache invalidation - clear cache immediately
+      revalidateTag('catalog-products', 'page');
+      revalidateTag(`product-${productId}`, 'page');
+      revalidatePath('/shop');
+      revalidatePath('/');
+      revalidatePath('/api/catalog/products');
+      revalidatePath('/api/admin/products');
+      revalidatePath(`/product/${productId}`);
 
       return NextResponse.json({ success: true, status: newStatus });
     }

@@ -76,6 +76,15 @@ export async function GET(request: Request) {
           name_en,
           description_el,
           description_en
+        ),
+        product_discounts (
+          id,
+          discount_type,
+          discount_value,
+          starts_at,
+          ends_at,
+          is_active,
+          can_combine_with_codediscount
         )
       `
     )
@@ -135,7 +144,21 @@ export async function GET(request: Request) {
     )
   }
 
-  const response = NextResponse.json({ products: data ?? [] })
+  // Filter product_discounts to only include active, valid ones
+  const now = new Date()
+  const productsWithFilteredDiscounts = (data ?? []).map((product: any) => {
+    if (product.product_discounts && Array.isArray(product.product_discounts)) {
+      product.product_discounts = product.product_discounts.filter((discount: any) => {
+        if (!discount.is_active) return false
+        if (discount.starts_at && new Date(discount.starts_at) > now) return false
+        if (discount.ends_at && new Date(discount.ends_at) < now) return false
+        return true
+      })
+    }
+    return product
+  })
+
+  const response = NextResponse.json({ products: productsWithFilteredDiscounts })
   response.headers.set('Cache-Control', CACHE_HEADER)
   return response
 }

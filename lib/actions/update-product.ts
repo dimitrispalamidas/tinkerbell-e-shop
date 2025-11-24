@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 export async function updateProduct(
   productId: string,
@@ -74,6 +74,19 @@ export async function updateProduct(
 
   if (productError) throw productError
 
+  // Get existing variants with sold_count to preserve it
+  const { data: existingVariants } = await supabase
+    .from('product_variants')
+    .select('size, color, sold_count')
+    .eq('product_id', productId)
+
+  // Create a map of existing variants by size+color for quick lookup
+  const existingVariantsMap = new Map<string, number>()
+  existingVariants?.forEach(v => {
+    const key = `${v.size}|${v.color}`
+    existingVariantsMap.set(key, v.sold_count || 0)
+  })
+
   // Update variants: Delete all existing and insert new ones
   const { error: deleteError } = await supabase
     .from('product_variants')
@@ -82,7 +95,7 @@ export async function updateProduct(
 
   if (deleteError) throw deleteError
 
-  // Insert new variants
+  // Insert new variants with preserved sold_count
   if (formData.variants.length > 0) {
     const uniqueVariants = formData.variants.reduce((acc: typeof formData.variants, curr) => {
       const exists = acc.some(v => v.size === curr.size && v.color === curr.color)
@@ -90,12 +103,18 @@ export async function updateProduct(
       return acc
     }, [])
 
-    const variantData = uniqueVariants.map(v => ({
-      product_id: productId,
-      size: v.size,
-      color: v.color,
-      stock: v.stock,
-    }))
+    const variantData = uniqueVariants.map(v => {
+      const key = `${v.size}|${v.color}`
+      const preservedSoldCount = existingVariantsMap.get(key) || 0
+      
+      return {
+        product_id: productId,
+        size: v.size,
+        color: v.color,
+        stock: v.stock,
+        sold_count: preservedSoldCount, // Preserve sold_count from existing variant
+      }
+    })
 
     const { error: variantError } = await supabase
       .from('product_variants')
@@ -105,21 +124,25 @@ export async function updateProduct(
   }
 
   // ✅ Cache invalidation - admin sees changes immediately
-  revalidatePath('/shop')
-  revalidatePath('/')
+  // Clear all relevant caches so changes appear instantly
+  revalidateTag('catalog-products', 'page')
+  revalidateTag(`product-${productId}`, 'page')
+  revalidatePath('/shop', 'page')
+  revalidatePath('/', 'page')
   revalidatePath('/api/catalog/products')
+  revalidatePath('/api/admin/products')
   
   // Revalidate old category if changed
   if (oldProduct?.category_id) {
-    revalidatePath(`/shop?category=${oldProduct.category_id}`)
+    revalidatePath(`/shop?category=${oldProduct.category_id}`, 'page')
   }
   
   // Revalidate new category
   if (formData.category_id) {
-    revalidatePath(`/shop?category=${formData.category_id}`)
+    revalidatePath(`/shop?category=${formData.category_id}`, 'page')
   }
   
-  revalidatePath(`/product/${productId}`)
+  revalidatePath(`/product/${productId}`, 'page')
 
   return { success: true }
 }

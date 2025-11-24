@@ -23,6 +23,14 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     minimumCacheTTL: 60,
   },
+  // Cache configuration for Next.js 16
+  cacheLife: {
+    page: {
+      stale: 60,
+      revalidate: 300,
+      expire: 900,
+    },
+  },
   // Production optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',

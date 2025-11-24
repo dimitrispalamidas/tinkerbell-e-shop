@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { getLocale } from 'next-intl/server';
 import { formatPrice } from '@/lib/utils';
+import { getProductDiscountInfo } from '@/lib/utils/discounts';
 import { getRequestBaseUrl } from '@/lib/utils/base-url';
 import { ProductClient } from './product-client';
 import { ProductGallery } from './product-gallery';
@@ -17,9 +18,9 @@ interface ProductDetailPayload {
 async function fetchProductDetail(id: string) {
   try {
     const baseUrl = await getRequestBaseUrl();
-    // ✅ Cache 30 seconds - cache invalidation via revalidatePath in server actions
+    // ✅ Cache 30 seconds - cache invalidation via revalidateTag in server actions
     const response = await fetch(`${baseUrl}/api/catalog/products/${id}`, {
-      next: { revalidate: 30 },
+      next: { revalidate: 30, tags: ['catalog-products', `product-${id}`] },
     });
 
     if (response.status === 404) {
@@ -181,9 +182,37 @@ export default async function ProductPage({
               <h1 className="text-3xl md:text-4xl lg:text-5xl font-light text-sage-900 tracking-tight mb-4">
                 {locale === 'el' ? product.name_el : product.name_en}
               </h1>
-              <p className="text-3xl md:text-4xl font-light text-sage-800 tracking-wide">
-                {formatPrice(product.price, locale)}
-              </p>
+              {(() => {
+                const discountInfo = getProductDiscountInfo(
+                  product.price,
+                  (product as any).product_discounts
+                );
+                return (
+                  <div className="space-y-2">
+                    {discountInfo.activeDiscount ? (
+                      <>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <p className="text-2xl md:text-3xl font-light text-sage-500 tracking-wide line-through">
+                            {formatPrice(product.price, locale)}
+                          </p>
+                          <span className="px-3 py-1 rounded text-sm font-light bg-magenta-100 text-magenta-700">
+                            {discountInfo.activeDiscount.discount_type === 'percentage'
+                              ? `-${discountInfo.activeDiscount.discount_value}%`
+                              : `-${formatPrice(discountInfo.activeDiscount.discount_value, locale)}`}
+                          </span>
+                        </div>
+                        <p className="text-3xl md:text-4xl font-light text-magenta-600 tracking-wide">
+                          {formatPrice(discountInfo.finalPrice, locale)}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-3xl md:text-4xl font-light text-sage-800 tracking-wide">
+                        {formatPrice(product.price, locale)}
+                      </p>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             {/* Description */}

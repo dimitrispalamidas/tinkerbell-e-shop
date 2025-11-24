@@ -12,7 +12,9 @@ import {
   DollarSign,
   Calendar,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Tag,
+  Percent
 } from 'lucide-react';
 import { 
   LineChart, 
@@ -44,6 +46,46 @@ interface AnalyticsData {
   categoryPerformance: Array<{ name: string; value: number }>;
 }
 
+interface DiscountAnalyticsData {
+  totalDiscountsAmount: number;
+  totalProductDiscountsAmount: number;
+  totalDiscountCodesAmount: number;
+  totalProductDiscountsUsage: number;
+  totalDiscountCodesUsage: number;
+  // Conversion metrics
+  totalOrders: number;
+  ordersWithDiscounts: number;
+  conversionRate: number;
+  averageDiscountPerOrder: number;
+  revenueFromDiscountedOrders: number;
+  topProductDiscounts: Array<{
+    id: string;
+    productName: string;
+    discountType: string;
+    discountValue: number;
+    discountLabel: string;
+    isActive: boolean;
+    usageCount: number;
+    totalAmount: number;
+    revenueBeforeDiscount: number;
+    revenueAfterDiscount: number;
+  }>;
+  topDiscountCodes: Array<{
+    id: string;
+    code: string;
+    discountType: string;
+    discountValue: number;
+    discountLabel: string;
+    isActive: boolean;
+    usageCount: number;
+    totalAmount: number;
+    revenueBeforeDiscount: number;
+    revenueAfterDiscount: number;
+  }>;
+  productDiscountsByDay: Array<{ date: string; count: number; amount: number }>;
+  discountCodesByDay: Array<{ date: string; count: number; amount: number }>;
+}
+
 const COLORS = ['#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
 
 export default function AnalyticsPage() {
@@ -63,8 +105,28 @@ export default function AnalyticsPage() {
     categoryPerformance: []
   });
 
+  const [discountAnalytics, setDiscountAnalytics] = useState<DiscountAnalyticsData>({
+    totalDiscountsAmount: 0,
+    totalProductDiscountsAmount: 0,
+    totalDiscountCodesAmount: 0,
+    totalProductDiscountsUsage: 0,
+    totalDiscountCodesUsage: 0,
+    totalOrders: 0,
+    ordersWithDiscounts: 0,
+    conversionRate: 0,
+    averageDiscountPerOrder: 0,
+    revenueFromDiscountedOrders: 0,
+    topProductDiscounts: [],
+    topDiscountCodes: [],
+    productDiscountsByDay: [],
+    discountCodesByDay: []
+  });
+
+  const [isLoadingDiscounts, setIsLoadingDiscounts] = useState(false);
+
   useEffect(() => {
     fetchAnalytics();
+    fetchDiscountAnalytics();
   }, [timePeriod]);
 
   const getDateRange = (): { startDate: Date; endDate: Date; prevStartDate: Date } => {
@@ -215,6 +277,26 @@ export default function AnalyticsPage() {
     }
   };
 
+  const fetchDiscountAnalytics = async () => {
+    try {
+      setIsLoadingDiscounts(true);
+      const response = await fetch(`/api/admin/analytics/discounts?period=${timePeriod}`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch discount analytics');
+      }
+
+      const data = await response.json();
+      setDiscountAnalytics(data);
+    } catch (error) {
+      console.error('Failed to fetch discount analytics:', error);
+    } finally {
+      setIsLoadingDiscounts(false);
+    }
+  };
+
   const StatCard = ({ 
     title, 
     value, 
@@ -226,7 +308,7 @@ export default function AnalyticsPage() {
     value: number; 
     icon: any; 
     change?: number; 
-    format?: 'number' | 'currency' 
+    format?: 'number' | 'currency' | 'percentage' 
   }) => (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -235,7 +317,11 @@ export default function AnalyticsPage() {
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">
-          {format === 'currency' ? formatPrice(value, locale) : value.toLocaleString()}
+          {format === 'currency' 
+            ? formatPrice(value, locale) 
+            : format === 'percentage'
+            ? `${value.toFixed(1)}%`
+            : value.toLocaleString()}
         </div>
         {change !== undefined && (
           <p className={`text-xs flex items-center gap-1 mt-1 ${
@@ -529,6 +615,167 @@ export default function AnalyticsPage() {
             )}
           </CardContent>
         </Card>
+      </div>
+
+      {/* Discount Analytics Section */}
+      <div className="space-y-6">
+        <div>
+          <h2 className="text-2xl font-bold mb-2">
+            {locale === 'el' ? 'Ανάλυση Εκπτώσεων' : 'Discount Analytics'}
+          </h2>
+          <p className="text-muted-foreground">
+            {locale === 'el' ? 'Στατιστικά και απόδοση εκπτώσεων προϊόντων και κωδικών' : 'Product and discount code statistics and performance'}
+          </p>
+        </div>
+
+        {/* Discount Metrics */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <StatCard
+            title={locale === 'el' ? 'Συνολικές Εκπτώσεις' : 'Total Discounts'}
+            value={discountAnalytics.totalDiscountsAmount}
+            icon={Percent}
+            format="currency"
+          />
+          <StatCard
+            title={locale === 'el' ? 'Μέση Έκπτωση/Παραγγελία' : 'Avg Discount/Order'}
+            value={discountAnalytics.averageDiscountPerOrder}
+            icon={Tag}
+            format="currency"
+          />
+          <StatCard
+            title={locale === 'el' ? 'Ποσοστό Χρήσης' : 'Conversion Rate'}
+            value={discountAnalytics.conversionRate}
+            icon={TrendingUp}
+            format="percentage"
+          />
+          <StatCard
+            title={locale === 'el' ? 'Έσοδα από Εκπτώσεις' : 'Revenue from Discounts'}
+            value={discountAnalytics.revenueFromDiscountedOrders}
+            icon={DollarSign}
+            format="currency"
+          />
+        </div>
+
+        {/* Top Discounts Row */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Top Product Discounts */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5" />
+                {locale === 'el' ? 'Κορυφαίες Εκπτώσεις Προϊόντων' : 'Top Product Discounts'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingDiscounts ? (
+                <div className="flex items-center justify-center h-[250px]">
+                  <p className="text-muted-foreground">
+                    {locale === 'el' ? 'Φόρτωση...' : 'Loading...'}
+                  </p>
+                </div>
+              ) : discountAnalytics.topProductDiscounts.length > 0 ? (
+                <div className="space-y-4">
+                  {discountAnalytics.topProductDiscounts.map((discount, index) => (
+                    <div key={discount.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm flex-shrink-0 ${
+                          discount.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate">{discount.productName}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {discount.discountLabel} • {discount.usageCount} {locale === 'el' ? 'χρήσεις' : 'uses'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0 ml-2">
+                        <p className="font-semibold text-sm text-primary">
+                          {formatPrice(discount.revenueAfterDiscount || 0, locale)}
+                        </p>
+                        <p className="text-xs text-muted-foreground line-through">
+                          {formatPrice(discount.revenueBeforeDiscount || 0, locale)}
+                        </p>
+                        <p className="text-xs text-green-600">
+                          -{formatPrice(discount.totalAmount, locale)} {locale === 'el' ? 'έκπτωση' : 'discount'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {discount.isActive ? (locale === 'el' ? 'Ενεργό' : 'Active') : (locale === 'el' ? 'Ανενεργό' : 'Inactive')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-[250px]">
+                  <p className="text-muted-foreground">
+                    {locale === 'el' ? 'Δεν υπάρχουν δεδομένα' : 'No data available'}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Top Discount Codes */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Tag className="h-5 w-5" />
+                {locale === 'el' ? 'Κορυφαίοι Εκπτωτικοί Κωδικοί' : 'Top Discount Codes'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingDiscounts ? (
+                <div className="flex items-center justify-center h-[250px]">
+                  <p className="text-muted-foreground">
+                    {locale === 'el' ? 'Φόρτωση...' : 'Loading...'}
+                  </p>
+                </div>
+              ) : discountAnalytics.topDiscountCodes.length > 0 ? (
+                <div className="space-y-4">
+                  {discountAnalytics.topDiscountCodes.map((code, index) => (
+                    <div key={code.id} className="flex items-center justify-between p-3 bg-muted rounded-lg">
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={`flex items-center justify-center w-8 h-8 rounded-full font-semibold text-sm flex-shrink-0 ${
+                          code.isActive ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium text-sm truncate font-mono">{code.code}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {code.discountLabel} • {code.usageCount} {locale === 'el' ? 'χρήσεις' : 'uses'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0 ml-2">
+                        <p className="font-semibold text-sm text-primary">
+                          {formatPrice(code.revenueAfterDiscount || 0, locale)}
+                        </p>
+                        <p className="text-xs text-muted-foreground line-through">
+                          {formatPrice(code.revenueBeforeDiscount || 0, locale)}
+                        </p>
+                        <p className="text-xs text-green-600">
+                          -{formatPrice(code.totalAmount, locale)} {locale === 'el' ? 'έκπτωση' : 'discount'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {code.isActive ? (locale === 'el' ? 'Ενεργό' : 'Active') : (locale === 'el' ? 'Ανενεργό' : 'Inactive')}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex items-center justify-center h-[250px]">
+                  <p className="text-muted-foreground">
+                    {locale === 'el' ? 'Δεν υπάρχουν δεδομένα' : 'No data available'}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

@@ -34,9 +34,9 @@ async function fetchFeaturedProducts(): Promise<CatalogProduct[]> {
     const baseUrl = await getRequestBaseUrl();
     // ✅ Cache 30 seconds - cache invalidation via revalidatePath in server actions
     const response = await fetch(
-      `${baseUrl}/api/catalog/products?limit=15`,
+      `${baseUrl}/api/catalog/products?limit=10`,
       {
-        next: { revalidate: 30 },
+        next: { revalidate: 30, tags: ['catalog-products'] },
       }
     );
 

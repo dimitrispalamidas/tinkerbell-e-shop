@@ -102,6 +102,10 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
     setIsAddingToCart(true);
 
     try {
+      // Get product_discounts from the product (it's actually CatalogProduct with discounts)
+      const productWithDiscounts = product as any;
+      const productDiscounts = productWithDiscounts.product_discounts || null;
+      
       addItem({
         id: product.id,
         name: locale === 'el' ? product.name_el : product.name_en,
@@ -111,6 +115,7 @@ export function ProductClient({ product, variants, locale }: ProductClientProps)
         color: selectedColor || undefined,
         image: product.images[0] || undefined,
         stock: availableStock, // Pass current stock for validation
+        product_discounts: productDiscounts,
       });
 
       // Trigger flying animation

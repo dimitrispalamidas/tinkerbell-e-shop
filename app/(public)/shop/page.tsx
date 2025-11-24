@@ -57,10 +57,10 @@ async function fetchProducts(params: { type?: string; category?: string }) {
       ? `${baseUrl}/api/catalog/products?${query}`
       : `${baseUrl}/api/catalog/products`;
 
-    // ✅ Cache 30 seconds - cache invalidation via revalidatePath in server actions
+    // ✅ Cache 30 seconds - cache invalidation via revalidateTag in server actions
     // Each filter combination has its own cache key automatically
     const response = await fetch(url, { 
-      next: { revalidate: 30 }
+      next: { revalidate: 30, tags: ['catalog-products'] }
     });
 
     if (!response.ok) {

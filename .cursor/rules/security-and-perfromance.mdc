@@ -1,0 +1,15 @@
+---
+alwaysApply: true
+---
+
+ALWAYS prioritize security and performance in everything you do:
+- Before implementing any feature, consider security implications (SQL injection, XSS, CSRF, authentication, authorization, data validation)
+- Always validate and sanitize user inputs
+- Use parameterized queries and prepared statements for database operations
+- Implement proper authentication and authorization checks
+- Consider performance impact: optimize database queries, use indexes, implement caching where appropriate
+- Avoid N+1 queries, optimize API calls, minimize bundle size
+- Review code for potential security vulnerabilities before suggesting implementations
+- When using AI/agent features, ensure they don't expose sensitive data or create security holes
+- Performance: consider lazy loading, code splitting, image optimization, and efficient data fetching patterns
+- Security and performance should be considered FIRST, not as an afterthought

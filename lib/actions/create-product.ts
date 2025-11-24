@@ -1,7 +1,7 @@
 "use server"
 
 import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 
 export async function createProduct(formData: {
   sku: string
@@ -88,9 +88,13 @@ export async function createProduct(formData: {
   }
 
   // ✅ Cache invalidation - admin sees changes immediately
+  // Clear all relevant caches so changes appear instantly
+  revalidateTag('catalog-products', 'page')
+  revalidateTag(`product-${product.id}`, 'page')
   revalidatePath('/shop')
   revalidatePath('/')
   revalidatePath('/api/catalog/products')
+  revalidatePath('/api/admin/products')
   if (product.category_id) {
     revalidatePath(`/shop?category=${product.category_id}`)
   }
