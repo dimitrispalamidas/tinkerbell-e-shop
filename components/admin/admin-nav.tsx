@@ -58,8 +58,8 @@ export function AdminNav() {
               width={140} 
               height={30}
               className="h-8 w-auto md:h-12"
+              style={{ width: "auto" }}
               priority
-              sizes="140px"
               unoptimized
             />
           </Link>

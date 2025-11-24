@@ -22,6 +22,7 @@ const nextConfig: NextConfig = {
     formats: ['image/webp'], // Removed AVIF to reduce transformations (webp is sufficient)
     deviceSizes: [640, 1200], // Reduced to 2 sizes (mobile, desktop) - was 4
     imageSizes: [64, 128], // Reduced to 2 sizes for small images - was 4
+    qualities: [75, 80, 90], // Supported quality levels
     minimumCacheTTL: 31536000, // 1 year cache
     // Disable image optimization for admin routes (not needed for SEO)
     dangerouslyAllowSVG: false,

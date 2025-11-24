@@ -340,6 +340,8 @@ export default function NewGalleryItemPage() {
                           alt={`Preview ${index + 1}`}
                           fill
                           className="object-cover rounded-lg"
+                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                          unoptimized
                         />
                         <button
                           type="button"

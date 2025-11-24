@@ -455,6 +455,7 @@ export default function AdminGalleryPage() {
                       height={300}
                       className="object-cover w-full h-full"
                       sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                      unoptimized
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">

@@ -73,7 +73,6 @@ export function Footer() {
                   height={40}
                   style={{ objectFit: 'contain', height: '40px', width: 'auto' }}
                   className="transition-transform duration-300 group-hover:scale-105"
-                  sizes="180px"
                   unoptimized
                 />
               </Link>

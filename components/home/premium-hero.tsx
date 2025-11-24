@@ -40,8 +40,8 @@ export function PremiumHero({ locale }: PremiumHeroProps) {
             height={120}
             className="h-16 w-auto md:h-24 lg:h-32 drop-shadow-2xl transition-all duration-300 hover:scale-105"
             priority
-            sizes="(max-width: 768px) 240px, (max-width: 1024px) 360px, 480px"
-            style={{ filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))' }}
+            style={{ width: "auto", filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.3))' }}
+            unoptimized
           />
         ) : (
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-light text-cream-50 tracking-tight leading-tight">

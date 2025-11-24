@@ -104,8 +104,9 @@ export function Header() {
               width={240} 
               height={60}
               className="h-8 w-auto md:h-12 transition-all duration-300 group-hover:scale-105 drop-shadow-sm"
+              style={{ width: "auto" }}
               priority
-              sizes="(max-width: 768px) 120px, 240px"
+              unoptimized
             />
           </Link>
           {isAdmin && (

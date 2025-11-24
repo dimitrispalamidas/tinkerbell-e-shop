@@ -72,7 +72,6 @@ export function ProductGallery({ images, productName }: ProductGalleryProps) {
                 width={200}
                 height={200}
                 className="object-cover w-full h-full"
-                sizes="200px"
                 unoptimized
               />
             </button>

@@ -148,7 +148,6 @@ export function MiniCartSidebar({ isOpen, onClose }: MiniCartSidebarProps) {
                           width={80}
                           height={80}
                           className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-200"
-                          sizes="80px"
                           unoptimized
                         />
                       ) : (

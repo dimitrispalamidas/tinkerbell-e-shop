@@ -320,7 +320,6 @@ export default function AdminProductsPage() {
                           width={80}
                           height={80}
                           className="object-cover w-full h-full"
-                          sizes="80px"
                           unoptimized
                         />
                       ) : (

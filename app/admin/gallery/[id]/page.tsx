@@ -381,6 +381,8 @@ export default function EditGalleryItemPage() {
                     alt="Preview"
                     fill
                     className="object-cover rounded-lg"
+                    sizes="(max-width: 768px) 100vw, 448px"
+                    unoptimized
                   />
                   <button
                     type="button"

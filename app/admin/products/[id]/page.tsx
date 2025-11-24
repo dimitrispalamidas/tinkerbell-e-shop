@@ -957,7 +957,9 @@ export default function EditProductPage() {
                           alt={`Product image ${index + 1}`}
                           fill
                           className="object-cover rounded-lg pointer-events-none"
+                          sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
                           draggable={false}
+                          unoptimized
                         />
                         <button
                           type="button"
